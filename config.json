@@ -3,10 +3,10 @@
   "members": [
     {
       "id": "test",
-      "rank": "general",
+      "rank": "General",
       "name": "Anwalt",
       "password": "test",
-      "unit": "GeneralStab"
+      "unit": "Führungsstab"
     },
     {
       "id": "BW002",
