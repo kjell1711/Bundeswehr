@@ -7,333 +7,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        /* RESET & BASIS */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        body { background: #000; color: #fff; height: 100vh; overflow: hidden; }
-        
-        /* APP CONTAINER */
-        .app-container {
-            display: flex;
-            height: 100vh;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #1c1c1e;
-            border-radius: 0;
-        }
-        
-        /* LINKE NAVIGATION */
-        .nav-sidebar {
-            width: 80px;
-            background: #2c2c2e;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 0;
-            border-right: 1px solid #3a3a3c;
-        }
-        
-        .nav-item {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 15px 0;
-            color: #8e8e93;
-            font-size: 22px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .nav-item.active {
-            background: #007aff;
-            color: white;
-        }
-        
-        .nav-item:hover:not(.active) {
-            background: rgba(255,255,255,0.05);
-        }
-        
-        /* HAUPTBEREICH */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .content-area {
-            flex: 1;
+        /* BASIS */
+        * {
+            margin: 0;
             padding: 0;
-            overflow-y: auto;
-            display: none;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
         
-        .content-area.active {
-            display: block;
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
         
-        /* TAB-STILE */
-        .tab-header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #3a3a3c;
-        }
-        
-        .tab-header h1 {
-            font-size: 34px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #007aff, #5856d6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        /* HOME TAB */
-        .profile-card {
-            background: linear-gradient(135deg, #2c2c2e, #1c1c1e);
-            margin: 30px;
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid #3a3a3c;
-        }
-        
-        .profile-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #007aff, #34c759);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            margin-right: 20px;
-        }
-        
-        .profile-info h2 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        
-        .profile-info p {
-            color: #8e8e93;
-            font-size: 17px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .stat-card {
-            background: rgba(255,255,255,0.03);
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid #3a3a3c;
-        }
-        
-        .stat-card i {
-            font-size: 24px;
-            color: #007aff;
-            margin-bottom: 10px;
-        }
-        
-        /* FUNK TAB */
-        .channels-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 30px;
-        }
-        
-        .channel-card {
-            background: #2c2c2e;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid #3a3a3c;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .channel-card.active {
-            border-color: #007aff;
-            background: rgba(0, 122, 255, 0.1);
-        }
-        
-        .channel-card.general {
-            grid-column: 1 / -1;
-            background: rgba(52, 199, 89, 0.1);
-            border-color: #34c759;
-        }
-        
-        .channel-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .channel-icon {
-            width: 50px;
-            height: 50px;
-            background: #3a3a3c;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 22px;
-        }
-        
-        .channel-card.active .channel-icon {
-            background: #007aff;
-        }
-        
-        .channel-card.general .channel-icon {
-            background: #34c759;
-        }
-        
-        .channel-users {
-            margin-top: 15px;
-        }
-        
-        .user-badge {
-            display: inline-block;
-            background: rgba(255,255,255,0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            margin: 5px 5px 0 0;
-            font-size: 14px;
-        }
-        
-        .user-badge.talking {
-            background: rgba(255, 69, 58, 0.2);
-            color: #ff453a;
-        }
-        
-        .ptt-container {
-            position: fixed;
-            bottom: 40px;
-            right: 40px;
-        }
-        
-        .ptt-button {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ff3b30, #ff453a);
-            border: none;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(255, 69, 58, 0.4);
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .ptt-button:active {
-            transform: scale(0.95);
-            background: linear-gradient(135deg, #34c759, #30d158);
-        }
-        
-        .ptt-button i {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-        
-        /* EINSTELLUNGEN TAB */
-        .settings-container {
-            padding: 30px;
-            max-width: 600px;
-        }
-        
-        .setting-group {
-            background: #2c2c2e;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid #3a3a3c;
-        }
-        
-        .setting-group h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #fff;
-        }
-        
-        .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #3a3a3c;
-        }
-        
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-        
-        select, input[type="range"] {
-            background: #3a3a3c;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 15px;
-            color: white;
-            width: 200px;
-        }
-        
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 28px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #3a3a3c;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        input:checked + .toggle-slider {
-            background-color: #007aff;
-        }
-        
-        input:checked + .toggle-slider:before {
-            transform: translateX(22px);
+        /* GLASMORPHISM EFFECT */
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         
         /* LOGIN SCREEN */
@@ -343,304 +38,612 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
             z-index: 1000;
         }
         
         .login-card {
-            background: #1c1c1e;
-            border-radius: 24px;
-            padding: 50px;
             width: 90%;
             max-width: 400px;
-            border: 1px solid #3a3a3c;
+            padding: 40px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
         }
         
         .login-card h1 {
-            font-size: 32px;
+            font-size: 2.5rem;
             margin-bottom: 10px;
-            background: linear-gradient(90deg, #007aff, #5856d6);
+            background: linear-gradient(90deg, #4cc9f0, #4361ee);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 700;
         }
         
         .login-input {
             width: 100%;
-            padding: 18px;
-            background: #2c2c2e;
-            border: 2px solid #3a3a3c;
-            border-radius: 14px;
+            padding: 16px;
+            margin: 12px 0;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             color: white;
-            font-size: 17px;
-            margin: 15px 0;
+            font-size: 16px;
             text-align: center;
+            transition: all 0.3s;
         }
         
         .login-input:focus {
             outline: none;
-            border-color: #007aff;
+            border-color: #4361ee;
+            background: rgba(255, 255, 255, 0.1);
         }
         
         .login-btn {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(90deg, #007aff, #5856d6);
+            padding: 16px;
+            background: linear-gradient(90deg, #4361ee, #3a0ca3);
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             color: white;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 20px;
+            transition: transform 0.2s;
         }
         
-        /* STATUS ANZEIGE */
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* MAIN APP */
+        .app-container {
+            display: none;
+            height: 100vh;
+        }
+        
+        /* TABS NAVIGATION */
+        .tabs-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 10px;
+            z-index: 100;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: rgba(67, 97, 238, 0.2);
+            color: #4cc9f0;
+        }
+        
+        .tab-btn i {
+            font-size: 18px;
+        }
+        
+        /* CONTENT AREAS */
+        .content-area {
+            display: none;
+            padding: 20px;
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+        
+        .content-area.active {
+            display: block;
+        }
+        
+        /* HOME TAB */
+        .profile-section {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4361ee, #7209b7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .profile-info h2 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #ffffff, #4cc9f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .profile-info p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 24px;
+            color: #4cc9f0;
+            margin-bottom: 10px;
+        }
+        
+        /* FUNK TAB */
+        .channels-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .channel-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .channel-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(76, 201, 240, 0.3);
+        }
+        
+        .channel-item.active {
+            background: rgba(67, 97, 238, 0.15);
+            border-color: #4361ee;
+        }
+        
+        .channel-item.general {
+            border-color: #4cc9f0;
+            background: rgba(76, 201, 240, 0.08);
+        }
+        
+        .channel-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .channel-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        
+        .channel-info h3 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .channel-info p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+        
+        .users-in-channel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .user-tag {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-tag.talking {
+            background: rgba(76, 201, 240, 0.2);
+            color: #4cc9f0;
+        }
+        
+        .voice-indicator {
+            width: 10px;
+            height: 10px;
+            background: #34c759;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* PUSH TO TALK BUTTON */
+        .ptt-container {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            z-index: 99;
+        }
+        
+        .ptt-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f72585, #b5179e);
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(247, 37, 133, 0.4);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ptt-button:active {
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+        }
+        
+        .ptt-button i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        /* EINSTELLUNGEN TAB */
+        .settings-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .settings-group {
+            margin-bottom: 25px;
+        }
+        
+        .settings-group h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #4cc9f0;
+            padding-left: 10px;
+        }
+        
+        .setting-item {
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .setting-label h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .setting-label p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+        
+        select {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: white;
+            min-width: 200px;
+        }
+        
+        /* STATUS BAR */
         .status-bar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(28,28,30,0.95);
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
-            padding: 10px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #3a3a3c;
-            z-index: 100;
+            z-index: 99;
         }
         
         .connection-status {
             display: flex;
             align-items: center;
+            gap: 10px;
             font-size: 14px;
         }
         
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            margin-right: 8px;
+            background: #34c759;
         }
         
-        .status-dot.connected { background: #34c759; }
-        .status-dot.disconnected { background: #ff453a; }
-        
-        /* UTILITY */
-        .hidden { display: none !important; }
+        .status-dot.offline {
+            background: #ff453a;
+        }
         
         /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1c1c1e; }
-        ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4a4a4c; }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* UTILITY */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-gradient {
+            background: linear-gradient(90deg, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
 <body>
-    <!-- STATUS BAR -->
-    <div class="status-bar">
-        <div class="connection-status">
-            <div class="status-dot disconnected" id="statusDot"></div>
-            <span id="statusText">Nicht verbunden</span>
-        </div>
-        <div id="currentTime">--:--</div>
-    </div>
-    
     <!-- LOGIN SCREEN -->
     <div class="login-screen" id="loginScreen">
-        <div class="login-card">
+        <div class="login-card glass">
             <h1>BWFunk</h1>
-            <p style="color: #8e8e93; margin-bottom: 30px;">Bundeswehr Funknetz v1.0</p>
+            <p style="color: rgba(255,255,255,0.6); margin-bottom: 30px;">Bundeswehr Funknetz</p>
             
-            <input type="text" class="login-input" id="loginID" placeholder="Einlog-ID (z.B. BW001)" autocomplete="off">
-            <input type="password" class="login-input" id="loginPassword" placeholder="Passwort" autocomplete="off">
+            <input type="text" class="login-input" id="loginID" placeholder="Einlog-ID (z.B. BW001)">
+            <input type="password" class="login-input" id="loginPassword" placeholder="Passwort">
             
             <button class="login-btn" onclick="login()">Einloggen</button>
             
-            <p style="color: #ff453a; font-size: 12px; margin-top: 20px;">
-                ⚠️ Simulation - Keine echte Bundeswehr-Kommunikation
+            <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
+                Simulation - Keine echte Bundeswehr-Kommunikation
             </p>
         </div>
     </div>
     
     <!-- MAIN APP -->
-    <div class="app-container hidden" id="mainApp">
-        <!-- NAVIGATION -->
-        <div class="nav-sidebar">
-            <div class="nav-item active" onclick="switchTab('home')">
-                <i class="fas fa-home"></i>
+    <div class="app-container" id="mainApp">
+        <!-- STATUS BAR -->
+        <div class="status-bar glass">
+            <div class="connection-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Bereit</span>
             </div>
-            <div class="nav-item" onclick="switchTab('funk')">
-                <i class="fas fa-broadcast-tower"></i>
-            </div>
-            <div class="nav-item" onclick="switchTab('settings')">
-                <i class="fas fa-sliders-h"></i>
+            <div id="currentTime">--:--</div>
+        </div>
+        
+        <!-- CONTENT AREAS -->
+        <div class="content-area active" id="homeTab">
+            <div class="profile-section glass">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="userAvatar">BW</div>
+                    <div class="profile-info">
+                        <h2 id="userDisplayName">Oberst Meyer</h2>
+                        <p id="userUnit">Führungsstab</p>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-satellite"></i>
+                        <h3>Verbindung</h3>
+                        <p id="connectionStatusText">Aktiv</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Online</h3>
+                        <p id="onlineCount">1 Benutzer</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-microphone"></i>
+                        <h3>Aktueller Kanal</h3>
+                        <p id="currentChannelDisplay">Hauptfunk</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Status</h3>
+                        <p id="transmitStatus">Bereit</p>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-            <!-- HOME TAB -->
-            <div class="content-area active" id="homeTab">
-                <div class="tab-header">
-                    <h1>Willkommen</h1>
-                </div>
-                
-                <div class="profile-card">
-                    <div class="profile-header">
-                        <div class="profile-avatar" id="userAvatar">BW</div>
-                        <div class="profile-info">
-                            <h2 id="userDisplayName">Oberst Meyer</h2>
-                            <p id="userDetails">Führungsstab • Adler-1</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fas fa-microphone"></i>
-                            <h3>Funkstatus</h3>
-                            <p id="funkStatus">Bereit</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-users"></i>
-                            <h3>Aktiv</h3>
-                            <p id="activeUsers">1 Benutzer</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-satellite"></i>
-                            <h3>Aktueller Kanal</h3>
-                            <p id="currentChannelDisplay">Hauptfunk</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-shield-alt"></i>
-                            <h3>Sicherheit</h3>
-                            <p>Verschlüsselt</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="content-area" id="funkTab">
+            <div class="channels-list" id="channelsList">
+                <!-- Kanäle werden hier geladen -->
             </div>
             
-            <!-- FUNK TAB -->
-            <div class="content-area" id="funkTab">
-                <div class="tab-header">
-                    <h1>Funkkanäle</h1>
-                </div>
-                
-                <div class="channels-container" id="channelsContainer">
-                    <!-- Channels werden hier dynamisch geladen -->
-                </div>
-                
-                <div class="ptt-container">
-                    <button class="ptt-button" id="pttButton" 
-                            onmousedown="startTransmitting()" 
-                            onmouseup="stopTransmitting()"
-                            ontouchstart="startTransmitting()" 
-                            ontouchend="stopTransmitting()">
-                        <i class="fas fa-microphone"></i>
-                        PUSH TO TALK
-                    </button>
-                </div>
+            <div class="ptt-container">
+                <button class="ptt-button" id="pttButton"
+                        onmousedown="startTransmitting()"
+                        onmouseup="stopTransmitting()"
+                        ontouchstart="startTransmitting()"
+                        ontouchend="stopTransmitting()">
+                    <i class="fas fa-microphone"></i>
+                    PTT
+                </button>
             </div>
-            
-            <!-- EINSTELLUNGEN TAB -->
-            <div class="content-area" id="settingsTab">
-                <div class="tab-header">
-                    <h1>Einstellungen</h1>
+        </div>
+        
+        <div class="content-area" id="settingsTab">
+            <div class="settings-container">
+                <div class="settings-group">
+                    <h3>Audio-Einstellungen</h3>
+                    
+                    <div class="setting-item glass">
+                        <div class="setting-label">
+                            <h4>Mikrofon</h4>
+                            <p>Wähle dein Eingabegerät</p>
+                        </div>
+                        <select id="micSelect" onchange="changeMicrophone()">
+                            <option>Lade Geräte...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item glass">
+                        <div class="setting-label">
+                            <h4>Lautsprecher</h4>
+                            <p>Wähle dein Ausgabegerät</p>
+                        </div>
+                        <select id="speakerSelect">
+                            <option>Lade Geräte...</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <div class="settings-container">
-                    <div class="setting-group">
-                        <h3>Audio</h3>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Mikrofon</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Wähle dein Eingabegerät</p>
-                            </div>
-                            <select id="micSelect" onchange="changeMicrophone()">
-                                <option>Lade Geräte...</option>
-                            </select>
+                <div class="settings-group">
+                    <h3>Verbindung</h3>
+                    
+                    <div class="setting-item glass">
+                        <div class="setting-label">
+                            <h4>Peer-ID</h4>
+                            <p id="peerIdDisplay">Nicht verbunden</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Lautsprecher</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Wähle dein Ausgabegerät</p>
-                            </div>
-                            <select id="speakerSelect" onchange="changeSpeaker()">
-                                <option>Lade Geräte...</option>
-                            </select>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Mikrofon-Verstärkung</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Empfindlichkeit einstellen</p>
-                            </div>
-                            <input type="range" id="micGain" min="1" max="100" value="50">
-                        </div>
+                        <button style="background: #4361ee; color: white; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer;" onclick="copyPeerId()">
+                            Kopieren
+                        </button>
                     </div>
                     
-                    <div class="setting-group">
-                        <h3>Verbindung</h3>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Peer-ID</strong>
-                                <p style="color: #8e8e93; font-size: 14px;" id="peerIdDisplay">Nicht verbunden</p>
-                            </div>
-                            <button style="background: #007aff; color: white; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer;" onclick="copyPeerId()">
-                                Kopieren
-                            </button>
+                    <div class="setting-item glass">
+                        <div class="setting-label">
+                            <h4>Mit Benutzer verbinden</h4>
+                            <p>Direktverbindung herstellen</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Mit Peer verbinden</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Direktverbindung herstellen</p>
-                            </div>
-                            <input type="text" id="connectPeerId" placeholder="Peer-ID eingeben" style="background: #3a3a3c; border: none; border-radius: 10px; padding: 10px 15px; color: white; width: 200px;">
-                            <button style="background: #34c759; color: white; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; margin-left: 10px;" onclick="connectToPeer()">
-                                Verbinden
-                            </button>
-                        </div>
+                        <input type="text" id="connectPeerId" placeholder="BW001, BW002, ..." style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 15px; color: white; min-width: 120px;">
+                        <button style="background: #4cc9f0; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;" onclick="connectToPeer()">
+                            Verbinden
+                        </button>
                     </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Funk-Einstellungen</h3>
                     
-                    <div class="setting-group">
-                        <h3>Benachrichtigungen</h3>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Sprecher-Benachrichtigungen</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Zeige wer spricht</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
+                    <div class="setting-item glass">
+                        <div class="setting-label">
+                            <h4>Push-to-Talk Taste</h4>
+                            <p>Leertaste (SPACE) aktiv</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div>
-                                <strong>Sound-Effekte</strong>
-                                <p style="color: #8e8e93; font-size: 14px;">Aktiviere Übertragungssounds</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
+                        <div style="color: #4cc9f0; font-weight: 600;">
+                            SPACE
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- TABS NAVIGATION -->
+        <div class="tabs-container glass">
+            <button class="tab-btn active" onclick="switchTab('home')">
+                <i class="fas fa-home"></i>
+                Home
+            </button>
+            <button class="tab-btn" onclick="switchTab('funk')">
+                <i class="fas fa-broadcast-tower"></i>
+                Funk
+            </button>
+            <button class="tab-btn" onclick="switchTab('settings')">
+                <i class="fas fa-sliders-h"></i>
+                Einstellungen
+            </button>
         </div>
     </div>
 
     <script>
+        // ========== KONFIGURATION ==========
+        const SERVER_CONFIG = {
+            peerjs: {
+                host: 'peerjs-server-production.up.railway.app',
+                port: 443,
+                path: '/myapp',
+                debug: 2
+            }
+        };
+        
         // ========== GLOBALE VARIABLEN ==========
         let currentUser = null;
         let config = null;
@@ -648,12 +651,14 @@
         let isTransmitting = false;
         let myPeer = null;
         let myStream = null;
-        let connections = {}; // { peerId: { call: Peer.Call, audio: HTMLAudioElement, user: userData } }
-        let allPeers = {}; // Alle verbundenen Peers
+        let audioContext = null;
+        let analyser = null;
+        let connections = {};
+        let allUsers = {};
+        let isInitialized = false;
         
         // ========== APP START ==========
         window.onload = async function() {
-            // Uhrzeit aktualisieren
             updateClock();
             setInterval(updateClock, 1000);
             
@@ -663,8 +668,22 @@
                 config = await response.json();
                 console.log('Config geladen');
             } catch (error) {
-                console.error('Config-Fehler:', error);
-                alert('config.json nicht gefunden!');
+                console.log('Lade Standard-Config');
+                config = {
+                    members: [
+                        {id: "BW001", rank: "Oberst", name: "Meyer", password: "1234", unit: "Führungsstab"},
+                        {id: "BW002", rank: "Hauptmann", name: "Schmidt", password: "1234", unit: "Jägerbataillon 1"},
+                        {id: "BW003", rank: "Stabsunteroffizier", name: "Weber", password: "1234", unit: "Fernmeldebataillon"},
+                        {id: "BW004", rank: "Obergefreiter", name: "Klein", password: "1234", unit: "Versorgungskompanie"}
+                    ],
+                    channels: [
+                        {id: "hauptfunk", name: "Hauptfunk"},
+                        {id: "gatefunk", name: "Gatefunk"},
+                        {id: "einsatzfunk", name: "Einsatzfunk"},
+                        {id: "kasernefunk", name: "Kasernefunk"},
+                        {id: "allgemeinfunk", name: "Allgemeinfunk"}
+                    ]
+                };
             }
             
             // Event Listener für Space-Taste
@@ -687,12 +706,6 @@
             const id = document.getElementById('loginID').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             
-            if (!id || !password) {
-                alert('Bitte ID und Passwort eingeben!');
-                return;
-            }
-            
-            // Benutzer suchen
             const user = config.members.find(m => m.id === id && m.password === password);
             
             if (!user) {
@@ -703,42 +716,37 @@
             currentUser = user;
             
             // UI aktualisieren
-            document.getElementById('userAvatar').textContent = user.id;
+            document.getElementById('userAvatar').textContent = user.id.substring(2);
             document.getElementById('userDisplayName').textContent = `${user.rank} ${user.name}`;
-            document.getElementById('userDetails').textContent = `${user.unit} • ${user.callsign}`;
+            document.getElementById('userUnit').textContent = user.unit;
             
-            // Login ausblenden, App zeigen
+            // Screens wechseln
             document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('mainApp').style.display = 'block';
             
-            // WebRTC starten
+            // Initialisierung
             await initializeWebRTC();
-            
-            // Kanäle laden
             loadChannels();
-            
-            // Einstellungen laden
-            loadAudioDevices();
-        }
+            updateStatus('Verbunden', true);
+        };
         
         // ========== WEBRTC INITIALISIERUNG ==========
         async function initializeWebRTC() {
             try {
-                // 1. Mikrofon Zugriff
+                // 1. Mikrofon anfordern
                 await requestMicrophone();
                 
                 // 2. PeerJS Verbindung
-                myPeer = new Peer(currentUser.id, {
-                    host: '0.peerjs.com',
-                    port: 443,
-                    path: '/',
-                    debug: 2
-                });
+                myPeer = new Peer(currentUser.id, SERVER_CONFIG.peerjs);
                 
                 myPeer.on('open', (id) => {
                     console.log('Verbunden als:', id);
-                    updateStatus('Verbunden', true);
                     document.getElementById('peerIdDisplay').textContent = id;
+                    document.getElementById('connectionStatusText').textContent = 'Aktiv';
+                    document.getElementById('statusText').textContent = 'Verbunden';
+                    
+                    // Mit anderen Benutzern verbinden
+                    connectToOtherUsers();
                 });
                 
                 myPeer.on('error', (err) => {
@@ -750,35 +758,34 @@
                 myPeer.on('call', (call) => {
                     console.log('Eingehender Anruf von:', call.peer);
                     
-                    // Finde Benutzerdaten
-                    const callerData = config.members.find(m => m.id === call.peer);
+                    // Benutzerdaten finden
+                    const caller = config.members.find(m => m.id === call.peer);
                     
+                    // Antworten mit eigenem Stream
                     call.answer(myStream);
                     
+                    // Stream empfangen
                     call.on('stream', (remoteStream) => {
                         console.log('Stream empfangen von:', call.peer);
-                        addAudioStream(call.peer, remoteStream, callerData);
+                        addUserConnection(call.peer, remoteStream, caller);
                     });
                     
                     call.on('close', () => {
                         console.log('Verbindung geschlossen mit:', call.peer);
-                        removePeer(call.peer);
+                        removeUser(call.peer);
                     });
                     
                     // Verbindung speichern
                     connections[call.peer] = { call: call };
                 });
                 
-                // Nach 2 Sekunden mit anderen verbinden (simuliert)
-                setTimeout(() => {
-                    simulateConnections();
-                }, 2000);
+                isInitialized = true;
                 
             } catch (error) {
-                console.error('WebRTC Fehler:', error);
+                console.error('Initialisierungsfehler:', error);
                 alert('Mikrofon-Zugriff verweigert! Bitte erlauben.');
             }
-        }
+        };
         
         // ========== MIKROFON ==========
         async function requestMicrophone() {
@@ -794,8 +801,9 @@
                 }
             });
             
-            console.log('Mikrofon aktiviert');
-        }
+            // Audio-Geräte laden
+            loadAudioDevices();
+        };
         
         async function loadAudioDevices() {
             try {
@@ -825,7 +833,7 @@
             } catch (error) {
                 console.error('Audio-Geräte Fehler:', error);
             }
-        }
+        };
         
         async function changeMicrophone() {
             const deviceId = document.getElementById('micSelect').value;
@@ -839,7 +847,7 @@
                     audio: { deviceId: { exact: deviceId } }
                 });
                 
-                // Neuen Stream an alle Verbindungen senden
+                // Neue Streams an alle Verbindungen senden
                 Object.values(connections).forEach(conn => {
                     if (conn.call) {
                         conn.call.close();
@@ -847,150 +855,131 @@
                 });
                 
                 connections = {};
-                allPeers = {};
-                loadChannels();
+                allUsers = {};
                 
                 // Neu verbinden
-                simulateConnections();
+                connectToOtherUsers();
                 
             } catch (error) {
                 console.error('Mikrofonwechsel fehlgeschlagen:', error);
             }
-        }
-        
-        function changeSpeaker() {
-            // Speaker-Änderung ist in WebRTC nicht direkt unterstützt
-            console.log('Lautsprecher geändert');
-        }
+        };
         
         // ========== FUNK LOGIK ==========
         function startTransmitting() {
             if (!currentUser || !myStream) return;
             
             isTransmitting = true;
-            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, #34c759, #30d158)';
-            document.getElementById('pttButton').innerHTML = '<i class="fas fa-broadcast-tower"></i> SPRICHT...';
             
-            document.getElementById('funkStatus').textContent = 'Übertragung aktiv';
-            document.getElementById('funkStatus').style.color = '#34c759';
+            // UI aktualisieren
+            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, #4cc9f0, #4361ee)';
+            document.getElementById('transmitStatus').textContent = 'Übertrage...';
+            document.getElementById('transmitStatus').style.color = '#4cc9f0';
             
-            // Benutzer in UI als sprechend markieren
             updateUserSpeakingStatus(currentUser.id, true);
+            updateAudioRouting();
             
-            console.log(`Übertrage auf Kanal: ${currentChannel}`);
-        }
+            console.log(`Spreche auf Kanal: ${currentChannel}`);
+        };
         
         function stopTransmitting() {
             if (!currentUser) return;
             
             isTransmitting = false;
-            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, #ff3b30, #ff453a)';
-            document.getElementById('pttButton').innerHTML = '<i class="fas fa-microphone"></i> PUSH TO TALK';
             
-            document.getElementById('funkStatus').textContent = 'Bereit';
-            document.getElementById('funkStatus').style.color = '';
+            // UI aktualisieren
+            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, #f72585, #b5179e)';
+            document.getElementById('transmitStatus').textContent = 'Bereit';
+            document.getElementById('transmitStatus').style.color = '';
             
             updateUserSpeakingStatus(currentUser.id, false);
-        }
+        };
         
-        // ========== KANAL LOGIK ==========
+        // ========== KANAL SYSTEM ==========
         function loadChannels() {
-            const container = document.getElementById('channelsContainer');
+            const container = document.getElementById('channelsList');
             container.innerHTML = '';
             
             config.channels.forEach(channel => {
                 const isActive = channel.id === currentChannel;
-                const isGeneral = channel.type === 'general';
+                const isGeneral = channel.id === 'allgemeinfunk';
                 
-                const channelCard = document.createElement('div');
-                channelCard.className = `channel-card ${isActive ? 'active' : ''} ${isGeneral ? 'general' : ''}`;
-                channelCard.onclick = () => switchChannel(channel.id);
+                const channelDiv = document.createElement('div');
+                channelDiv.className = `channel-item glass ${isActive ? 'active' : ''} ${isGeneral ? 'general' : ''}`;
+                channelDiv.onclick = () => switchChannel(channel.id);
                 
                 // Benutzer in diesem Kanal zählen
-                const usersInChannel = Object.values(allPeers).filter(peer => 
-                    peer.channel === channel.id || (isGeneral && peer.user)
-                ).length + 1; // +1 für mich selbst
+                const usersInChannel = Object.values(allUsers).filter(user => 
+                    user.channel === channel.id || (isGeneral && user.id)
+                ).length + (isActive ? 1 : 0);
                 
-                channelCard.innerHTML = `
+                channelDiv.innerHTML = `
                     <div class="channel-header">
                         <div class="channel-icon">
                             <i class="fas ${getChannelIcon(channel.id)}"></i>
                         </div>
-                        <div>
+                        <div class="channel-info">
                             <h3>${channel.name}</h3>
-                            <p style="color: #8e8e93;">${usersInChannel} Benutzer</p>
+                            <p>${usersInChannel} Benutzer online</p>
                         </div>
                     </div>
-                    <div class="channel-users" id="users-${channel.id}">
-                        <!-- Benutzer werden hier dynamisch eingefügt -->
+                    <div class="users-in-channel" id="users-${channel.id}">
+                        <!-- Benutzer werden hier angezeigt -->
                     </div>
                 `;
                 
-                container.appendChild(channelCard);
-                
-                // Benutzer für diesen Kanal anzeigen
+                container.appendChild(channelDiv);
                 updateChannelUsers(channel.id);
             });
             
-            // Aktuellen Kanal in Home anzeigen
-            const channelName = config.channels.find(c => c.id === currentChannel)?.name || 'Hauptfunk';
-            document.getElementById('currentChannelDisplay').textContent = channelName;
-        }
+            document.getElementById('currentChannelDisplay').textContent = 
+                config.channels.find(c => c.id === currentChannel)?.name || 'Hauptfunk';
+        };
         
         function switchChannel(channelId) {
             currentChannel = channelId;
-            
-            // UI aktualisieren
             loadChannels();
-            
-            // Audio-Streams basierend auf neuen Regeln steuern
-            updateAudioStreams();
-            
-            console.log(`Gewechselt zu Kanal: ${channelId}`);
-        }
+            updateAudioRouting();
+        };
         
-        function updateAudioStreams() {
-            // Regel: 
-            // - Wenn ich in Kanal X bin, höre ich:
-            //   1. Alle in Kanal X
-            //   2. PLUS alle im Allgemeinfunk (wenn X nicht Allgemeinfunk ist)
-            // - Wenn ich im Allgemeinfunk bin, höre ich ALLE in ALLEN Kanälen
+        function updateAudioRouting() {
+            // FUNK-LOGIK:
+            // - Wenn ich in Kanal X spreche: hören mich nur Leute in Kanal X
+            // - Wenn jemand in Allgemeinfunk spricht: hören ihn ALLE
+            // - Wenn ich in Kanal X bin: höre ich Leute in Kanal X + Alle im Allgemeinfunk
             
             Object.keys(connections).forEach(peerId => {
                 const conn = connections[peerId];
-                const peerData = allPeers[peerId];
+                const user = allUsers[peerId];
                 
                 if (conn.audio) {
                     let shouldHear = false;
                     
-                    if (currentChannel === 'allgemeinfunk') {
-                        // Höre alle
-                        shouldHear = true;
-                    } else if (peerData && peerData.channel) {
-                        // Höre wenn:
-                        // 1. Peer im selben Kanal ist
-                        // 2. ODER Peer im Allgemeinfunk ist
-                        shouldHear = (peerData.channel === currentChannel) || (peerData.channel === 'allgemeinfunk');
+                    if (user) {
+                        // Logik:
+                        // 1. Höre alle im selben Kanal
+                        // 2. Höre alle im Allgemeinfunk (egal welchen Kanal ich habe)
+                        shouldHear = (user.channel === currentChannel) || (user.channel === 'allgemeinfunk');
                     }
                     
                     conn.audio.muted = !shouldHear;
                 }
             });
-        }
+        };
         
         function getChannelIcon(channelId) {
-            switch(channelId) {
-                case 'hauptfunk': return 'fa-bullhorn';
-                case 'gatefunk': return 'fa-door-open';
-                case 'einsatzfunk': return 'fa-ambulance';
-                case 'kasernefunk': return 'fa-flag';
-                case 'allgemeinfunk': return 'fa-broadcast-tower';
-                default: return 'fa-walkie-talkie';
-            }
-        }
+            const icons = {
+                'hauptfunk': 'fa-bullhorn',
+                'gatefunk': 'fa-door-open',
+                'einsatzfunk': 'fa-ambulance',
+                'kasernefunk': 'fa-flag',
+                'allgemeinfunk': 'fa-broadcast-tower'
+            };
+            return icons[channelId] || 'fa-walkie-talkie';
+        };
         
-        // ========== PEER VERBINDUNGEN ==========
-        function addAudioStream(peerId, stream, userData) {
+        // ========== BENUTZER VERWALTUNG ==========
+        function addUserConnection(peerId, stream, userData) {
             // Audio-Element erstellen
             const audio = document.createElement('audio');
             audio.srcObject = stream;
@@ -999,53 +988,51 @@
             audio.style.display = 'none';
             document.body.appendChild(audio);
             
-            // Verbindung speichern
+            // Benutzer speichern
+            allUsers[peerId] = {
+                id: peerId,
+                name: userData.name,
+                rank: userData.rank,
+                unit: userData.unit,
+                channel: 'hauptfunk', // Standard-Kanal
+                talking: false,
+                audio: audio
+            };
+            
             if (!connections[peerId]) {
                 connections[peerId] = {};
             }
-            
             connections[peerId].audio = audio;
-            
-            // Peer-Daten speichern
-            allPeers[peerId] = {
-                user: userData,
-                channel: 'hauptfunk', // Standardkanal
-                talking: false
-            };
             
             // UI aktualisieren
             loadChannels();
-            updateActiveUsersCount();
-            updateAudioStreams();
-            
-            console.log(`Audio von ${peerId} hinzugefügt`);
-        }
+            updateOnlineCount();
+            updateAudioRouting();
+        };
         
-        function removePeer(peerId) {
-            if (connections[peerId] && connections[peerId].audio) {
-                connections[peerId].audio.pause();
-                connections[peerId].audio.srcObject = null;
+        function removeUser(peerId) {
+            if (allUsers[peerId] && allUsers[peerId].audio) {
+                allUsers[peerId].audio.pause();
+                allUsers[peerId].audio.srcObject = null;
             }
             
+            delete allUsers[peerId];
             delete connections[peerId];
-            delete allPeers[peerId];
             
             loadChannels();
-            updateActiveUsersCount();
-            
-            console.log(`Peer ${peerId} entfernt`);
-        }
+            updateOnlineCount();
+        };
         
         function updateUserSpeakingStatus(userId, isTalking) {
-            if (allPeers[userId]) {
-                allPeers[userId].talking = isTalking;
+            if (allUsers[userId]) {
+                allUsers[userId].talking = isTalking;
             }
             
             // In allen Kanälen aktualisieren
             config.channels.forEach(channel => {
                 updateChannelUsers(channel.id);
             });
-        }
+        };
         
         function updateChannelUsers(channelId) {
             const container = document.getElementById(`users-${channelId}`);
@@ -1053,122 +1040,136 @@
             
             container.innerHTML = '';
             
-            // Eigenen Benutzer hinzufügen, wenn in diesem Kanal
-            if (currentChannel === channelId) {
-                const badge = document.createElement('span');
-                badge.className = `user-badge ${isTransmitting ? 'talking' : ''}`;
-                badge.textContent = `${currentUser.rank} ${currentUser.name} ${isTransmitting ? '●' : ''}`;
-                container.appendChild(badge);
+            // Eigener Benutzer (wenn in diesem Kanal)
+            if (currentChannel === channelId && currentUser) {
+                const userTag = document.createElement('div');
+                userTag.className = `user-tag ${isTransmitting ? 'talking' : ''}`;
+                userTag.innerHTML = `
+                    ${isTransmitting ? '<div class="voice-indicator"></div>' : ''}
+                    <span>${currentUser.rank} ${currentUser.name} ${isTransmitting ? '(spricht)' : ''}</span>
+                `;
+                container.appendChild(userTag);
             }
             
-            // Andere Benutzer hinzufügen
-            Object.values(allPeers).forEach(peer => {
-                if (peer.channel === channelId || (channelId === 'allgemeinfunk' && peer.user)) {
-                    const badge = document.createElement('span');
-                    badge.className = `user-badge ${peer.talking ? 'talking' : ''}`;
-                    badge.textContent = `${peer.user.rank} ${peer.user.name} ${peer.talking ? '●' : ''}`;
-                    container.appendChild(badge);
+            // Andere Benutzer
+            Object.values(allUsers).forEach(user => {
+                if (user.channel === channelId || (channelId === 'allgemeinfunk' && user.id)) {
+                    const userTag = document.createElement('div');
+                    userTag.className = `user-tag ${user.talking ? 'talking' : ''}`;
+                    userTag.innerHTML = `
+                        ${user.talking ? '<div class="voice-indicator"></div>' : ''}
+                        <span>${user.rank} ${user.name} ${user.talking ? '(spricht)' : ''}</span>
+                    `;
+                    container.appendChild(userTag);
                 }
             });
-        }
+        };
         
-        // ========== SIMULATION (für Demo) ==========
-        function simulateConnections() {
-            // Simuliere Verbindungen zu anderen Benutzern
+        // ========== VERBINDUNGEN ==========
+        async function connectToOtherUsers() {
+            if (!myPeer) return;
+            
+            // Mit allen anderen Benutzern in der Config verbinden
             config.members.forEach(member => {
-                if (member.id !== currentUser.id) {
-                    // Warte 1-3 Sekunden, dann "verbinde"
+                if (member.id !== currentUser.id && !connections[member.id]) {
+                    // Zufällige Verzögerung um Server zu entlasten
                     setTimeout(() => {
-                        simulatePeerConnection(member);
-                    }, 1000 + Math.random() * 2000);
+                        connectToUser(member.id);
+                    }, 1000 + Math.random() * 3000);
                 }
             });
-        }
+        };
         
-        function simulatePeerConnection(member) {
-            // Simuliere eingehende Verbindung
-            if (!allPeers[member.id]) {
-                // Zufälligen Kanal zuweisen
-                const channels = config.channels.filter(c => c.type !== 'general').map(c => c.id);
-                const randomChannel = channels[Math.floor(Math.random() * channels.length)];
-                
-                allPeers[member.id] = {
-                    user: member,
-                    channel: randomChannel,
-                    talking: false
-                };
-                
-                // UI aktualisieren
-                loadChannels();
-                updateActiveUsersCount();
-                
-                console.log(`Simulierter Peer verbunden: ${member.id} auf ${randomChannel}`);
-            }
-        }
-        
-        // ========== UI HELPER ==========
-        function switchTab(tabName) {
-            // Navigation aktualisieren
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.target.closest('.nav-item').classList.add('active');
+        async function connectToUser(peerId) {
+            if (!myPeer || connections[peerId]) return;
             
-            // Tabs wechseln
+            try {
+                const call = myPeer.call(peerId, myStream);
+                
+                call.on('stream', (remoteStream) => {
+                    const userData = config.members.find(m => m.id === peerId);
+                    if (userData) {
+                        addUserConnection(peerId, remoteStream, userData);
+                    }
+                });
+                
+                call.on('close', () => {
+                    removeUser(peerId);
+                });
+                
+                connections[peerId] = { call: call };
+                
+            } catch (error) {
+                console.error(`Verbindungsfehler zu ${peerId}:`, error);
+            }
+        };
+        
+        // ========== UI FUNKTIONEN ==========
+        function switchTab(tabName) {
+            // Tabs aktualisieren
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Content aktualisieren
             document.querySelectorAll('.content-area').forEach(area => {
                 area.classList.remove('active');
             });
             document.getElementById(`${tabName}Tab`).classList.add('active');
-        }
+        };
         
         function updateClock() {
             const now = new Date();
             const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('currentTime').textContent = time;
-        }
+        };
         
         function updateStatus(message, isConnected) {
             document.getElementById('statusText').textContent = message;
-            document.getElementById('statusDot').className = `status-dot ${isConnected ? 'connected' : 'disconnected'}`;
-        }
+            document.getElementById('statusDot').className = `status-dot ${isConnected ? '' : 'offline'}`;
+        };
         
-        function updateActiveUsersCount() {
-            const total = Object.keys(allPeers).length + 1;
-            document.getElementById('activeUsers').textContent = `${total} Benutzer`;
-        }
+        function updateOnlineCount() {
+            const total = Object.keys(allUsers).length + 1;
+            document.getElementById('onlineCount').textContent = `${total} Benutzer`;
+        };
         
         function copyPeerId() {
-            const peerId = currentUser.id;
-            navigator.clipboard.writeText(peerId);
-            alert(`Peer-ID kopiert: ${peerId}`);
-        }
+            if (currentUser) {
+                navigator.clipboard.writeText(currentUser.id);
+                alert(`Peer-ID kopiert: ${currentUser.id}`);
+            }
+        };
         
         function connectToPeer() {
             const peerId = document.getElementById('connectPeerId').value.trim();
             if (!peerId) return;
             
-            // Versuche Verbindung herzustellen
-            const call = myPeer.call(peerId, myStream);
-            
-            call.on('stream', (remoteStream) => {
-                const userData = { id: peerId, rank: 'Extern', name: 'Benutzer', unit: 'Extern' };
-                addAudioStream(peerId, remoteStream, userData);
-            });
-            
+            connectToUser(peerId);
             document.getElementById('connectPeerId').value = '';
-        }
+        };
         
         // ========== KEYBOARD SHORTCUTS ==========
         document.addEventListener('keydown', (e) => {
-            // Tab-Wechsel mit 1,2,3
-            if (e.key >= '1' && e.key <= '3' && currentUser) {
+            if (!currentUser) return;
+            
+            // Tab-Wechsel mit 1-3
+            if (e.key >= '1' && e.key <= '3') {
                 const tabs = ['home', 'funk', 'settings'];
                 const tabIndex = parseInt(e.key) - 1;
-                switchTab(tabs[tabIndex]);
+                
+                document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                    btn.classList.toggle('active', idx === tabIndex);
+                });
+                
+                document.querySelectorAll('.content-area').forEach((area, idx) => {
+                    area.classList.toggle('active', idx === tabIndex);
+                });
             }
             
             // Kanal-Wechsel mit F1-F5
-            if (e.key.startsWith('F') && currentUser) {
+            if (e.key.startsWith('F')) {
                 const fKey = parseInt(e.key.substring(1));
                 const channels = ['hauptfunk', 'gatefunk', 'einsatzfunk', 'kasernefunk', 'allgemeinfunk'];
                 if (fKey >= 1 && fKey <= 5) {
