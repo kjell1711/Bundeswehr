@@ -1,45 +1,40 @@
 {
   "organization": "Bundeswehr Funknetz",
-  "version": "1.0",
   "members": [
     {
-      "id": "BW001",
-      "rank": "Oberst",
-      "name": "Meyer",
-      "password": "1234",
-      "unit": "Führungsstab",
-      "callsign": "Adler-1"
+      "id": "test",
+      "rank": "general",
+      "name": "Anwalt",
+      "password": "test",
+      "unit": "GeneralStab"
     },
     {
-      "id": "BW002", 
+      "id": "BW002",
       "rank": "Hauptmann",
       "name": "Schmidt",
       "password": "1234",
-      "unit": "Jägerbataillon 1",
-      "callsign": "Falke-2"
+      "unit": "Jägerbataillon 1"
     },
     {
       "id": "BW003",
-      "rank": "Stabsunteroffizier", 
+      "rank": "Stabsunteroffizier",
       "name": "Weber",
       "password": "1234",
-      "unit": "Fernmeldebataillon",
-      "callsign": "Wolf-3"
+      "unit": "Fernmeldebataillon"
     },
     {
       "id": "BW004",
       "rank": "Obergefreiter",
       "name": "Klein",
-      "password": "1234", 
-      "unit": "Versorgungskompanie",
-      "callsign": "Bär-4"
+      "password": "1234",
+      "unit": "Versorgungskompanie"
     }
   ],
   "channels": [
-    {"id": "hauptfunk", "name": "Hauptfunk", "type": "normal"},
-    {"id": "gatefunk", "name": "Gatefunk", "type": "normal"},
-    {"id": "einsatzfunk", "name": "Einsatzfunk", "type": "normal"},
-    {"id": "kasernefunk", "name": "Kasernefunk", "type": "normal"},
-    {"id": "allgemeinfunk", "name": "Allgemeinfunk", "type": "general"}
+    {"id": "hauptfunk", "name": "Hauptfunk"},
+    {"id": "gatefunk", "name": "Gatefunk"},
+    {"id": "einsatzfunk", "name": "Einsatzfunk"},
+    {"id": "kasernefunk", "name": "Kasernefunk"},
+    {"id": "allgemeinfunk", "name": "Allgemeinfunk"}
   ]
 }
