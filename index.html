@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundeswehr Funknetz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1f3c;
+            --secondary: #2d3566;
+            --accent: #4a5bcf;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --card: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .screen.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* LOGIN SCREEN */
+        .login-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo i {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .input-group {
+            margin-bottom: 24px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(74, 91, 207, 0.1);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(to right, #4a5bcf, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(74, 91, 207, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        /* MAIN APP */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border);
+        }
+        
+        .sidebar {
+            background: var(--primary);
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            background: var(--primary);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .right-sidebar {
+            background: var(--primary);
+            padding: 24px;
+            border-left: 1px solid var(--border);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 16px;
+        }
+        
+        .user-details h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .user-details p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .channels-list {
+            margin-top: 24px;
+        }
+        
+        .channels-list h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        
+        .channel {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .channel:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .channel.active {
+            background: var(--accent);
+        }
+        
+        .channel i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .users-list h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: var(--card);
+        }
+        
+        .user-item.talking {
+            background: rgba(74, 222, 128, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            margin-right: 12px;
+        }
+        
+        .user-status.talking {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .device-selector {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .ptt-button {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .ptt-button:active {
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #16a34a, var(--success));
+        }
+        
+        .channel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .channel-header i {
+            font-size: 32px;
+            margin-right: 16px;
+            color: var(--accent);
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 120px;
+            right: 32px;
+            background: var(--card);
+            padding: 16px 24px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--accent);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .badge.general {
+            background: var(--success);
+        }
+        
+        /* MICROPHONE TEST */
+        .mic-test {
+            display: flex;
+            align-items: center;
+            margin-top: 16px;
+        }
+        
+        .mic-level {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-right: 12px;
+        }
+        
+        .mic-level-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div class="screen active" id="loginScreen">
+        <div class="login-container">
+            <div class="logo">
+                <i class="fas fa-satellite-dish"></i>
+                <h1>BUNDESWEHR FUNKNETZ</h1>
+                <p style="color: #94a3b8; margin-top: 8px;">Sichere Sprachkommunikation</p>
+            </div>
+            
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> Einlog-ID</label>
+                <input type="text" id="loginId" placeholder="z.B. BW001" autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label><i class="fas fa-lock"></i> Passwort</label>
+                <input type="password" id="loginPassword" placeholder="Passwort" autocomplete="off">
+            </div>
+            
+            <button class="btn" onclick="handleLogin()">
+                <i class="fas fa-sign-in-alt"></i> Einloggen
+            </button>
+            
+            <p style="text-align: center; margin-top: 24px; color: #64748b; font-size: 12px;">
+                ⚠️ Simulation - Keine echte Bundeswehr-Kommunikation
+            </p>
+        </div>
+    </div>
+    
+    <!-- MAIN APP -->
+    <div class="screen" id="mainScreen">
+        <div class="app-container">
+            <!-- LINKE SIDEBAR - KANÄLE -->
+            <div class="sidebar">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">BW</div>
+                    <div class="user-details">
+                        <h3 id="userRankName">Oberst Meyer</h3>
+                        <p id="userUnit">Führungsstab</p>
+                    </div>
+                </div>
+                
+                <div class="channels-list">
+                    <h3>FUNKKANÄLE</h3>
+                    <div class="channel active" onclick="switchChannel('hauptfunk')">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Hauptfunk</span>
+                        <span class="badge" id="count-hauptfunk">0</span>
+                    </div>
+                    <div class="channel" onclick="switchChannel('gatefunk')">
+                        <i class="fas fa-door-open"></i>
+                        <span>Gatefunk</span>
+                        <span class="badge" id="count-gatefunk">0</span>
+                    </div>
+                    <div class="channel" onclick="switchChannel('einsatzfunk')">
+                        <i class="fas fa-ambulance"></i>
+                        <span>Einsatzfunk</span>
+                        <span class="badge" id="count-einsatzfunk">0</span>
+                    </div>
+                    <div class="channel" onclick="switchChannel('kasernefunk')">
+                        <i class="fas fa-flag"></i>
+                        <span>Kasernefunk</span>
+                        <span class="badge" id="count-kasernefunk">0</span>
+                    </div>
+                    <div class="channel" onclick="switchChannel('allgemeinfunk')" style="margin-top: 24px;">
+                        <i class="fas fa-broadcast-tower"></i>
+                        <span>Allgemeinfunk</span>
+                        <span class="badge general" id="count-allgemeinfunk">0</span>
+                    </div>
+                </div>
+                
+                <div class="device-selector">
+                    <h3>MIKROFON</h3>
+                    <select id="micSelect" onchange="changeMicrophone()">
+                        <option>Wird geladen...</option>
+                    </select>
+                    
+                    <div class="mic-test">
+                        <div class="mic-level">
+                            <div class="mic-level-fill" id="micLevel"></div>
+                        </div>
+                        <span style="font-size: 12px;" id="micStatus">Testen...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MITTE - CHAT/Hauptbereich -->
+            <div class="main-content">
+                <div class="channel-header">
+                    <i class="fas fa-bullhorn" id="channelIcon"></i>
+                    <div>
+                        <h2 id="currentChannelName">Hauptfunk</h2>
+                        <p style="color: #94a3b8; font-size: 14px;" id="channelDescription">
+                            Primärer Kommunikationskanal
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;">
+                    <div>
+                        <i class="fas fa-satellite" style="font-size: 64px; color: var(--accent); margin-bottom: 24px;"></i>
+                        <h3 style="margin-bottom: 12px;">Funkverbindung aktiv</h3>
+                        <p style="color: #94a3b8; max-width: 400px;">
+                            Du hörst jetzt: <span id="listeningTo">Hauptfunk + Allgemeinfunk</span><br>
+                            Drücke die SPACE-Taste oder den roten Button zum Sprechen
+                        </p>
+                    </div>
+                </div>
+                
+                <button class="ptt-button" id="pttButton" onmousedown="startTalking()" onmouseup="stopTalking()" ontouchstart="startTalking()" ontouchend="stopTalking()">
+                    <i class="fas fa-microphone"></i><br>
+                    PUSH TO TALK
+                </button>
+            </div>
+            
+            <!-- RECHTE SIDEBAR - AKTIVE SPRECHER -->
+            <div class="right-sidebar">
+                <div class="users-list">
+                    <h3>AKTIVE SPRECHER <span id="totalUsers">(0)</span></h3>
+                    <div id="usersList">
+                        <div class="user-item">
+                            <div class="user-status"></div>
+                            <div>
+                                <strong>Oberst Meyer</strong><br>
+                                <span style="font-size: 12px; color: #94a3b8;">● Verbunden</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
+                    <h3>SYSTEMSTATUS</h3>
+                    <p style="font-size: 14px; margin-top: 12px; display: flex; align-items: center;">
+                        <i class="fas fa-circle" style="color: var(--success); margin-right: 8px;"></i>
+                        <span id="connectionStatus">Verbunden mit PeerJS</span>
+                    </p>
+                    <p style="font-size: 14px; margin-top: 8px; display: flex; align-items: center;">
+                        <i class="fas fa-microphone" style="color: var(--success); margin-right: 8px;"></i>
+                        <span id="audioStatus">Mikrofon bereit</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== GLOBALE VARIABLEN ==========
+        let currentUser = null;
+        let config = null;
+        let currentChannel = 'hauptfunk';
+        let isTalking = false;
+        let myPeer = null;
+        let myStream = null;
+        let audioContext = null;
+        let analyser = null;
+        let connections = {};
+        let allUsers = {};
+        
+        // ========== START ==========
+        window.onload = async function() {
+            // Config laden
+            try {
+                const response = await fetch('config.json');
+                config = await response.json();
+                console.log('Config geladen:', config);
+            } catch (error) {
+                console.error('Config konnte nicht geladen werden:', error);
+                alert('FEHLER: config.json Datei nicht gefunden!');
+            }
+            
+            // Event Listener für Space-Taste
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && currentUser) {
+                    startTalking();
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.code === 'Space' && currentUser) {
+                    stopTalking();
+                }
+            });
+        };
+        
+        // ========== LOGIN ==========
+        function handleLogin() {
+            const id = document.getElementById('loginId').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!config) {
+                alert('Config nicht geladen!');
+                return;
+            }
+            
+            // Benutzer suchen
+            const user = config.members.find(m => m.id === id && m.password === password);
+            
+            if (!user) {
+                alert('Falsche Einlog-ID oder Passwort!');
+                return;
+            }
+            
+            currentUser = user;
+            
+            // UI aktualisieren
+            document.getElementById('userAvatar').textContent = user.id;
+            document.getElementById('userRankName').textContent = `${user.rank} ${user.name}`;
+            document.getElementById('userUnit').textContent = user.unit;
+            
+            // Screens wechseln
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            
+            // WebRTC starten
+            initializeWebRTC();
+            
+            // Mikrofone laden
+            loadMicrophones();
+            
+            // Simulierte andere Benutzer
+            simulateOtherUsers();
+        }
+        
+        // ========== WEBRTC INIT ==========
+        async function initializeWebRTC() {
+            try {
+                // 1. Mikrofon stream holen (wenn erlaubt)
+                await requestMicrophone();
+                
+                // 2. PeerJS Verbindung
+                myPeer = new Peer(currentUser.id, {
+                    host: '0.peerjs.com',
+                    port: 443,
+                    path: '/',
+                    debug: 3
+                });
+                
+                myPeer.on('open', (id) => {
+                    console.log('PeerJS verbunden mit ID:', id);
+                    document.getElementById('connectionStatus').innerHTML = 
+                        `<i class="fas fa-circle" style="color: var(--success); margin-right: 8px;"></i> Verbunden als ${id}`;
+                });
+                
+                myPeer.on('error', (err) => {
+                    console.error('PeerJS Fehler:', err);
+                    document.getElementById('connectionStatus').innerHTML = 
+                        `<i class="fas fa-circle" style="color: var(--danger); margin-right: 8px;"></i> Verbindungsfehler`;
+                });
+                
+                // 3. Auf eingehende Anrufe warten
+                myPeer.on('call', (call) => {
+                    console.log('Eingehender Anruf von:', call.peer);
+                    
+                    call.answer(myStream);
+                    
+                    call.on('stream', (remoteStream) => {
+                        console.log('Stream empfangen von:', call.peer);
+                        addAudioPlayer(call.peer, remoteStream);
+                    });
+                    
+                    call.on('close', () => {
+                        console.log('Verbindung geschlossen mit:', call.peer);
+                        removeUser(call.peer);
+                    });
+                });
+                
+                // 4. Mit anderen Benutzern verbinden (simuliert)
+                setTimeout(() => {
+                    connectToSimulatedUsers();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('WebRTC Fehler:', error);
+                alert('Mikrofon-Zugriff wurde verweigert! Bitte erlauben.');
+            }
+        }
+        
+        // ========== MIKROFON ==========
+        async function requestMicrophone() {
+            if (myStream) {
+                myStream.getTracks().forEach(track => track.stop());
+            }
+            
+            myStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+            
+            document.getElementById('audioStatus').innerHTML = 
+                `<i class="fas fa-circle" style="color: var(--success); margin-right: 8px;"></i> Mikrofon aktiv`;
+            
+            // Audio-Analyse für VU-Meter
+            setupAudioAnalysis();
+        }
+        
+        function setupAudioAnalysis() {
+            if (!myStream) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(myStream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            
+            updateMicLevel();
+        }
+        
+        function updateMicLevel() {
+            if (!analyser) return;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            
+            let average = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                average += dataArray[i];
+            }
+            average = average / dataArray.length;
+            
+            const level = Math.min(100, (average / 128) * 100);
+            document.getElementById('micLevel').style.width = level + '%';
+            
+            requestAnimationFrame(updateMicLevel);
+        }
+        
+        async function loadMicrophones() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                
+                const select = document.getElementById('micSelect');
+                select.innerHTML = '';
+                
+                audioInputs.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Mikrofon ${select.options.length + 1}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Mikrofone konnten nicht geladen werden:', error);
+            }
+        }
+        
+        async function changeMicrophone() {
+            const deviceId = document.getElementById('micSelect').value;
+            
+            if (!deviceId) return;
+            
+            try {
+                if (myStream) {
+                    myStream.getTracks().forEach(track => track.stop());
+                }
+                
+                myStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { deviceId: { exact: deviceId } }
+                });
+                
+                // Neue Stream an alle Verbindungen senden
+                Object.values(connections).forEach(call => {
+                    call.close();
+                });
+                connections = {};
+                
+                setupAudioAnalysis();
+                showNotification('Mikrofon gewechselt');
+                
+            } catch (error) {
+                console.error('Mikrofonwechsel fehlgeschlagen:', error);
+                showNotification('Fehler beim Mikrofonwechsel', true);
+            }
+        }
+        
+        // ========== SPRECHEN ==========
+        function startTalking() {
+            if (!currentUser || !myStream) return;
+            
+            isTalking = true;
+            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, #16a34a, var(--success))';
+            document.getElementById('pttButton').innerHTML = '<i class="fas fa-microphone"></i><br>SPRICHT...';
+            
+            // UI aktualisieren
+            updateUserList();
+            
+            // An alle verbundenen Peers senden (simuliert)
+            broadcastTalkingStatus(true);
+            
+            console.log(`${currentUser.rank} ${currentUser.name} spricht in ${currentChannel}`);
+        }
+        
+        function stopTalking() {
+            if (!currentUser) return;
+            
+            isTalking = false;
+            document.getElementById('pttButton').style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+            document.getElementById('pttButton').innerHTML = '<i class="fas fa-microphone"></i><br>PUSH TO TALK';
+            
+            updateUserList();
+            broadcastTalkingStatus(false);
+        }
+        
+        // ========== KANÄLE ==========
+        function switchChannel(channelId) {
+            // UI aktualisieren
+            document.querySelectorAll('.channel').forEach(c => c.classList.remove('active'));
+            event.target.closest('.channel').classList.add('active');
+            
+            currentChannel = channelId;
+            
+            // Channel-Info aktualisieren
+            const channelNames = {
+                'hauptfunk': 'Hauptfunk',
+                'gatefunk': 'Gatefunk', 
+                'einsatzfunk': 'Einsatzfunk',
+                'kasernefunk': 'Kasernefunk',
+                'allgemeinfunk': 'Allgemeinfunk'
+            };
+            
+            const channelIcons = {
+                'hauptfunk': 'fa-bullhorn',
+                'gatefunk': 'fa-door-open',
+                'einsatzfunk': 'fa-ambulance',
+                'kasernefunk': 'fa-flag',
+                'allgemeinfunk': 'fa-broadcast-tower'
+            };
+            
+            document.getElementById('currentChannelName').textContent = channelNames[channelId];
+            document.getElementById('channelIcon').className = `fas ${channelIcons[channelId]}`;
+            
+            const listeningTo = channelId === 'allgemeinfunk' ? 'Alle Kanäle' : `${channelNames[channelId]} + Allgemeinfunk`;
+            document.getElementById('listeningTo').textContent = listeningTo;
+            
+            showNotification(`Wechsel zu ${channelNames[channelId]}`);
+        }
+        
+        // ========== SIMULATION (für Demo) ==========
+        function simulateOtherUsers() {
+            const simulatedUsers = [
+                {id: 'BW002', rank: 'Hauptmann', name: 'Schmidt', unit: 'Jägerbataillon 1', channel: 'hauptfunk'},
+                {id: 'BW003', rank: 'StUffz', name: 'Weber', unit: 'Fernmeldebataillon', channel: 'gatefunk'},
+                {id: 'BW004', rank: 'OGefr', name: 'Klein', unit: 'Versorgungskompanie', channel: 'einsatzfunk'}
+            ];
+            
+            // Simulierte Benutzer zur Liste hinzufügen
+            simulatedUsers.forEach(user => {
+                allUsers[user.id] = {
+                    ...user,
+                    talking: false,
+                    connected: true
+                };
+            });
+            
+            // Benutzerliste aktualisieren
+            updateUserList();
+            
+            // Zufälliges Sprechen simulieren
+            setInterval(() => {
+                const userIds = Object.keys(allUsers);
+                if (userIds.length > 0) {
+                    const randomId = userIds[Math.floor(Math.random() * userIds.length)];
+                    const user = allUsers[randomId];
+                    
+                    if (user && !user.talking) {
+                        // Simuliere Sprechen für 2-5 Sekunden
+                        user.talking = true;
+                        updateUserList();
+                        
+                        setTimeout(() => {
+                            user.talking = false;
+                            updateUserList();
+                        }, 2000 + Math.random() * 3000);
+                    }
+                }
+            }, 8000);
+            
+            // Kanal-Zähler aktualisieren
+            updateChannelCounts();
+        }
+        
+        function connectToSimulatedUsers() {
+            // Simuliere Verbindungen zu anderen
+            config.members.forEach(member => {
+                if (member.id !== currentUser.id && Math.random() > 0.5) {
+                    setTimeout(() => {
+                        simulateIncomingCall(member);
+                    }, 1000 + Math.random() * 3000);
+                }
+            });
+        }
+        
+        function simulateIncomingCall(member) {
+            // Erstelle simulierten Audio-Stream (leer)
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const dst = oscillator.connect(audioContext.createMediaStreamDestination());
+            oscillator.start();
+            
+            const simulatedStream = dst.stream;
+            
+            // UI aktualisieren
+            allUsers[member.id] = {
+                ...member,
+                talking: false,
+                connected: true
+            };
+            
+            updateUserList();
+            updateChannelCounts();
+            addAudioPlayer(member.id, simulatedStream);
+        }
+        
+        // ========== UI UPDATES ==========
+        function updateUserList() {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '';
+            
+            // Aktuellen Benutzer hinzufügen
+            if (currentUser) {
+                const userDiv = document.createElement('div');
+                userDiv.className = `user-item ${isTalking ? 'talking' : ''}`;
+                userDiv.innerHTML = `
+                    <div class="user-status ${isTalking ? 'talking' : ''}"></div>
+                    <div>
+                        <strong>${currentUser.rank} ${currentUser.name}</strong><br>
+                        <span style="font-size: 12px; color: #94a3b8;">● ${isTalking ? 'SPRICHT' : 'Bereit'}</span>
+                    </div>
+                `;
+                container.appendChild(userDiv);
+            }
+            
+            // Andere Benutzer hinzufügen
+            Object.values(allUsers).forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = `user-item ${user.talking ? 'talking' : ''}`;
+                userDiv.innerHTML = `
+                    <div class="user-status ${user.talking ? 'talking' : ''}"></div>
+                    <div>
+                        <strong>${user.rank} ${user.name}</strong><br>
+                        <span style="font-size: 12px; color: #94a3b8;">● ${user.channel || 'Hauptfunk'}</span>
+                    </div>
+                `;
+                container.appendChild(userDiv);
+            });
+            
+            document.getElementById('totalUsers').textContent = `(${Object.keys(allUsers).length + 1})`;
+        }
+        
+        function updateChannelCounts() {
+            // Simulierte Benutzer auf Kanäle verteilen
+            const counts = {
+                'hauptfunk': 1, // Du selbst
+                'gatefunk': 0,
+                'einsatzfunk': 0,
+                'kasernefunk': 0,
+                'allgemeinfunk': Object.keys(allUsers).length + 1
+            };
+            
+            Object.values(allUsers).forEach(user => {
+                if (user.channel && counts[user.channel] !== undefined) {
+                    counts[user.channel]++;
+                }
+            });
+            
+            // UI aktualisieren
+            Object.keys(counts).forEach(channel => {
+                const element = document.getElementById(`count-${channel}`);
+                if (element) {
+                    element.textContent = counts[channel];
+                }
+            });
+        }
+        
+        // ========== WEBRTC HELPER ==========
+        function addAudioPlayer(peerId, stream) {
+            // Prüfen ob schon vorhanden
+            if (connections[peerId]) return;
+            
+            // Audio-Element erstellen (unsichtbar)
+            const audio = document.createElement('audio');
+            audio.srcObject = stream;
+            audio.autoplay = true;
+            audio.volume = 0.8;
+            audio.style.display = 'none';
+            document.body.appendChild(audio);
+            
+            connections[peerId] = audio;
+            console.log(`Audio-Stream von ${peerId} hinzugefügt`);
+        }
+        
+        function removeUser(peerId) {
+            if (connections[peerId]) {
+                connections[peerId].pause();
+                connections[peerId].srcObject = null;
+                delete connections[peerId];
+            }
+            
+            if (allUsers[peerId]) {
+                delete allUsers[peerId];
+                updateUserList();
+                updateChannelCounts();
+            }
+        }
+        
+        function broadcastTalkingStatus(talking) {
+            // In einer echten Implementierung würde das über DataChannels gehen
+            console.log(`Broadcast talking status: ${talking}`);
+        }
+        
+        // ========== HELPER ==========
+        function showNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--accent)';
+            notification.innerHTML = `
+                <i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-info-circle'}" 
+                   style="margin-right: 8px;"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
