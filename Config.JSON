@@ -1,0 +1,41 @@
+{
+  "server": "https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js",
+  "organization": "Bundeswehr Funknetz",
+  "members": [
+    {
+      "id": "BW001",
+      "rank": "Oberst",
+      "name": "Meyer",
+      "password": "1234",
+      "unit": "Führungsstab"
+    },
+    {
+      "id": "BW002",
+      "rank": "Hauptmann",
+      "name": "Schmidt",
+      "password": "1234",
+      "unit": "Jägerbataillon 1"
+    },
+    {
+      "id": "BW003",
+      "rank": "Stabsunteroffizier",
+      "name": "Weber",
+      "password": "1234",
+      "unit": "Fernmeldebataillon"
+    },
+    {
+      "id": "BW004",
+      "rank": "Obergefreiter",
+      "name": "Klein",
+      "password": "1234",
+      "unit": "Versorgungskompanie"
+    }
+  ],
+  "channels": [
+    {"id": "hauptfunk", "name": "Hauptfunk", "type": "main"},
+    {"id": "gatefunk", "name": "Gatefunk", "type": "normal"},
+    {"id": "einsatzfunk", "name": "Einsatzfunk", "type": "normal"},
+    {"id": "kasernefunk", "name": "Kasernefunk", "type": "normal"},
+    {"id": "allgemeinfunk", "name": "Allgemeinfunk", "type": "general"}
+  ]
+}
