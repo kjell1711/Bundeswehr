@@ -1,38 +1,42 @@
 {
-  "server": "https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js",
   "organization": "Bundeswehr Funknetz",
+  "version": "1.0",
   "members": [
     {
       "id": "BW001",
       "rank": "Oberst",
       "name": "Meyer",
       "password": "1234",
-      "unit": "Führungsstab"
+      "unit": "Führungsstab",
+      "callsign": "Adler-1"
     },
     {
-      "id": "BW002",
+      "id": "BW002", 
       "rank": "Hauptmann",
       "name": "Schmidt",
       "password": "1234",
-      "unit": "Jägerbataillon 1"
+      "unit": "Jägerbataillon 1",
+      "callsign": "Falke-2"
     },
     {
       "id": "BW003",
-      "rank": "Stabsunteroffizier",
+      "rank": "Stabsunteroffizier", 
       "name": "Weber",
       "password": "1234",
-      "unit": "Fernmeldebataillon"
+      "unit": "Fernmeldebataillon",
+      "callsign": "Wolf-3"
     },
     {
       "id": "BW004",
       "rank": "Obergefreiter",
       "name": "Klein",
-      "password": "1234",
-      "unit": "Versorgungskompanie"
+      "password": "1234", 
+      "unit": "Versorgungskompanie",
+      "callsign": "Bär-4"
     }
   ],
   "channels": [
-    {"id": "hauptfunk", "name": "Hauptfunk", "type": "main"},
+    {"id": "hauptfunk", "name": "Hauptfunk", "type": "normal"},
     {"id": "gatefunk", "name": "Gatefunk", "type": "normal"},
     {"id": "einsatzfunk", "name": "Einsatzfunk", "type": "normal"},
     {"id": "kasernefunk", "name": "Kasernefunk", "type": "normal"},
