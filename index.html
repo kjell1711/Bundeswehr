@@ -1178,6 +1178,17 @@
     <!-- Main JavaScript -->
     <script>
         // ======================
+        // SUPABASE INITIALISIERUNG
+        // ======================
+        const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+        const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
+        
+        // Supabase Client erstellen
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+        
+        console.log('Supabase Client initialisiert');
+
+        // ======================
         // APP STATE & CONFIGURATION
         // ======================
         const APP_CONFIG = {
@@ -1227,11 +1238,6 @@
             // Setup event listeners
             setupEventListeners();
             
-            // Load test data if no database
-            if (!window.supabase) {
-                loadTestData();
-            }
-            
             // Show welcome message
             setTimeout(() => {
                 if (!currentUser) {
@@ -1252,7 +1258,7 @@
                     const tokenExpiry = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
                     if (tokenExpiry && Date.now() < parseInt(tokenExpiry)) {
                         // Auto-login
-                        handleLoginSuccess(user);
+                        await handleLoginSuccess(user);
                         showNotification('Willkommen zurück, ' + user.display_name, 'success');
                         return true;
                     } else {
@@ -1371,147 +1377,1074 @@
             });
         }
 
-        function loadTestData() {
-            // Test accounts
-            const testUsers = [
-                {
-                    id: 'admin-001',
-                    username: 'admin_test',
-                    password: 'bundeswehr123',
-                    display_name: 'Oberst Markus Schmidt',
-                    rank: 'Oberst',
-                    division: 'Heer',
-                    role: 'admin',
-                    stamina: 45,
-                    soldier_id: 'BW-0001',
-                    service_start: '2023-01-15',
-                    roblox_username: 'OberstSchmidt_BW'
-                },
-                {
-                    id: 'soldier-001',
-                    username: 'soldat',
-                    password: 'soldat123',
-                    display_name: 'Gefreiter Thomas Weber',
-                    rank: 'Gefreiter',
-                    division: 'Marine',
-                    role: 'soldier',
-                    stamina: 12,
-                    soldier_id: 'BW-0015',
-                    service_start: '2023-06-10',
-                    roblox_username: 'MarineWeber'
-                },
-                {
-                    id: 'soldier-002',
-                    username: 'soldat2',
-                    password: 'soldat123',
-                    display_name: 'Schütze Lisa Müller',
-                    rank: 'Schütze',
-                    division: 'Luftwaffe',
-                    role: 'soldier',
-                    stamina: 5,
-                    soldier_id: 'BW-0023',
-                    service_start: '2023-08-22',
-                    roblox_username: 'LuftwaffeLisa'
-                }
-            ];
+        // ======================
+        // DATABASE FUNKTIONEN
+        // ======================
+
+        // User Management
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
             
-            // Test missions
-            missions = [
-                {
-                    id: 'mission-001',
-                    title: 'Patrouille Grenzgebiet Alpha',
-                    description: 'Routine-Patrouille entlang der östlichen Grenze. Überwachung und Kontrolle des Grenzbereichs.',
-                    location: 'Grenzgebiet Alpha, Sektor 7',
-                    meeting_point: 'Kaserne Haupttor',
-                    type: 'Patrouille',
-                    difficulty: 'Mittel',
-                    date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                    time: '14:00',
-                    plan: '14:00 Treffen am Haupttor\n14:30 Abfahrt zum Grenzgebiet\n15:00 Beginn Patrouille\n17:00 Rückkehr zur Kaserne',
+            if (!username || !password) {
+                showError('loginError', 'Bitte Benutzername und Passwort eingeben');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // User aus Supabase holen
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('password', password); // In production: password hashing verwenden!
+                
+                if (error) throw error;
+                
+                if (users && users.length > 0) {
+                    const user = users[0];
+                    
+                    // Create session
+                    const token = 'supabase_token_' + Date.now();
+                    const tokenExpiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+                    
+                    // Store session
+                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(user));
+                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token', token);
+                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token_expiry', tokenExpiry.toString());
+                    
+                    // Handle login success
+                    await handleLoginSuccess(user);
+                    hideError('loginError');
+                    
+                    showNotification('Erfolgreich eingeloggt', 'success');
+                } else {
+                    throw new Error('Falscher Benutzername oder Passwort');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('loginError', error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleLoginSuccess(user) {
+            currentUser = user;
+            
+            // Update UI
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Update user display
+            updateUserDisplay(user);
+            
+            // Check permissions
+            checkPermissions(user.role);
+            
+            // Load initial data from Supabase
+            await Promise.all([
+                loadDashboard(),
+                loadMissions(),
+                loadPersonnel(),
+                loadApplications()
+            ]);
+            
+            // Show dashboard
+            showPage('dashboard');
+        }
+
+        async function logout() {
+            if (confirm('Möchtest du dich wirklich ausloggen?')) {
+                // Clear session
+                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
+                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
+                
+                // Reset UI
+                currentUser = null;
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                
+                // Clear forms
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                hideError('loginError');
+                
+                showNotification('Erfolgreich ausgeloggt', 'info');
+            }
+        }
+
+        // Missions
+        async function loadMissions(filter = 'all') {
+            try {
+                let query = supabase
+                    .from('missions')
+                    .select('*');
+                
+                if (filter !== 'all') {
+                    query = query.eq('status', filter);
+                }
+                
+                const { data: missionsData, error } = await query;
+                
+                if (error) throw error;
+                
+                missions = missionsData || [];
+                
+                // Update UI
+                const container = document.getElementById('missionsList');
+                if (container) {
+                    renderMissions(missions, container);
+                }
+                
+                return missions;
+            } catch (error) {
+                console.error('Error loading missions:', error);
+                showNotification('Fehler beim Laden der Einsätze', 'error');
+                return [];
+            }
+        }
+
+        async function createMission() {
+            const title = document.getElementById('missionTitle').value;
+            const description = document.getElementById('missionDescription').value;
+            const location = document.getElementById('missionLocation').value;
+            const meetingPoint = document.getElementById('missionMeetingPoint').value;
+            const type = document.getElementById('missionType').value;
+            const difficulty = document.getElementById('missionDifficulty').value;
+            const date = document.getElementById('missionDate').value;
+            const time = document.getElementById('missionTime').value;
+            const plan = document.getElementById('missionPlan').value;
+            
+            if (!title || !description || !location || !date || !time) {
+                document.getElementById('missionError').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const newMission = {
+                    title: title,
+                    description: description,
+                    location: location,
+                    meeting_point: meetingPoint,
+                    mission_type: type,
+                    difficulty: difficulty,
+                    mission_date: date,
+                    mission_time: time,
+                    plan: plan,
                     status: 'upcoming',
-                    created_by: 'admin-001',
-                    participants: ['soldier-001', 'soldier-002'],
-                    created_at: new Date(Date.now() - 86400000).toISOString()
-                },
-                {
-                    id: 'mission-002',
-                    title: 'Übung: Nachtmanöver',
-                    description: 'Taktische Übung unter Nachtbedingungen. Training von Nachtsicht und stiller Bewegung.',
-                    location: 'Übungsgelände Bravo',
-                    meeting_point: 'Übungsgelände Kommandostand',
-                    type: 'Übung',
-                    difficulty: 'Hoch',
-                    date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-                    time: '20:00',
-                    plan: '20:00 Einweisung\n20:30 Beginn Nachtübung\n22:30 Abschlussbesprechung\n23:00 Ende',
-                    status: 'upcoming',
-                    created_by: 'admin-001',
-                    participants: ['soldier-001'],
-                    created_at: new Date(Date.now() - 43200000).toISOString()
-                },
-                {
-                    id: 'mission-003',
-                    title: 'Wachdienst Haupttor',
-                    description: 'Standard-Wachdienst am Haupteingang der Kaserne.',
-                    location: 'Kaserne Haupttor',
-                    meeting_point: 'Wachlokal',
-                    type: 'Wachdienst',
-                    difficulty: 'Niedrig',
-                    date: new Date().toISOString().split('T')[0],
-                    time: '08:00',
-                    plan: '8:00-12:00 Wachdienst Schicht 1\n12:00-16:00 Schicht 2\n16:00-20:00 Schicht 3',
-                    status: 'active',
-                    created_by: 'admin-001',
-                    participants: [],
-                    created_at: new Date(Date.now() - 86400000).toISOString()
+                    created_by: currentUser.id,
+                    created_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('missions')
+                    .insert([newMission])
+                    .select();
+                
+                if (error) throw error;
+                
+                hideCreateMissionModal();
+                
+                // Reset form
+                document.getElementById('missionTitle').value = '';
+                document.getElementById('missionDescription').value = '';
+                document.getElementById('missionLocation').value = '';
+                document.getElementById('missionMeetingPoint').value = '';
+                document.getElementById('missionPlan').value = '';
+                
+                showNotification('Einsatz erfolgreich erstellt', 'success');
+                await loadMissions();
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Error creating mission:', error);
+                showNotification('Fehler beim Erstellen des Einsatzes', 'error');
+            }
+        }
+
+        async function joinMission(missionId) {
+            try {
+                // Check if already participating
+                const { data: existing, error: checkError } = await supabase
+                    .from('mission_participants')
+                    .select('*')
+                    .eq('mission_id', missionId)
+                    .eq('user_id', currentUser.id);
+                
+                if (checkError) throw checkError;
+                
+                if (existing && existing.length > 0) {
+                    showNotification('Du bist bereits diesem Einsatz zugeteilt', 'info');
+                    return;
                 }
-            ];
-            
-            // Test personnel
-            personnel = testUsers.map(user => ({
-                id: user.id,
-                name: user.display_name,
-                rank: user.rank,
-                division: user.division,
-                stamina: user.stamina,
-                soldier_id: user.soldier_id,
-                role: user.role,
-                username: user.username
-            }));
-            
-            // Test applications
-            applications = [
-                {
-                    id: 'app-001',
-                    roblox_username: 'FutureSoldier',
-                    display_name: 'Max Bauer',
-                    application_text: 'Ich möchte der Bundeswehr beitreten, weil ich schon immer für mein Land dienen wollte. Ich bin teamfähig und diszipliniert.',
-                    age_group: '18-25',
-                    preferred_division: 'Heer',
-                    status: 'pending',
-                    created_at: new Date(Date.now() - 86400000).toISOString(),
-                    application_date: new Date(Date.now() - 86400000).toLocaleDateString('de-DE')
-                },
-                {
-                    id: 'app-002',
-                    roblox_username: 'MarineFan',
-                    display_name: 'Anna Fischer',
-                    application_text: 'Ich interessiere mich besonders für die Marine und möchte zur See dienen. Ich habe bereits Erfahrung mit Teamwork und bin körperlich fit.',
-                    age_group: '26-35',
-                    preferred_division: 'Marine',
-                    status: 'pending',
-                    created_at: new Date(Date.now() - 172800000).toISOString(),
-                    application_date: new Date(Date.now() - 172800000).toLocaleDateString('de-DE')
+                
+                // Add participant
+                const { error } = await supabase
+                    .from('mission_participants')
+                    .insert([
+                        { mission_id: missionId, user_id: currentUser.id }
+                    ]);
+                
+                if (error) throw error;
+                
+                showNotification('Du bist dem Einsatz beigetreten', 'success');
+                await loadMissions();
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Error joining mission:', error);
+                showNotification('Fehler beim Beitreten des Einsatzes', 'error');
+            }
+        }
+
+        // Personnel
+        async function loadPersonnel() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('rank', { ascending: false });
+                
+                if (error) throw error;
+                
+                personnel = users || [];
+                
+                // Update UI
+                const container = document.getElementById('personnelList');
+                if (container) {
+                    renderPersonnel(personnel, container);
                 }
-            ];
+                
+                return personnel;
+            } catch (error) {
+                console.error('Error loading personnel:', error);
+                showNotification('Fehler beim Laden des Personals', 'error');
+                return [];
+            }
+        }
+
+        async function createUser() {
+            const name = document.getElementById('createUserName').value;
+            const username = document.getElementById('createUserUsername').value;
+            const password = document.getElementById('createUserPassword').value;
+            const rank = document.getElementById('createUserRank').value;
+            const division = document.getElementById('createUserDivision').value;
+            const role = document.getElementById('createUserRole').value;
             
-            // Store test users globally for login simulation
-            window.testUsers = testUsers;
+            if (!name || !username || !password || !rank || !division) {
+                document.getElementById('createUserError').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                // Generate soldier ID
+                const { data: lastUser } = await supabase
+                    .from('users')
+                    .select('soldier_id')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                
+                let nextId = 1000;
+                if (lastUser && lastUser[0]) {
+                    const lastId = parseInt(lastUser[0].soldier_id.split('-')[1]);
+                    nextId = lastId + 1;
+                }
+                
+                const soldierId = 'BW-' + nextId.toString().padStart(4, '0');
+                
+                const newUser = {
+                    username: username,
+                    password: password, // In production: hashen!
+                    display_name: name,
+                    rank: rank,
+                    division: division,
+                    role: role,
+                    stamina: 0,
+                    soldier_id: soldierId,
+                    service_start: new Date().toISOString().split('T')[0],
+                    created_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([newUser])
+                    .select();
+                
+                if (error) throw error;
+                
+                hideCreateUserModal();
+                showNotification(`Account für ${name} erstellt`, 'success');
+                
+                // Clear form
+                document.getElementById('createUserName').value = '';
+                document.getElementById('createUserUsername').value = '';
+                document.getElementById('createUserPassword').value = '';
+                
+                await loadPersonnel();
+                
+                // Show credentials
+                setTimeout(() => {
+                    alert(`Account erstellt:\n\nName: ${name}\nUsername: ${username}\nPasswort: ${password}\nRang: ${rank}\nDivision: ${division}\nRolle: ${role}\nSoldier ID: ${soldierId}`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showNotification('Fehler beim Erstellen des Accounts', 'error');
+            }
+        }
+
+        async function promoteSoldier(soldierId) {
+            try {
+                const soldier = personnel.find(p => p.id === soldierId);
+                if (!soldier) return;
+                
+                const currentRankIndex = APP_CONFIG.ranks.indexOf(soldier.rank);
+                if (currentRankIndex === -1 || currentRankIndex >= APP_CONFIG.ranks.length - 1) {
+                    showNotification('Beförderung nicht möglich', 'warning');
+                    return;
+                }
+                
+                const newRank = APP_CONFIG.ranks[currentRankIndex + 1];
+                const confirmMsg = `${soldier.display_name} von ${soldier.rank} zu ${newRank} befördern?`;
+                
+                if (confirm(confirmMsg)) {
+                    const { error } = await supabase
+                        .from('users')
+                        .update({ rank: newRank })
+                        .eq('id', soldierId);
+                    
+                    if (error) throw error;
+                    
+                    // Update current user if it's them
+                    if (currentUser && currentUser.id === soldierId) {
+                        currentUser.rank = newRank;
+                        updateUserDisplay(currentUser);
+                    }
+                    
+                    hideSoldierActionsModal();
+                    showNotification(`${soldier.display_name} zu ${newRank} befördert`, 'success');
+                    await loadPersonnel();
+                }
+            } catch (error) {
+                console.error('Error promoting soldier:', error);
+                showNotification('Fehler bei der Beförderung', 'error');
+            }
+        }
+
+        async function addStamina(soldierId, amount) {
+            try {
+                const soldier = personnel.find(p => p.id === soldierId);
+                if (!soldier) return;
+                
+                const exerciseNames = {
+                    1: 'Pushups (Liegestütze)',
+                    2: 'Klimmzüge',
+                    3: '5km Lauf'
+                };
+                
+                const exerciseName = exerciseNames[amount] || 'Training';
+                
+                if (confirm(`${soldier.display_name} ${amount} Ausdauer für ${exerciseName} gutschreiben?`)) {
+                    const newStamina = soldier.stamina + amount;
+                    
+                    const { error } = await supabase
+                        .from('users')
+                        .update({ stamina: newStamina })
+                        .eq('id', soldierId);
+                    
+                    if (error) throw error;
+                    
+                    // Update current user if it's them
+                    if (currentUser && currentUser.id === soldierId) {
+                        currentUser.stamina = newStamina;
+                        updateUserDisplay(currentUser);
+                    }
+                    
+                    hideSoldierActionsModal();
+                    showNotification(`${soldier.display_name}: +${amount} Ausdauer für ${exerciseName}`, 'success');
+                    await loadPersonnel();
+                }
+            } catch (error) {
+                console.error('Error adding stamina:', error);
+                showNotification('Fehler beim Hinzufügen von Ausdauer', 'error');
+            }
+        }
+
+        // Applications
+        async function loadApplications(filter = 'pending') {
+            try {
+                let query = supabase
+                    .from('applications')
+                    .select('*');
+                
+                if (filter !== 'all') {
+                    query = query.eq('status', filter);
+                }
+                
+                const { data: apps, error } = await query;
+                
+                if (error) throw error;
+                
+                applications = apps || [];
+                
+                // Update counts
+                const pendingCount = applications.filter(app => app.status === 'pending').length;
+                document.getElementById('pendingCount').textContent = pendingCount;
+                const pendingAppsBadge = document.getElementById('pendingAppsBadge');
+                if (pendingAppsBadge) {
+                    pendingAppsBadge.textContent = pendingCount;
+                    pendingAppsBadge.classList.toggle('hidden', pendingCount === 0);
+                }
+                
+                // Update UI
+                const container = document.getElementById('applicationsList');
+                if (container) {
+                    renderApplications(applications, container);
+                }
+                
+                return applications;
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                showNotification('Fehler beim Laden der Bewerbungen', 'error');
+                return [];
+            }
+        }
+
+        async function submitApplication() {
+            const roblox = document.getElementById('appRoblox').value;
+            const displayName = document.getElementById('appDisplayName').value;
+            const ageGroup = document.getElementById('appAgeGroup').value;
+            const division = document.getElementById('appDivision').value;
+            const appText = document.getElementById('appText').value;
+            
+            // Check cooldown
+            const lastApplicationTime = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_application_time');
+            if (lastApplicationTime) {
+                const timeSinceLastApp = Date.now() - parseInt(lastApplicationTime);
+                if (timeSinceLastApp < APP_CONFIG.applicationCooldown) {
+                    const daysLeft = Math.ceil((APP_CONFIG.applicationCooldown - timeSinceLastApp) / (1000 * 60 * 60 * 24));
+                    showNotification(`Du kannst erst in ${daysLeft} Tagen erneut eine Bewerbung einreichen.`, 'warning');
+                    return;
+                }
+            }
+            
+            try {
+                const newApplication = {
+                    roblox_username: roblox,
+                    display_name: displayName,
+                    age_group: ageGroup,
+                    preferred_division: division,
+                    application_text: appText,
+                    status: 'pending',
+                    created_at: new Date().toISOString(),
+                    application_date: new Date().toLocaleDateString('de-DE')
+                };
+                
+                const { data, error } = await supabase
+                    .from('applications')
+                    .insert([newApplication])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Store locally for status checking
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application', JSON.stringify(newApplication));
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'application_status', 'pending');
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application_time', Date.now().toString());
+                
+                // Show success
+                showNotification('Bewerbung erfolgreich eingereicht!', 'success');
+                
+                // If current user is admin/leader, reload applications
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'leader')) {
+                    await loadApplications();
+                }
+                
+                setTimeout(() => {
+                    showApplicationStatus();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error submitting application:', error);
+                showNotification('Fehler beim Einreichen der Bewerbung', 'error');
+            }
+        }
+
+        async function acceptApplicationConfirm() {
+            const username = document.getElementById('acceptUsername').value;
+            const password = document.getElementById('acceptPassword').value;
+            const rank = document.getElementById('acceptRank').value;
+            const message = document.getElementById('acceptMessage').value;
+            
+            if (!username || !password) {
+                document.getElementById('acceptError').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const app = applications.find(a => a.id === currentAcceptAppId);
+                if (!app) return;
+                
+                // Generate soldier ID
+                const { data: lastUser } = await supabase
+                    .from('users')
+                    .select('soldier_id')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                
+                let nextId = 1000;
+                if (lastUser && lastUser[0]) {
+                    const lastId = parseInt(lastUser[0].soldier_id.split('-')[1]);
+                    nextId = lastId + 1;
+                }
+                
+                const soldierId = 'BW-' + nextId.toString().padStart(4, '0');
+                
+                // Create new user
+                const newUser = {
+                    username: username,
+                    password: password,
+                    display_name: app.display_name,
+                    rank: rank,
+                    division: app.preferred_division,
+                    role: 'soldier',
+                    stamina: 0,
+                    soldier_id: soldierId,
+                    service_start: new Date().toISOString().split('T')[0],
+                    roblox_username: app.roblox_username,
+                    created_at: new Date().toISOString()
+                };
+                
+                // Update application status
+                const { error: updateError } = await supabase
+                    .from('applications')
+                    .update({ 
+                        status: 'accepted',
+                        reviewed_by: currentUser.id,
+                        reviewed_at: new Date().toISOString()
+                    })
+                    .eq('id', currentAcceptAppId);
+                
+                if (updateError) throw updateError;
+                
+                // Create user account
+                const { error: userError } = await supabase
+                    .from('users')
+                    .insert([newUser]);
+                
+                if (userError) throw userError;
+                
+                hideAcceptApplicationModal();
+                showNotification('Bewerbung angenommen und Account erstellt', 'success');
+                
+                await Promise.all([
+                    loadApplications(),
+                    loadPersonnel(),
+                    loadManagement()
+                ]);
+                
+                // Show credentials
+                setTimeout(() => {
+                    alert(`Account erstellt für ${app.display_name}:\n\nUsername: ${username}\nPasswort: ${password}\nSoldier ID: ${soldierId}\n\n${message}`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error accepting application:', error);
+                showNotification('Fehler beim Annehmen der Bewerbung', 'error');
+            }
+        }
+
+        async function rejectApplicationConfirm() {
+            const reason = document.getElementById('rejectReason').value;
+            
+            if (!reason) {
+                document.getElementById('rejectError').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('applications')
+                    .update({ 
+                        status: 'rejected',
+                        rejection_reason: reason,
+                        reviewed_by: currentUser.id,
+                        reviewed_at: new Date().toISOString()
+                    })
+                    .eq('id', currentRejectAppId);
+                
+                if (error) throw error;
+                
+                hideRejectApplicationModal();
+                showNotification('Bewerbung abgelehnt', 'info');
+                
+                await Promise.all([
+                    loadApplications(),
+                    loadManagement()
+                ]);
+                
+            } catch (error) {
+                console.error('Error rejecting application:', error);
+                showNotification('Fehler beim Ablehnen der Bewerbung', 'error');
+            }
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            if (!currentUser) return;
+            
+            // Update user display
+            updateUserDisplay(currentUser);
+            
+            // Load upcoming missions
+            try {
+                const { data: missionsData, error } = await supabase
+                    .from('missions')
+                    .select('*')
+                    .in('status', ['upcoming', 'active'])
+                    .order('mission_date', { ascending: true })
+                    .limit(3);
+                
+                if (error) throw error;
+                
+                // Load mission participants
+                const missionsWithParticipants = [];
+                for (const mission of missionsData || []) {
+                    const { data: participants } = await supabase
+                        .from('mission_participants')
+                        .select('user_id')
+                        .eq('mission_id', mission.id);
+                    
+                    missionsWithParticipants.push({
+                        ...mission,
+                        participants: participants?.map(p => p.user_id) || []
+                    });
+                }
+                
+                // Update UI
+                const container = document.getElementById('upcomingMissions');
+                if (container) {
+                    renderUpcomingMissions(missionsWithParticipants, container);
+                }
+                
+            } catch (error) {
+                console.error('Error loading dashboard missions:', error);
+            }
+        }
+
+        // Management
+        async function loadManagement() {
+            if (!currentUser) return;
+            
+            // Update pending applications count
+            const pendingCount = applications.filter(app => app.status === 'pending').length;
+            document.getElementById('pendingAppsCount2').textContent = pendingCount;
+            
+            // Load recent activity (simplified)
+            // In production, you would query an activity log table
+            const activityContainer = document.getElementById('managementActivity');
+            if (activityContainer) {
+                // This is a simplified version
+                activityContainer.innerHTML = `
+                    <div class="text-center py-8 text-ios-text-secondary">
+                        <i class="fas fa-history text-3xl mb-3"></i>
+                        <p>Aktivitätsprotokoll wird geladen...</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function updateProfile() {
+            if (!currentUser) return;
+            
+            const displayName = document.getElementById('displayNameInput').value;
+            const robloxUsername = document.getElementById('robloxUsername').value;
+            
+            if (!displayName) {
+                showNotification('Bitte einen Namen eingeben', 'warning');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ 
+                        display_name: displayName,
+                        roblox_username: robloxUsername 
+                    })
+                    .eq('id', currentUser.id);
+                
+                if (error) throw error;
+                
+                // Update current user
+                currentUser.display_name = displayName;
+                currentUser.roblox_username = robloxUsername;
+                
+                // Update local storage
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(currentUser));
+                
+                // Update UI
+                updateUserDisplay(currentUser);
+                
+                showNotification('Profil aktualisiert', 'success');
+                
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showNotification('Fehler beim Aktualisieren des Profils', 'error');
+            }
         }
 
         // ======================
-        // UI FUNCTIONS
+        // UI RENDERING FUNCTIONS
         // ======================
+        
+        function renderMissions(missions, container) {
+            if (missions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-ios-text-secondary">
+                        <i class="fas fa-crosshairs text-4xl mb-4"></i>
+                        <p class="text-lg mb-2">Keine Einsätze gefunden</p>
+                        <p class="text-sm">Es sind keine Einsätze verfügbar.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            missions.forEach(mission => {
+                const date = new Date(mission.mission_date + 'T' + mission.mission_time);
+                const isParticipant = mission.participants && mission.participants.includes(currentUser?.id);
+                const isCreator = currentUser && mission.created_by === currentUser.id;
+                
+                html += `
+                    <div class="mission-card p-5 rounded-ios-sm bg-white border border-ios-border hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-xl font-bold mb-1">${mission.title}</h3>
+                                <div class="flex items-center gap-3 text-sm text-ios-text-secondary">
+                                    <span><i class="fas fa-map-marker-alt mr-1"></i>${mission.location}</span>
+                                    <span>•</span>
+                                    <span><i class="fas fa-tag mr-1"></i>${mission.mission_type}</span>
+                                    <span>•</span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                        mission.difficulty === 'Hoch' ? 'bg-red-100 text-red-800' :
+                                        mission.difficulty === 'Mittel' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-green-100 text-green-800'
+                                    }">
+                                        ${mission.difficulty}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold ${
+                                mission.status === 'active' ? 'bg-green-100 text-green-800' :
+                                mission.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                'bg-blue-100 text-blue-800'
+                            }">
+                                ${mission.status === 'active' ? 'Aktiv' : 
+                                  mission.status === 'completed' ? 'Abgeschlossen' : 'Bevorstehend'}
+                            </span>
+                        </div>
+                        
+                        <p class="mb-4">${mission.description}</p>
+                        
+                        ${mission.plan ? `
+                            <div class="mb-4 p-3 bg-gray-50 rounded-ios-sm">
+                                <div class="font-medium mb-2">Ablauf:</div>
+                                <div class="text-sm whitespace-pre-line">${mission.plan}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex justify-between items-center pt-4 border-t border-ios-border">
+                            <div class="text-ios-text-secondary text-sm">
+                                <i class="far fa-calendar-alt mr-1"></i>
+                                ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                ${mission.meeting_point ? ` • Treffpunkt: ${mission.meeting_point}` : ''}
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                ${!isParticipant && mission.status !== 'completed' ? `
+                                    <button data-mission-id="${mission.id}" class="join-mission-btn text-ios-primary hover:text-ios-primary/80 font-medium">
+                                        <i class="fas fa-plus mr-1"></i>Beitreten
+                                    </button>
+                                ` : isParticipant ? `
+                                    <span class="text-green-600 font-medium">
+                                        <i class="fas fa-check mr-1"></i>Eingeteilt
+                                    </span>
+                                ` : ''}
+                                
+                                ${(isCreator || currentUser?.role === 'admin') && mission.status !== 'completed' ? `
+                                    <button data-mission-id="${mission.id}" class="delete-mission-btn text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add event listeners
+            container.querySelectorAll('.join-mission-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const missionId = this.getAttribute('data-mission-id');
+                    joinMission(missionId);
+                });
+            });
+            
+            container.querySelectorAll('.delete-mission-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const missionId = this.getAttribute('data-mission-id');
+                    if (confirm('Möchtest du diesen Einsatz wirklich löschen?')) {
+                        deleteMission(missionId);
+                    }
+                });
+            });
+        }
+        
+        async function deleteMission(missionId) {
+            try {
+                const { error } = await supabase
+                    .from('missions')
+                    .delete()
+                    .eq('id', missionId);
+                
+                if (error) throw error;
+                
+                showNotification('Einsatz gelöscht', 'success');
+                await loadMissions();
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Error deleting mission:', error);
+                showNotification('Fehler beim Löschen des Einsatzes', 'error');
+            }
+        }
+        
+        function renderPersonnel(users, container) {
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-ios-text-secondary">
+                        <i class="fas fa-users text-4xl mb-4"></i>
+                        <p class="text-lg mb-2">Kein Personal gefunden</p>
+                        <p class="text-sm">Es sind keine Soldaten registriert.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            users.forEach(user => {
+                const isCurrentUser = currentUser && user.id === currentUser.id;
+                const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'leader');
+                
+                html += `
+                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-ios-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-bw-green to-bw-olive flex items-center justify-center text-white font-bold text-sm">
+                                ${user.display_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                            </div>
+                            <div>
+                                <div class="font-medium">
+                                    ${user.display_name}
+                                    ${isCurrentUser ? ' <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Du</span>' : ''}
+                                </div>
+                                <div class="text-ios-text-secondary text-sm flex items-center gap-2">
+                                    <span>${user.rank}</span>
+                                    <span>•</span>
+                                    <span>${user.division}</span>
+                                    <span>•</span>
+                                    <span class="flex items-center gap-1">
+                                        <i class="fas fa-fire ${user.stamina < 10 ? 'stamina-low' : user.stamina < 30 ? 'stamina-medium' : 'stamina-high'}"></i>
+                                        ${user.stamina} Ausdauer
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${isAdmin && !isCurrentUser ? `
+                            <div class="relative">
+                                <button data-soldier-id="${user.id}" class="soldier-actions-btn text-ios-text-secondary hover:text-ios-text p-2">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add event listeners for soldier actions
+            container.querySelectorAll('.soldier-actions-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const soldierId = this.getAttribute('data-soldier-id');
+                    showSoldierActions(soldierId);
+                });
+            });
+        }
+        
+        function renderApplications(applications, container) {
+            if (applications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-ios-text-secondary">
+                        <i class="fas fa-file-alt text-4xl mb-4"></i>
+                        <p class="text-lg mb-2">Keine Bewerbungen gefunden</p>
+                        <p class="text-sm">Es sind keine Bewerbungen verfügbar.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            applications.forEach(app => {
+                html += `
+                    <div class="border border-ios-border rounded-ios-sm p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg">${app.display_name}</h3>
+                                <p class="text-ios-text-secondary">
+                                    <i class="fab fa-roblox mr-1"></i>${app.roblox_username}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-calendar-alt mr-1"></i>${app.application_date}
+                                    <span class="mx-2">•</span>
+                                    ${app.age_group} • ${app.preferred_division}
+                                </p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold ${
+                                app.status === 'pending' ? 'status-pending' :
+                                app.status === 'accepted' ? 'status-accepted' :
+                                'status-rejected'
+                            }">
+                                ${app.status === 'pending' ? 'Ausstehend' :
+                                  app.status === 'accepted' ? 'Angenommen' : 'Abgelehnt'}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-sm font-medium mb-2">Bewerbungstext:</p>
+                            <div class="bg-gray-50 p-3 rounded-ios-sm whitespace-pre-line">${app.application_text}</div>
+                        </div>
+                        
+                        ${app.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
+                            <div class="flex gap-3 pt-4 border-t border-ios-border">
+                                <button data-app-id="${app.id}" class="accept-app-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
+                                    <i class="fas fa-check mr-2"></i>Annehmen
+                                </button>
+                                <button data-app-id="${app.id}" class="reject-app-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
+                                    <i class="fas fa-times mr-2"></i>Ablehnen
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        ${app.status === 'accepted' ? `
+                            <div class="bg-green-50 border border-green-200 rounded-ios-sm p-3 mt-3">
+                                <p class="font-medium text-green-800 mb-1">Aufgenommen als ${app.reviewed_by ? 'Soldat' : ''}</p>
+                                <p class="text-sm text-green-600">Account wurde erstellt und Bewerber wurde benachrichtigt.</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${app.status === 'rejected' && app.rejection_reason ? `
+                            <div class="bg-red-50 border border-red-200 rounded-ios-sm p-3 mt-3">
+                                <p class="font-medium text-red-800 mb-1">Abgelehnt</p>
+                                <p class="text-sm text-red-600">Grund: ${app.rejection_reason}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add event listeners
+            container.querySelectorAll('.accept-app-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const appId = this.getAttribute('data-app-id');
+                    showAcceptApplication(appId);
+                });
+            });
+            
+            container.querySelectorAll('.reject-app-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const appId = this.getAttribute('data-app-id');
+                    showRejectApplication(appId);
+                });
+            });
+        }
+        
+        function renderUpcomingMissions(missions, container) {
+            if (missions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-ios-text-secondary">
+                        <i class="fas fa-calendar-alt text-3xl mb-3"></i>
+                        <p>Keine bevorstehenden Einsätze</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            missions.forEach(mission => {
+                const date = new Date(mission.mission_date + 'T' + mission.mission_time);
+                const isParticipant = mission.participants.includes(currentUser?.id);
+                
+                html += `
+                    <div class="mission-card p-4 rounded-ios-sm bg-white border border-ios-border">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold">${mission.title}</h3>
+                                <p class="text-sm text-ios-text-secondary">${mission.location}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${
+                                mission.difficulty === 'Hoch' ? 'bg-red-100 text-red-800' :
+                                mission.difficulty === 'Mittel' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                            }">
+                                ${mission.difficulty}
+                            </span>
+                        </div>
+                        
+                        <p class="text-sm mb-3 line-clamp-2">${mission.description}</p>
+                        
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-ios-text-secondary">
+                                <i class="far fa-calendar-alt mr-1"></i>
+                                ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            
+                            ${isParticipant ? `
+                                <span class="text-green-600 font-medium">
+                                    <i class="fas fa-check mr-1"></i>Eingeteilt
+                                </span>
+                            ` : `
+                                <button data-mission-id="${mission.id}" class="join-mission-btn text-ios-primary hover:text-ios-primary/80 font-medium">
+                                    <i class="fas fa-plus mr-1"></i>Beitreten
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add event listeners
+            container.querySelectorAll('.join-mission-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const missionId = this.getAttribute('data-mission-id');
+                    joinMission(missionId);
+                });
+            });
+        }
+
+        // ======================
+        // HELPER FUNCTIONS (unchanged from your original)
+        // ======================
+        
         function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('de-DE', { 
@@ -1544,7 +2477,6 @@
                 mainContent.classList.remove('main-expanded');
                 mainContent.classList.add('main-collapsed');
                 
-                // Hide text in sidebar
                 sidebar.querySelectorAll('span:not(.absolute)').forEach(span => {
                     if (!span.closest('#userID')) {
                         span.classList.add('hidden');
@@ -1556,7 +2488,6 @@
                 mainContent.classList.remove('main-collapsed');
                 mainContent.classList.add('main-expanded');
                 
-                // Show text in sidebar
                 sidebar.querySelectorAll('span').forEach(span => {
                     span.classList.remove('hidden');
                 });
@@ -1564,38 +2495,20 @@
         }
 
         function showPage(page) {
-            // Hide all pages
             document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            
-            // Show selected page
             document.getElementById(page + 'Page').classList.remove('hidden');
             
-            // Update active nav item
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('bg-gray-50', 'text-ios-primary');
             });
             
-            // Load page data
-            switch(page) {
-                case 'dashboard':
-                    loadDashboard();
-                    break;
-                case 'missions':
-                    loadMissions();
-                    break;
-                case 'personnel':
-                    loadPersonnel();
-                    break;
-                case 'management':
-                    loadManagement();
-                    break;
-                case 'applications':
-                    loadApplications();
-                    break;
-                case 'settings':
-                    loadSettings();
-                    break;
-            }
+            // Load page data if needed
+            if (page === 'dashboard') loadDashboard();
+            if (page === 'missions') loadMissions();
+            if (page === 'personnel') loadPersonnel();
+            if (page === 'management') loadManagement();
+            if (page === 'applications') loadApplications();
+            if (page === 'settings') loadSettings();
             
             currentPage = page;
         }
@@ -1630,24 +2543,18 @@
             loadApplications(filter);
         }
 
-        // ======================
-        // AUTHENTICATION
-        // ======================
         function showLoginForm() {
             document.getElementById('applicationForm').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
         }
 
         function showApplicationForm() {
-            // Check if user already has an application
             const lastApplication = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_application');
             const applicationStatus = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'application_status');
             
             if (lastApplication && applicationStatus) {
-                // Show application status
                 showApplicationStatus();
             } else {
-                // Show new application form
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('applicationForm').classList.remove('hidden');
                 
@@ -1720,7 +2627,6 @@
                 
                 document.getElementById('applicationContent').innerHTML = content;
                 
-                // Add event listeners for the new form
                 document.getElementById('applicationFormElement').addEventListener('submit', function(event) {
                     event.preventDefault();
                     submitApplication();
@@ -1807,26 +2713,6 @@
                                     <p class="text-sm text-green-600 mt-1">
                                         Deine Bewerbung wurde angenommen. Du wurdest als Schütze in die Bundeswehr aufgenommen.
                                     </p>
-                                    <div class="mt-3 p-3 bg-white rounded border border-green-100">
-                                        <p class="font-semibold mb-2">Deine Account-Daten:</p>
-                                        <p class="text-sm"><span class="font-medium">Username:</span> ${application.username || 'wird zugewiesen'}</p>
-                                        <p class="text-sm"><span class="font-medium">Passwort:</span> ${application.password || 'wird zugesendet'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-ios-sm p-4">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-calendar-alt text-yellow-600 mt-0.5"></i>
-                                <div>
-                                    <p class="font-medium text-yellow-800">Erster Dienst</p>
-                                    <p class="text-sm text-yellow-600 mt-1">
-                                        Dein erster Dienst beginnt am <strong>${application.startDate || 'wird bekannt gegeben'}</strong> um <strong>${application.startTime || '08:00 Uhr'}</strong>.
-                                    </p>
-                                    <p class="text-sm text-yellow-600 mt-1">
-                                        Treffpunkt: ${application.meetingPoint || 'Kaserne Haupttor'}
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1839,7 +2725,7 @@
                                 <div>
                                     <p class="font-medium text-red-800">Bewerbung abgelehnt</p>
                                     <p class="text-sm text-red-600 mt-1">
-                                        ${application.rejectionReason || 'Leider entspricht deine Bewerbung nicht unseren aktuellen Anforderungen.'}
+                                        ${application.rejection_reason || 'Leider entspricht deine Bewerbung nicht unseren aktuellen Anforderungen.'}
                                     </p>
                                     <p class="text-sm text-red-600 mt-2">
                                         Du kannst dich in 30 Tagen erneut bewerben.
@@ -1858,156 +2744,14 @@
             `;
             
             document.getElementById('applicationContent').innerHTML = content;
-            
-            // Add event listener for back button
             document.getElementById('backToLoginFromStatus').addEventListener('click', showLoginForm);
         }
 
-        function submitApplication() {
-            const roblox = document.getElementById('appRoblox').value;
-            const displayName = document.getElementById('appDisplayName').value;
-            const ageGroup = document.getElementById('appAgeGroup').value;
-            const division = document.getElementById('appDivision').value;
-            const appText = document.getElementById('appText').value;
-            
-            // Check cooldown
-            const lastApplicationTime = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_application_time');
-            if (lastApplicationTime) {
-                const timeSinceLastApp = Date.now() - parseInt(lastApplicationTime);
-                if (timeSinceLastApp < APP_CONFIG.applicationCooldown) {
-                    const daysLeft = Math.ceil((APP_CONFIG.applicationCooldown - timeSinceLastApp) / (1000 * 60 * 60 * 24));
-                    showNotification(`Du kannst erst in ${daysLeft} Tagen erneut eine Bewerbung einreichen.`, 'warning');
-                    return;
-                }
-            }
-            
-            // Create application
-            const application = {
-                id: 'app_' + Date.now(),
-                roblox_username: roblox,
-                display_name: displayName,
-                age_group: ageGroup,
-                preferred_division: division,
-                application_text: appText,
-                status: 'pending',
-                created_at: new Date().toISOString(),
-                application_date: new Date().toLocaleDateString('de-DE')
-            };
-            
-            // Store locally
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application', JSON.stringify(application));
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'application_status', 'pending');
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application_time', Date.now().toString());
-            
-            // Add to applications list
-            applications.push(application);
-            
-            // Show success
-            showNotification('Bewerbung erfolgreich eingereicht!', 'success');
-            setTimeout(() => {
-                showApplicationStatus();
-            }, 1500);
-        }
-
-        async function login() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!username || !password) {
-                showError('loginError', 'Bitte Benutzername und Passwort eingeben');
-                return;
-            }
-            
-            showLoading();
-            
-            try {
-                let user = null;
-                
-                // Check test users first
-                if (window.testUsers) {
-                    user = window.testUsers.find(u => 
-                        u.username === username && u.password === password
-                    );
-                }
-                
-                if (user) {
-                    // Create session
-                    const token = 'test_token_' + Date.now();
-                    const tokenExpiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
-                    
-                    // Store session
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(user));
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token', token);
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token_expiry', tokenExpiry.toString());
-                    
-                    // Handle login success
-                    handleLoginSuccess(user);
-                    hideError('loginError');
-                    
-                    showNotification('Erfolgreich eingeloggt', 'success');
-                } else {
-                    throw new Error('Falscher Benutzername oder Passwort');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showError('loginError', error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function handleLoginSuccess(user) {
-            currentUser = user;
-            
-            // Update UI
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            
-            // Update user display
-            updateUserDisplay(user);
-            
-            // Check permissions
-            checkPermissions(user.role);
-            
-            // Load initial data
-            loadDashboard();
-            loadMissions();
-            loadPersonnel();
-            
-            // Show dashboard
-            showPage('dashboard');
-        }
-
-        function logout() {
-            if (confirm('Möchtest du dich wirklich ausloggen?')) {
-                // Clear session
-                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
-                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-                
-                // Reset UI
-                currentUser = null;
-                document.getElementById('mainApp').classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('hidden');
-                
-                // Clear forms
-                document.getElementById('loginUsername').value = '';
-                document.getElementById('loginPassword').value = '';
-                hideError('loginError');
-                
-                showNotification('Erfolgreich ausgeloggt', 'info');
-            }
-        }
-
-        // ======================
-        // USER MANAGEMENT
-        // ======================
         function updateUserDisplay(user) {
-            // Avatar initials
             const initials = user.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
             document.getElementById('userAvatar').textContent = initials.substring(0, 2);
             document.getElementById('userInitials').textContent = initials.substring(0, 2);
             
-            // User info
             document.getElementById('userDisplayName').textContent = user.display_name;
             document.getElementById('userName').textContent = user.display_name;
             document.getElementById('userRank').textContent = user.rank;
@@ -2015,17 +2759,14 @@
             document.getElementById('userDivision').textContent = `Division: ${user.division}`;
             document.getElementById('userID').textContent = user.soldier_id;
             
-            // Stamina
             document.getElementById('staminaValue').textContent = user.stamina;
             document.getElementById('dashboardStamina').textContent = user.stamina;
             
-            // Military ID
             document.getElementById('idName').textContent = user.display_name;
             document.getElementById('idRank').textContent = user.rank;
             document.getElementById('idUnit').textContent = user.division;
             document.getElementById('idNumber').textContent = user.soldier_id;
             
-            // Service time
             if (user.service_start) {
                 const startDate = new Date(user.service_start);
                 const now = new Date();
@@ -2049,518 +2790,175 @@
             }
         }
 
-        // ======================
-        // DATA LOADING
-        // ======================
-        function loadDashboard() {
-            if (!currentUser) return;
-            
-            // Update military ID
-            updateUserDisplay(currentUser);
-            
-            // Load upcoming missions
-            const upcomingMissions = missions
-                .filter(m => m.status === 'upcoming' || m.status === 'active')
-                .slice(0, 3);
-            
-            const container = document.getElementById('upcomingMissions');
-            if (container) {
-                if (upcomingMissions.length > 0) {
-                    let html = '';
-                    upcomingMissions.forEach(mission => {
-                        const date = new Date(mission.date + 'T' + mission.time);
-                        const isParticipant = mission.participants.includes(currentUser.id);
-                        
-                        html += `
-                            <div class="mission-card p-4 rounded-ios-sm bg-white border border-ios-border">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h3 class="font-bold">${mission.title}</h3>
-                                        <p class="text-sm text-ios-text-secondary">${mission.location}</p>
-                                    </div>
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${
-                                        mission.difficulty === 'Hoch' ? 'bg-red-100 text-red-800' :
-                                        mission.difficulty === 'Mittel' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-green-100 text-green-800'
-                                    }">
-                                        ${mission.difficulty}
-                                    </span>
-                                </div>
-                                
-                                <p class="text-sm mb-3 line-clamp-2">${mission.description}</p>
-                                
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-ios-text-secondary">
-                                        <i class="far fa-calendar-alt mr-1"></i>
-                                        ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                    
-                                    ${isParticipant ? `
-                                        <span class="text-green-600 font-medium">
-                                            <i class="fas fa-check mr-1"></i>Eingeteilt
-                                        </span>
-                                    ` : `
-                                        <button onclick="joinMission('${mission.id}')" class="text-ios-primary hover:text-ios-primary/80 font-medium">
-                                            <i class="fas fa-plus mr-1"></i>Beitreten
-                                        </button>
-                                    `}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    
-                    // Add event listeners for join buttons
-                    container.querySelectorAll('button[onclick^="joinMission"]').forEach(button => {
-                        const missionId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
-                        button.addEventListener('click', function() {
-                            joinMission(missionId);
-                        });
-                        button.removeAttribute('onclick');
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="text-center py-8 text-ios-text-secondary">
-                            <i class="fas fa-calendar-alt text-3xl mb-3"></i>
-                            <p>Keine bevorstehenden Einsätze</p>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        function loadMissions(filter = 'all') {
-            let filteredMissions = missions;
-            
-            if (filter === 'active') {
-                filteredMissions = missions.filter(m => m.status === 'active');
-            } else if (filter === 'upcoming') {
-                filteredMissions = missions.filter(m => m.status === 'upcoming');
-            } else if (filter === 'completed') {
-                filteredMissions = missions.filter(m => m.status === 'completed');
-            }
-            
-            const container = document.getElementById('missionsList');
-            if (container) {
-                if (filteredMissions.length > 0) {
-                    let html = '';
-                    filteredMissions.forEach(mission => {
-                        const date = new Date(mission.date + 'T' + mission.time);
-                        const isParticipant = currentUser && mission.participants.includes(currentUser.id);
-                        const isCreator = currentUser && mission.created_by === currentUser.id;
-                        
-                        html += `
-                            <div class="mission-card p-5 rounded-ios-sm bg-white border border-ios-border hover:shadow-md transition-shadow">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 class="text-xl font-bold mb-1">${mission.title}</h3>
-                                        <div class="flex items-center gap-3 text-sm text-ios-text-secondary">
-                                            <span><i class="fas fa-map-marker-alt mr-1"></i>${mission.location}</span>
-                                            <span>•</span>
-                                            <span><i class="fas fa-tag mr-1"></i>${mission.type}</span>
-                                            <span>•</span>
-                                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                                mission.difficulty === 'Hoch' ? 'bg-red-100 text-red-800' :
-                                                mission.difficulty === 'Mittel' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-green-100 text-green-800'
-                                            }">
-                                                ${mission.difficulty}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                                        mission.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        mission.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                                        'bg-blue-100 text-blue-800'
-                                    }">
-                                        ${mission.status === 'active' ? 'Aktiv' : 
-                                          mission.status === 'completed' ? 'Abgeschlossen' : 'Bevorstehend'}
-                                    </span>
-                                </div>
-                                
-                                <p class="mb-4">${mission.description}</p>
-                                
-                                ${mission.plan ? `
-                                    <div class="mb-4 p-3 bg-gray-50 rounded-ios-sm">
-                                        <div class="font-medium mb-2">Ablauf:</div>
-                                        <div class="text-sm whitespace-pre-line">${mission.plan}</div>
-                                    </div>
-                                ` : ''}
-                                
-                                <div class="flex justify-between items-center pt-4 border-t border-ios-border">
-                                    <div class="text-ios-text-secondary text-sm">
-                                        <i class="far fa-calendar-alt mr-1"></i>
-                                        ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                                        ${mission.meeting_point ? ` • Treffpunkt: ${mission.meeting_point}` : ''}
-                                    </div>
-                                    
-                                    <div class="flex gap-2">
-                                        ${!isParticipant && mission.status !== 'completed' ? `
-                                            <button data-mission-id="${mission.id}" class="join-mission-btn text-ios-primary hover:text-ios-primary/80 font-medium">
-                                                <i class="fas fa-plus mr-1"></i>Beitreten
-                                            </button>
-                                        ` : isParticipant ? `
-                                            <span class="text-green-600 font-medium">
-                                                <i class="fas fa-check mr-1"></i>Eingeteilt
-                                            </span>
-                                        ` : ''}
-                                        
-                                        ${isCreator || currentUser?.role === 'admin' ? `
-                                            <button data-mission-id="${mission.id}" class="edit-mission-btn text-ios-warning hover:text-ios-warning/80">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button data-mission-id="${mission.id}" class="delete-mission-btn text-red-600 hover:text-red-800">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    
-                    // Add event listeners
-                    container.querySelectorAll('.join-mission-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const missionId = this.getAttribute('data-mission-id');
-                            joinMission(missionId);
-                        });
-                    });
-                    
-                    container.querySelectorAll('.edit-mission-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const missionId = this.getAttribute('data-mission-id');
-                            editMission(missionId);
-                        });
-                    });
-                    
-                    container.querySelectorAll('.delete-mission-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const missionId = this.getAttribute('data-mission-id');
-                            deleteMission(missionId);
-                        });
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="text-center py-12 text-ios-text-secondary">
-                            <i class="fas fa-crosshairs text-4xl mb-4"></i>
-                            <p class="text-lg mb-2">Keine Einsätze gefunden</p>
-                            <p class="text-sm">${filter === 'all' ? 'Es sind keine Einsätze verfügbar.' : 
-                                               filter === 'active' ? 'Keine aktiven Einsätze.' :
-                                               filter === 'upcoming' ? 'Keine bevorstehenden Einsätze.' :
-                                               'Keine abgeschlossenen Einsätze.'}</p>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        function loadPersonnel() {
-            const container = document.getElementById('personnelList');
-            if (!container) return;
-            
-            if (personnel.length > 0) {
-                let html = '';
-                personnel.forEach(soldier => {
-                    const isCurrentUser = currentUser && soldier.id === currentUser.id;
-                    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'leader');
-                    
-                    html += `
-                        <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-ios-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-bw-green to-bw-olive flex items-center justify-center text-white font-bold text-sm">
-                                    ${soldier.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                                </div>
-                                <div>
-                                    <div class="font-medium">
-                                        ${soldier.name}
-                                        ${isCurrentUser ? ' <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Du</span>' : ''}
-                                    </div>
-                                    <div class="text-ios-text-secondary text-sm flex items-center gap-2">
-                                        <span>${soldier.rank}</span>
-                                        <span>•</span>
-                                        <span>${soldier.division}</span>
-                                        <span>•</span>
-                                        <span class="flex items-center gap-1">
-                                            <i class="fas fa-fire ${soldier.stamina < 10 ? 'stamina-low' : soldier.stamina < 30 ? 'stamina-medium' : 'stamina-high'}"></i>
-                                            ${soldier.stamina} Ausdauer
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            ${isAdmin && !isCurrentUser ? `
-                                <div class="relative">
-                                    <button data-soldier-id="${soldier.id}" class="soldier-actions-btn text-ios-text-secondary hover:text-ios-text p-2">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-                
-                // Add event listeners for soldier actions
-                container.querySelectorAll('.soldier-actions-btn').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const soldierId = this.getAttribute('data-soldier-id');
-                        showSoldierActions(soldierId);
-                    });
-                });
-            } else {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-ios-text-secondary">
-                        <i class="fas fa-users text-4xl mb-4"></i>
-                        <p class="text-lg mb-2">Kein Personal gefunden</p>
-                        <p class="text-sm">Es sind keine Soldaten registriert.</p>
-                    </div>
-                `;
-            }
-        }
-
         function filterPersonnel() {
             const search = document.getElementById('personnelSearch').value.toLowerCase();
             const division = document.getElementById('divisionFilter').value;
             const rank = document.getElementById('rankFilter').value;
             
-            const filtered = personnel.filter(soldier => {
+            const filtered = personnel.filter(user => {
                 const matchesSearch = !search || 
-                    soldier.name.toLowerCase().includes(search) ||
-                    soldier.rank.toLowerCase().includes(search) ||
-                    soldier.soldier_id.toLowerCase().includes(search);
+                    user.display_name.toLowerCase().includes(search) ||
+                    user.rank.toLowerCase().includes(search) ||
+                    user.soldier_id.toLowerCase().includes(search);
                 
-                const matchesDivision = !division || soldier.division === division;
-                const matchesRank = !rank || soldier.rank === rank;
+                const matchesDivision = !division || user.division === division;
+                const matchesRank = !rank || user.rank === rank;
                 
                 return matchesSearch && matchesDivision && matchesRank;
             });
             
             const container = document.getElementById('personnelList');
             if (container) {
-                if (filtered.length > 0) {
-                    let html = '';
-                    filtered.forEach(soldier => {
-                        const isCurrentUser = currentUser && soldier.id === currentUser.id;
-                        const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'leader');
-                        
-                        html += `
-                            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-ios-sm">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-bw-green to-bw-olive flex items-center justify-center text-white font-bold text-sm">
-                                        ${soldier.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                                    </div>
-                                    <div>
-                                        <div class="font-medium">
-                                            ${soldier.name}
-                                            ${isCurrentUser ? ' <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Du</span>' : ''}
-                                        </div>
-                                        <div class="text-ios-text-secondary text-sm flex items-center gap-2">
-                                            <span>${soldier.rank}</span>
-                                            <span>•</span>
-                                            <span>${soldier.division}</span>
-                                            <span>•</span>
-                                            <span class="flex items-center gap-1">
-                                                <i class="fas fa-fire ${soldier.stamina < 10 ? 'stamina-low' : soldier.stamina < 30 ? 'stamina-medium' : 'stamina-high'}"></i>
-                                                ${soldier.stamina} Ausdauer
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                ${isAdmin && !isCurrentUser ? `
-                                    <div class="relative">
-                                        <button data-soldier-id="${soldier.id}" class="soldier-actions-btn text-ios-text-secondary hover:text-ios-text p-2">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    
-                    // Add event listeners for soldier actions
-                    container.querySelectorAll('.soldier-actions-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const soldierId = this.getAttribute('data-soldier-id');
-                            showSoldierActions(soldierId);
-                        });
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="text-center py-8 text-ios-text-secondary">
-                            <i class="fas fa-search text-2xl mb-3"></i>
-                            <p>Keine passenden Soldaten gefunden</p>
-                        </div>
-                    `;
-                }
+                renderPersonnel(filtered, container);
             }
         }
 
-        function loadManagement() {
-            // Update pending applications count
-            const pendingCount = applications.filter(app => app.status === 'pending').length;
-            document.getElementById('pendingAppsCount2').textContent = pendingCount;
+        function showCreateMissionModal() {
+            document.getElementById('createMissionModal').classList.remove('hidden');
+        }
+
+        function hideCreateMissionModal() {
+            document.getElementById('createMissionModal').classList.add('hidden');
+            document.getElementById('missionError').classList.add('hidden');
+        }
+
+        function showCreateUserModal() {
+            document.getElementById('createUserModal').classList.remove('hidden');
+        }
+
+        function hideCreateUserModal() {
+            document.getElementById('createUserModal').classList.add('hidden');
+            document.getElementById('createUserError').classList.add('hidden');
+        }
+
+        function showAcceptApplication(appId) {
+            const app = applications.find(a => a.id === appId);
+            if (!app) return;
             
-            // Load recent activity
-            const activityContainer = document.getElementById('managementActivity');
-            if (activityContainer) {
-                // Simplified activity log
-                const activities = [
-                    { action: 'Einsatz erstellt', user: 'Oberst Schmidt', time: 'Heute, 14:30' },
-                    { action: 'Bewerbung angenommen', user: 'Lisa Müller', time: 'Gestern, 16:45' },
-                    { action: 'Ausdauer aktualisiert', user: 'Thomas Weber', time: 'Gestern, 10:20' }
-                ];
+            document.getElementById('acceptAppInfo').innerHTML = `
+                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
+                    <p class="font-medium">${app.display_name}</p>
+                    <p class="text-sm text-ios-text-secondary">Roblox: ${app.roblox_username}</p>
+                    <p class="text-sm text-ios-text-secondary">Beworben für: ${app.preferred_division}</p>
+                </div>
+            `;
+            
+            document.getElementById('acceptApplicationModal').classList.remove('hidden');
+            currentAcceptAppId = appId;
+        }
+
+        function hideAcceptApplicationModal() {
+            document.getElementById('acceptApplicationModal').classList.add('hidden');
+            document.getElementById('acceptError').classList.add('hidden');
+            currentAcceptAppId = null;
+        }
+
+        function showRejectApplication(appId) {
+            const app = applications.find(a => a.id === appId);
+            if (!app) return;
+            
+            document.getElementById('rejectAppInfo').innerHTML = `
+                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
+                    <p class="font-medium">${app.display_name}</p>
+                    <p class="text-sm text-ios-text-secondary">Roblox: ${app.roblox_username}</p>
+                </div>
+            `;
+            
+            document.getElementById('rejectApplicationModal').classList.remove('hidden');
+            currentRejectAppId = appId;
+        }
+
+        function hideRejectApplicationModal() {
+            document.getElementById('rejectApplicationModal').classList.add('hidden');
+            document.getElementById('rejectError').classList.add('hidden');
+            currentRejectAppId = null;
+        }
+
+        function showSoldierActions(soldierId) {
+            const soldier = personnel.find(p => p.id === soldierId);
+            if (!soldier) return;
+            
+            document.getElementById('soldierActionsTitle').textContent = `Aktionen für ${soldier.display_name}`;
+            
+            const actionsHtml = `
+                <button data-action="promote" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <i class="fas fa-star text-yellow-500"></i>
+                    <span>Befördern</span>
+                </button>
                 
-                let html = '';
-                activities.forEach(activity => {
-                    html += `
-                        <div class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-ios-sm">
-                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                <i class="fas fa-history text-gray-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium">${activity.action}</p>
-                                <p class="text-sm text-ios-text-secondary">${activity.user} • ${activity.time}</p>
-                            </div>
-                        </div>
-                    `;
+                <button data-action="add-stamina" data-amount="1" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <i class="fas fa-plus text-green-500"></i>
+                    <span>+1 Ausdauer (Pushups)</span>
+                </button>
+                
+                <button data-action="add-stamina" data-amount="2" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <i class="fas fa-plus text-green-500"></i>
+                    <span>+2 Ausdauer (Klimmzüge)</span>
+                </button>
+                
+                <button data-action="add-stamina" data-amount="3" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <i class="fas fa-plus text-green-500"></i>
+                    <span>+3 Ausdauer (5km Lauf)</span>
+                </button>
+            `;
+            
+            document.getElementById('soldierActionsContent').innerHTML = actionsHtml;
+            document.getElementById('soldierActionsModal').classList.remove('hidden');
+            currentSoldierId = soldierId;
+            
+            document.querySelectorAll('#soldierActionsContent button[data-action]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    const soldierId = this.getAttribute('data-soldier-id');
+                    
+                    if (action === 'promote') {
+                        promoteSoldier(soldierId);
+                    } else if (action === 'add-stamina') {
+                        const amount = parseInt(this.getAttribute('data-amount'));
+                        addStamina(soldierId, amount);
+                    }
                 });
-                activityContainer.innerHTML = html;
-            }
+            });
         }
 
-        function loadApplications(filter = 'pending') {
-            let filteredApps = applications;
-            
-            if (filter !== 'all') {
-                filteredApps = applications.filter(app => app.status === filter);
-            }
-            
-            // Update counts
-            const pendingCount = applications.filter(app => app.status === 'pending').length;
-            document.getElementById('pendingCount').textContent = pendingCount;
-            const pendingAppsBadge = document.getElementById('pendingAppsBadge');
-            if (pendingAppsBadge) {
-                pendingAppsBadge.textContent = pendingCount;
-                
-                if (pendingCount > 0) {
-                    pendingAppsBadge.classList.remove('hidden');
-                } else {
-                    pendingAppsBadge.classList.add('hidden');
-                }
-            }
-            
-            const container = document.getElementById('applicationsList');
-            if (container) {
-                if (filteredApps.length > 0) {
-                    let html = '';
-                    filteredApps.forEach(app => {
-                        html += `
-                            <div class="border border-ios-border rounded-ios-sm p-5">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 class="font-bold text-lg">${app.display_name}</h3>
-                                        <p class="text-ios-text-secondary">
-                                            <i class="fab fa-roblox mr-1"></i>${app.roblox_username}
-                                            <span class="mx-2">•</span>
-                                            <i class="fas fa-calendar-alt mr-1"></i>${app.application_date}
-                                            <span class="mx-2">•</span>
-                                            ${app.age_group} • ${app.preferred_division}
-                                        </p>
-                                    </div>
-                                    <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                                        app.status === 'pending' ? 'status-pending' :
-                                        app.status === 'accepted' ? 'status-accepted' :
-                                        'status-rejected'
-                                    }">
-                                        ${app.status === 'pending' ? 'Ausstehend' :
-                                          app.status === 'accepted' ? 'Angenommen' : 'Abgelehnt'}
-                                    </span>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <p class="text-sm font-medium mb-2">Bewerbungstext:</p>
-                                    <div class="bg-gray-50 p-3 rounded-ios-sm whitespace-pre-line">${app.application_text}</div>
-                                </div>
-                                
-                                ${app.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
-                                    <div class="flex gap-3 pt-4 border-t border-ios-border">
-                                        <button data-app-id="${app.id}" class="accept-app-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
-                                            <i class="fas fa-check mr-2"></i>Annehmen
-                                        </button>
-                                        <button data-app-id="${app.id}" class="reject-app-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
-                                            <i class="fas fa-times mr-2"></i>Ablehnen
-                                        </button>
-                                        <button data-app-id="${app.id}" class="view-app-btn flex-1 bg-ios-primary text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-primary/90">
-                                            <i class="fas fa-eye mr-2"></i>Details
-                                        </button>
-                                    </div>
-                                ` : ''}
-                                
-                                ${app.status === 'accepted' ? `
-                                    <div class="bg-green-50 border border-green-200 rounded-ios-sm p-3 mt-3">
-                                        <p class="font-medium text-green-800 mb-1">Aufgenommen als Schütze</p>
-                                        <p class="text-sm text-green-600">Account wurde erstellt und Bewerber wurde benachrichtigt.</p>
-                                    </div>
-                                ` : ''}
-                                
-                                ${app.status === 'rejected' ? `
-                                    <div class="bg-red-50 border border-red-200 rounded-ios-sm p-3 mt-3">
-                                        <p class="font-medium text-red-800 mb-1">Abgelehnt</p>
-                                        <p class="text-sm text-red-600">Bewerber wurde über die Ablehnung informiert.</p>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    
-                    // Add event listeners for application buttons
-                    container.querySelectorAll('.accept-app-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const appId = this.getAttribute('data-app-id');
-                            showAcceptApplication(appId);
-                        });
-                    });
-                    
-                    container.querySelectorAll('.reject-app-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const appId = this.getAttribute('data-app-id');
-                            showRejectApplication(appId);
-                        });
-                    });
-                    
-                    container.querySelectorAll('.view-app-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const appId = this.getAttribute('data-app-id');
-                            viewApplicationDetails(appId);
-                        });
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="text-center py-12 text-ios-text-secondary">
-                            <i class="fas fa-file-alt text-4xl mb-4"></i>
-                            <p class="text-lg mb-2">Keine Bewerbungen gefunden</p>
-                            <p class="text-sm">${filter === 'pending' ? 'Keine ausstehenden Bewerbungen.' :
-                                               filter === 'accepted' ? 'Keine angenommenen Bewerbungen.' :
-                                               'Keine abgelehnten Bewerbungen.'}</p>
-                        </div>
-                    `;
-                }
-            }
+        function hideSoldierActionsModal() {
+            document.getElementById('soldierActionsModal').classList.add('hidden');
+            currentSoldierId = null;
         }
 
-        function loadSettings() {
+        function showMilitaryID() {
             if (!currentUser) return;
             
-            // Update profile form
+            document.getElementById('modalName').textContent = currentUser.display_name;
+            document.getElementById('modalRank').textContent = currentUser.rank;
+            document.getElementById('modalUnit').textContent = currentUser.division;
+            const soldierIdParts = currentUser.soldier_id.split('-');
+            document.getElementById('modalPersonnelID').textContent = soldierIdParts.length > 1 ? soldierIdParts[1] : '0000';
+            document.getElementById('modalPersonnelNumber').textContent = currentUser.soldier_id;
+            document.getElementById('modalIDNumber').textContent = currentUser.soldier_id;
+            
+            if (currentUser.service_start) {
+                const startDate = new Date(currentUser.service_start);
+                document.getElementById('modalStartDate').textContent = startDate.toLocaleDateString('de-DE');
+                
+                const validUntil = new Date(startDate);
+                validUntil.setFullYear(validUntil.getFullYear() + 1);
+                document.getElementById('modalValidUntil').textContent = validUntil.toLocaleDateString('de-DE');
+            }
+            
+            document.getElementById('militaryIDModal').classList.remove('hidden');
+        }
+
+        function hideMilitaryID() {
+            document.getElementById('militaryIDModal').classList.add('hidden');
+        }
+
+        async function loadSettings() {
+            if (!currentUser) return;
+            
             document.getElementById('displayNameInput').value = currentUser.display_name;
             document.getElementById('robloxUsername').value = currentUser.roblox_username || '';
             
-            // Load application status
             const statusContainer = document.getElementById('applicationStatus');
             if (statusContainer) {
                 const hasApplication = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'application_status');
@@ -2621,7 +3019,6 @@
                         </div>
                     `;
                     
-                    // Add event listener for new application button
                     document.getElementById('newApplicationBtn').addEventListener('click', function() {
                         document.getElementById('mainApp').classList.add('hidden');
                         document.getElementById('loginScreen').classList.remove('hidden');
@@ -2631,544 +3028,6 @@
             }
         }
 
-        // ======================
-        // MISSION FUNCTIONS
-        // ======================
-        function showCreateMissionModal() {
-            document.getElementById('createMissionModal').classList.remove('hidden');
-        }
-
-        function hideCreateMissionModal() {
-            document.getElementById('createMissionModal').classList.add('hidden');
-            document.getElementById('missionError').classList.add('hidden');
-        }
-
-        function createMission() {
-            const title = document.getElementById('missionTitle').value;
-            const description = document.getElementById('missionDescription').value;
-            const location = document.getElementById('missionLocation').value;
-            const meetingPoint = document.getElementById('missionMeetingPoint').value;
-            const type = document.getElementById('missionType').value;
-            const difficulty = document.getElementById('missionDifficulty').value;
-            const date = document.getElementById('missionDate').value;
-            const time = document.getElementById('missionTime').value;
-            const plan = document.getElementById('missionPlan').value;
-            
-            if (!title || !description || !location || !date || !time) {
-                document.getElementById('missionError').classList.remove('hidden');
-                return;
-            }
-            
-            const newMission = {
-                id: 'mission_' + Date.now(),
-                title: title,
-                description: description,
-                location: location,
-                meeting_point: meetingPoint,
-                type: type,
-                difficulty: difficulty,
-                date: date,
-                time: time,
-                plan: plan,
-                status: 'upcoming',
-                created_by: currentUser.id,
-                participants: [],
-                created_at: new Date().toISOString()
-            };
-            
-            missions.push(newMission);
-            hideCreateMissionModal();
-            
-            // Reset form
-            document.getElementById('missionTitle').value = '';
-            document.getElementById('missionDescription').value = '';
-            document.getElementById('missionLocation').value = '';
-            document.getElementById('missionMeetingPoint').value = '';
-            document.getElementById('missionPlan').value = '';
-            
-            showNotification('Einsatz erfolgreich erstellt', 'success');
-            loadMissions();
-            loadDashboard();
-        }
-
-        function joinMission(missionId) {
-            const mission = missions.find(m => m.id === missionId);
-            if (!mission) return;
-            
-            if (!mission.participants.includes(currentUser.id)) {
-                mission.participants.push(currentUser.id);
-                showNotification(`Du bist dem Einsatz "${mission.title}" beigetreten`, 'success');
-                loadMissions();
-                loadDashboard();
-            } else {
-                showNotification('Du bist bereits diesem Einsatz zugeteilt', 'info');
-            }
-        }
-
-        function editMission(missionId) {
-            showNotification('Bearbeitungsfunktion wird noch implementiert', 'info');
-        }
-
-        function deleteMission(missionId) {
-            if (confirm('Möchtest du diesen Einsatz wirklich löschen?')) {
-                missions = missions.filter(m => m.id !== missionId);
-                showNotification('Einsatz gelöscht', 'success');
-                loadMissions();
-            }
-        }
-
-        // ======================
-        // APPLICATION MANAGEMENT
-        // ======================
-        function showAcceptApplication(appId) {
-            const app = applications.find(a => a.id === appId);
-            if (!app) return;
-            
-            document.getElementById('acceptAppInfo').innerHTML = `
-                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                    <p class="font-medium">${app.display_name}</p>
-                    <p class="text-sm text-ios-text-secondary">Roblox: ${app.roblox_username}</p>
-                    <p class="text-sm text-ios-text-secondary">Beworben für: ${app.preferred_division}</p>
-                </div>
-            `;
-            
-            document.getElementById('acceptApplicationModal').classList.remove('hidden');
-            currentAcceptAppId = appId;
-        }
-
-        function hideAcceptApplicationModal() {
-            document.getElementById('acceptApplicationModal').classList.add('hidden');
-            document.getElementById('acceptError').classList.add('hidden');
-            currentAcceptAppId = null;
-        }
-
-        function acceptApplicationConfirm() {
-            const username = document.getElementById('acceptUsername').value;
-            const password = document.getElementById('acceptPassword').value;
-            const rank = document.getElementById('acceptRank').value;
-            const message = document.getElementById('acceptMessage').value;
-            
-            if (!username || !password) {
-                document.getElementById('acceptError').classList.remove('hidden');
-                return;
-            }
-            
-            const app = applications.find(a => a.id === currentAcceptAppId);
-            
-            if (app) {
-                // Update application status
-                app.status = 'accepted';
-                
-                // Create new user account
-                const newUserId = 'user_' + Date.now();
-                const newSoldierId = 'BW-' + (1000 + personnel.length).toString().padStart(4, '0');
-                
-                const newUser = {
-                    id: newUserId,
-                    username: username,
-                    password: password,
-                    display_name: app.display_name,
-                    rank: rank,
-                    division: app.preferred_division,
-                    role: 'soldier',
-                    stamina: 0,
-                    soldier_id: newSoldierId,
-                    service_start: new Date().toISOString().split('T')[0],
-                    roblox_username: app.roblox_username
-                };
-                
-                // Add to personnel
-                personnel.push({
-                    id: newUserId,
-                    name: app.display_name,
-                    rank: rank,
-                    division: app.preferred_division,
-                    stamina: 0,
-                    soldier_id: newSoldierId,
-                    role: 'soldier',
-                    username: username
-                });
-                
-                // Also add to test users for login
-                if (window.testUsers) {
-                    window.testUsers.push(newUser);
-                }
-                
-                // Update local storage if this is the current user's application
-                const lastApp = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_application');
-                if (lastApp) {
-                    try {
-                        const savedApp = JSON.parse(lastApp);
-                        if (savedApp.roblox_username === app.roblox_username) {
-                            savedApp.username = username;
-                            savedApp.password = password;
-                            savedApp.startDate = new Date(Date.now() + 86400000).toLocaleDateString('de-DE');
-                            savedApp.startTime = '08:00';
-                            savedApp.meetingPoint = 'Kaserne Haupttor';
-                            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application', JSON.stringify(savedApp));
-                            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'application_status', 'accepted');
-                        }
-                    } catch (e) {
-                        console.error('Error updating local storage:', e);
-                    }
-                }
-                
-                hideAcceptApplicationModal();
-                showNotification('Bewerbung angenommen und Account erstellt', 'success');
-                loadApplications();
-                loadManagement();
-                
-                // Show credentials
-                setTimeout(() => {
-                    alert(`Account erstellt für ${app.display_name}:\n\nUsername: ${username}\nPasswort: ${password}\n\nDiese Daten bitte an den Bewerber weitergeben.`);
-                }, 500);
-            }
-        }
-
-        function showRejectApplication(appId) {
-            const app = applications.find(a => a.id === appId);
-            if (!app) return;
-            
-            document.getElementById('rejectAppInfo').innerHTML = `
-                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                    <p class="font-medium">${app.display_name}</p>
-                    <p class="text-sm text-ios-text-secondary">Roblox: ${app.roblox_username}</p>
-                </div>
-            `;
-            
-            document.getElementById('rejectApplicationModal').classList.remove('hidden');
-            currentRejectAppId = appId;
-        }
-
-        function hideRejectApplicationModal() {
-            document.getElementById('rejectApplicationModal').classList.add('hidden');
-            document.getElementById('rejectError').classList.add('hidden');
-            currentRejectAppId = null;
-        }
-
-        function rejectApplicationConfirm() {
-            const reason = document.getElementById('rejectReason').value;
-            
-            if (!reason) {
-                document.getElementById('rejectError').classList.remove('hidden');
-                return;
-            }
-            
-            const app = applications.find(a => a.id === currentRejectAppId);
-            
-            if (app) {
-                // Update application status
-                app.status = 'rejected';
-                app.rejectionReason = reason;
-                
-                // Update local storage if this is the current user's application
-                const lastApp = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_application');
-                if (lastApp) {
-                    try {
-                        const savedApp = JSON.parse(lastApp);
-                        if (savedApp.roblox_username === app.roblox_username) {
-                            savedApp.rejectionReason = reason;
-                            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_application', JSON.stringify(savedApp));
-                            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'application_status', 'rejected');
-                        }
-                    } catch (e) {
-                        console.error('Error updating local storage:', e);
-                    }
-                }
-                
-                hideRejectApplicationModal();
-                showNotification('Bewerbung abgelehnt', 'info');
-                loadApplications();
-                loadManagement();
-            }
-        }
-
-        function viewApplicationDetails(appId) {
-            const app = applications.find(a => a.id === appId);
-            if (app) {
-                alert(`Bewerbungsdetails:\n\nName: ${app.display_name}\nRoblox: ${app.roblox_username}\nAltersgruppe: ${app.age_group}\nDivision: ${app.preferred_division}\n\nBewerbungstext:\n${app.application_text}`);
-            }
-        }
-
-        // ======================
-        // SOLDIER ACTIONS
-        // ======================
-        function showSoldierActions(soldierId) {
-            const soldier = personnel.find(p => p.id === soldierId);
-            if (!soldier) return;
-            
-            document.getElementById('soldierActionsTitle').textContent = `Aktionen für ${soldier.name}`;
-            
-            const actionsHtml = `
-                <button data-action="promote" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                    <i class="fas fa-star text-yellow-500"></i>
-                    <span>Befördern</span>
-                </button>
-                
-                <button data-action="add-stamina" data-amount="1" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                    <i class="fas fa-plus text-green-500"></i>
-                    <span>+1 Ausdauer (Pushups)</span>
-                </button>
-                
-                <button data-action="add-stamina" data-amount="2" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                    <i class="fas fa-plus text-green-500"></i>
-                    <span>+2 Ausdauer (Klimmzüge)</span>
-                </button>
-                
-                <button data-action="add-stamina" data-amount="3" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                    <i class="fas fa-plus text-green-500"></i>
-                    <span>+3 Ausdauer (5km Lauf)</span>
-                </button>
-                
-                <button data-action="edit" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                    <i class="fas fa-edit text-blue-500"></i>
-                    <span>Bearbeiten</span>
-                </button>
-            `;
-            
-            document.getElementById('soldierActionsContent').innerHTML = actionsHtml;
-            document.getElementById('soldierActionsModal').classList.remove('hidden');
-            currentSoldierId = soldierId;
-            
-            // Add event listeners for action buttons
-            document.querySelectorAll('#soldierActionsContent button[data-action]').forEach(button => {
-                button.addEventListener('click', function() {
-                    const action = this.getAttribute('data-action');
-                    const soldierId = this.getAttribute('data-soldier-id');
-                    
-                    if (action === 'promote') {
-                        promoteSoldier(soldierId);
-                    } else if (action === 'add-stamina') {
-                        const amount = parseInt(this.getAttribute('data-amount'));
-                        addStamina(soldierId, amount);
-                    } else if (action === 'edit') {
-                        editSoldier(soldierId);
-                    }
-                });
-            });
-        }
-
-        function hideSoldierActionsModal() {
-            document.getElementById('soldierActionsModal').classList.add('hidden');
-            currentSoldierId = null;
-        }
-
-        function promoteSoldier(soldierId) {
-            const soldier = personnel.find(p => p.id === soldierId);
-            if (!soldier) return;
-            
-            const currentRankIndex = APP_CONFIG.ranks.indexOf(soldier.rank);
-            if (currentRankIndex === -1 || currentRankIndex >= APP_CONFIG.ranks.length - 1) {
-                showNotification('Beförderung nicht möglich', 'warning');
-                return;
-            }
-            
-            const newRank = APP_CONFIG.ranks[currentRankIndex + 1];
-            const confirmMsg = `${soldier.name} von ${soldier.rank} zu ${newRank} befördern?`;
-            
-            if (confirm(confirmMsg)) {
-                soldier.rank = newRank;
-                
-                // Also update in test users
-                if (window.testUsers) {
-                    const testUser = window.testUsers.find(u => u.id === soldierId);
-                    if (testUser) {
-                        testUser.rank = newRank;
-                    }
-                }
-                
-                // Update current user if it's them
-                if (currentUser && currentUser.id === soldierId) {
-                    currentUser.rank = newRank;
-                    updateUserDisplay(currentUser);
-                }
-                
-                hideSoldierActionsModal();
-                showNotification(`${soldier.name} zu ${newRank} befördert`, 'success');
-                loadPersonnel();
-            }
-        }
-
-        function addStamina(soldierId, amount) {
-            const soldier = personnel.find(p => p.id === soldierId);
-            if (!soldier) return;
-            
-            const exerciseNames = {
-                1: 'Pushups (Liegestütze)',
-                2: 'Klimmzüge',
-                3: '5km Lauf'
-            };
-            
-            const exerciseName = exerciseNames[amount] || 'Training';
-            
-            if (confirm(`${soldier.name} ${amount} Ausdauer für ${exerciseName} gutschreiben?`)) {
-                soldier.stamina += amount;
-                
-                // Also update in test users
-                if (window.testUsers) {
-                    const testUser = window.testUsers.find(u => u.id === soldierId);
-                    if (testUser) {
-                        testUser.stamina = soldier.stamina;
-                    }
-                }
-                
-                // Update current user if it's them
-                if (currentUser && currentUser.id === soldierId) {
-                    currentUser.stamina = soldier.stamina;
-                    updateUserDisplay(currentUser);
-                }
-                
-                hideSoldierActionsModal();
-                showNotification(`${soldier.name}: +${amount} Ausdauer für ${exerciseName}`, 'success');
-                loadPersonnel();
-            }
-        }
-
-        function editSoldier(soldierId) {
-            showNotification('Bearbeitungsfunktion wird noch implementiert', 'info');
-        }
-
-        // ======================
-        // MILITARY ID
-        // ======================
-        function showMilitaryID() {
-            if (!currentUser) return;
-            
-            document.getElementById('modalName').textContent = currentUser.display_name;
-            document.getElementById('modalRank').textContent = currentUser.rank;
-            document.getElementById('modalUnit').textContent = currentUser.division;
-            const soldierIdParts = currentUser.soldier_id.split('-');
-            document.getElementById('modalPersonnelID').textContent = soldierIdParts.length > 1 ? soldierIdParts[1] : '0000';
-            document.getElementById('modalPersonnelNumber').textContent = currentUser.soldier_id;
-            document.getElementById('modalIDNumber').textContent = currentUser.soldier_id;
-            
-            if (currentUser.service_start) {
-                const startDate = new Date(currentUser.service_start);
-                document.getElementById('modalStartDate').textContent = startDate.toLocaleDateString('de-DE');
-                
-                // Valid for 1 year from start
-                const validUntil = new Date(startDate);
-                validUntil.setFullYear(validUntil.getFullYear() + 1);
-                document.getElementById('modalValidUntil').textContent = validUntil.toLocaleDateString('de-DE');
-            }
-            
-            document.getElementById('militaryIDModal').classList.remove('hidden');
-        }
-
-        function hideMilitaryID() {
-            document.getElementById('militaryIDModal').classList.add('hidden');
-        }
-
-        // ======================
-        // USER MANAGEMENT
-        // ======================
-        function showCreateUserModal() {
-            document.getElementById('createUserModal').classList.remove('hidden');
-        }
-
-        function hideCreateUserModal() {
-            document.getElementById('createUserModal').classList.add('hidden');
-            document.getElementById('createUserError').classList.add('hidden');
-        }
-
-        function createUser() {
-            const name = document.getElementById('createUserName').value;
-            const username = document.getElementById('createUserUsername').value;
-            const password = document.getElementById('createUserPassword').value;
-            const rank = document.getElementById('createUserRank').value;
-            const division = document.getElementById('createUserDivision').value;
-            const role = document.getElementById('createUserRole').value;
-            
-            if (!name || !username || !password || !rank || !division) {
-                document.getElementById('createUserError').classList.remove('hidden');
-                return;
-            }
-            
-            const newUserId = 'user_' + Date.now();
-            const newSoldierId = 'BW-' + (1000 + personnel.length).toString().padStart(4, '0');
-            
-            const newUser = {
-                id: newUserId,
-                username: username,
-                password: password,
-                display_name: name,
-                rank: rank,
-                division: division,
-                role: role,
-                stamina: 0,
-                soldier_id: newSoldierId,
-                service_start: new Date().toISOString().split('T')[0]
-            };
-            
-            // Add to personnel
-            personnel.push({
-                id: newUserId,
-                name: name,
-                rank: rank,
-                division: division,
-                stamina: 0,
-                soldier_id: newSoldierId,
-                role: role,
-                username: username
-            });
-            
-            // Also add to test users for login
-            if (window.testUsers) {
-                window.testUsers.push(newUser);
-            }
-            
-            hideCreateUserModal();
-            showNotification(`Account für ${name} erstellt`, 'success');
-            loadPersonnel();
-            
-            // Show credentials
-            setTimeout(() => {
-                alert(`Account erstellt:\n\nName: ${name}\nUsername: ${username}\nPasswort: ${password}\nRang: ${rank}\nDivision: ${division}\nRolle: ${role}`);
-            }, 500);
-        }
-
-        function updateProfile() {
-            if (!currentUser) return;
-            
-            const displayName = document.getElementById('displayNameInput').value;
-            const robloxUsername = document.getElementById('robloxUsername').value;
-            
-            if (!displayName) {
-                showNotification('Bitte einen Namen eingeben', 'warning');
-                return;
-            }
-            
-            // Update current user
-            currentUser.display_name = displayName;
-            currentUser.roblox_username = robloxUsername;
-            
-            // Update in personnel
-            const personnelIndex = personnel.findIndex(p => p.id === currentUser.id);
-            if (personnelIndex !== -1) {
-                personnel[personnelIndex].name = displayName;
-            }
-            
-            // Update in test users
-            if (window.testUsers) {
-                const testUserIndex = window.testUsers.findIndex(u => u.id === currentUser.id);
-                if (testUserIndex !== -1) {
-                    window.testUsers[testUserIndex].display_name = displayName;
-                    window.testUsers[testUserIndex].roblox_username = robloxUsername;
-                }
-            }
-            
-            // Update local storage
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(currentUser));
-            
-            // Update UI
-            updateUserDisplay(currentUser);
-            
-            showNotification('Profil aktualisiert', 'success');
-        }
-
-        // ======================
-        // UTILITY FUNCTIONS
-        // ======================
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             if (element) {
@@ -3223,12 +3082,10 @@
             
             container.appendChild(notification);
             
-            // Add event listener for close button
             notification.querySelector('.close-notification-btn').addEventListener('click', function() {
                 notification.remove();
             });
             
-            // Auto-remove after 5 seconds
             setTimeout(() => {
                 const notif = document.getElementById(id);
                 if (notif) {
@@ -3247,9 +3104,8 @@
         }
 
         // ======================
-        // DATABASE SETUP
+        // DATABASE SETUP SQL
         // ======================
-        // This SQL should be run in Supabase SQL Editor
         const databaseSetupSQL = `
         -- Create tables for Bundeswehr RP System
         
@@ -3257,7 +3113,7 @@
         CREATE TABLE IF NOT EXISTS users (
             id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
+            password VARCHAR(255) NOT NULL, -- In production, use proper hashing!
             display_name VARCHAR(100) NOT NULL,
             rank VARCHAR(50) DEFAULT 'Schütze',
             division VARCHAR(50) DEFAULT 'Heer',
@@ -3267,7 +3123,8 @@
             roblox_username VARCHAR(100),
             service_start DATE DEFAULT CURRENT_DATE,
             last_login TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
         );
         
         -- Applications table
@@ -3282,7 +3139,8 @@
             rejection_reason TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
             reviewed_by UUID REFERENCES users(id),
-            reviewed_at TIMESTAMP
+            reviewed_at TIMESTAMP,
+            application_date VARCHAR(50)
         );
         
         -- Missions table
@@ -3299,7 +3157,8 @@
             plan TEXT,
             status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'active', 'completed', 'cancelled')),
             created_by UUID REFERENCES users(id) NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
         );
         
         -- Mission participants
@@ -3310,30 +3169,39 @@
             PRIMARY KEY (mission_id, user_id)
         );
         
-        -- Activity log
-        CREATE TABLE IF NOT EXISTS activity_log (
-            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-            user_id UUID REFERENCES users(id),
-            action_type VARCHAR(50) NOT NULL,
-            description TEXT NOT NULL,
-            details JSONB,
-            created_at TIMESTAMP DEFAULT NOW()
-        );
-        
         -- Create test admin account (password: bundeswehr123)
-        INSERT INTO users (username, password_hash, display_name, rank, division, role, soldier_id) 
+        INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
         VALUES (
-            'admin_test',
-            '$2b$10$YourHashedPasswordHere', -- Replace with actual bcrypt hash
+            'admin',
+            'bundeswehr123',
             'Oberst Markus Schmidt',
             'Oberst',
             'Heer',
             'admin',
             'BW-0001'
         ) ON CONFLICT (username) DO NOTHING;
+        
+        -- Create RLS policies (enable in Supabase dashboard)
+        ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE mission_participants ENABLE ROW LEVEL SECURITY;
+        
+        -- Basic policies
+        CREATE POLICY "Enable read access for all users" ON users
+            FOR SELECT USING (true);
+            
+        CREATE POLICY "Enable read access for all applications" ON applications
+            FOR SELECT USING (true);
+            
+        CREATE POLICY "Enable insert for applications" ON applications
+            FOR INSERT WITH CHECK (true);
+            
+        CREATE POLICY "Enable read access for all missions" ON missions
+            FOR SELECT USING (true);
         `;
 
-        // Make SQL available globally for copy-paste
+        // Make SQL available globally
         window.databaseSetupSQL = databaseSetupSQL;
         console.log('Database setup SQL available at window.databaseSetupSQL');
     </script>
