@@ -982,1237 +982,1236 @@
 
     <!-- Main JavaScript -->
     <script>
+    // ======================
+    // SUPABASE INITIALISIERUNG
+    // ======================
+    const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+    const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
 
+    // Supabase Client erstellen
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-        // ======================
-        // SUPABASE INITIALISIERUNG
-        // ======================
-        const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
-        const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
+    
+    // ======================
+    // APP STATE & CONFIGURATION
+    // ======================
+    const APP_CONFIG = {
+        appName: 'Bundeswehr RP',
+        version: '1.0.0',
+        localStoragePrefix: 'bw_rp_',
+        defaultStamina: 0,
+        applicationCooldown: 7 * 24 * 60 * 60 * 1000, // 7 Tage
+        ranks: [
+            'Schütze', 'Gefreiter', 'Obergefreiter', 'Hauptgefreiter',
+            'Stabsgefreiter', 'Oberstabsgefreiter', 'Unteroffizier',
+            'Stabsunteroffizier', 'Feldwebel', 'Hauptfeldwebel',
+            'Stabsfeldwebel', 'Oberstabsfeldwebel', 'Leutnant',
+            'Oberleutnant', 'Hauptmann', 'Stabshauptmann', 'Major',
+            'Oberstleutnant', 'Oberst', 'Brigadegeneral',
+            'Generalmajor', 'Generalleutnant', 'General'
+        ],
+        divisions: ['Heer', 'Marine', 'Luftwaffe', 'Sanitätsdienst']
+    };
 
-        // Supabase Client erstellen
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    // App State
+    let currentUser = null;
+    let currentPage = 'dashboard';
+    let missions = [];
+    let personnel = [];
+    let applications = [];
+    let visitors = [];
+    let visitorRequests = [];
+    let isSidebarCollapsed = false;
+    let currentAcceptVisitorId = null;
+    let currentRejectVisitorId = null;
+    let currentSoldierId = null;
 
+    // ======================
+    // INITIALIZATION
+    // ======================
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing app...');
+        initializeApp();
+    });
+
+    async function initializeApp() {
+        // Check for saved session
+        await checkSavedSession();
         
-        // ======================
-        // APP STATE & CONFIGURATION
-        // ======================
-        const APP_CONFIG = {
-            appName: 'Bundeswehr RP',
-            version: '1.0.0',
-            localStoragePrefix: 'bw_rp_',
-            defaultStamina: 0,
-            applicationCooldown: 7 * 24 * 60 * 60 * 1000, // 7 Tage
-            ranks: [
-                'Schütze', 'Gefreiter', 'Obergefreiter', 'Hauptgefreiter',
-                'Stabsgefreiter', 'Oberstabsgefreiter', 'Unteroffizier',
-                'Stabsunteroffizier', 'Feldwebel', 'Hauptfeldwebel',
-                'Stabsfeldwebel', 'Oberstabsfeldwebel', 'Leutnant',
-                'Oberleutnant', 'Hauptmann', 'Stabshauptmann', 'Major',
-                'Oberstleutnant', 'Oberst', 'Brigadegeneral',
-                'Generalmajor', 'Generalleutnant', 'General'
-            ],
-            divisions: ['Heer', 'Marine', 'Luftwaffe', 'Sanitätsdienst']
-        };
-
-        // App State
-        let currentUser = null;
-        let currentPage = 'dashboard';
-        let missions = [];
-        let personnel = [];
-        let applications = [];
-        let visitors = [];
-        let visitorRequests = [];
-        let isSidebarCollapsed = false;
-        let currentAcceptVisitorId = null;
-        let currentRejectVisitorId = null;
-        let currentSoldierId = null;
-
-        // ======================
-        // INITIALIZATION
-        // ======================
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
-            initializeApp();
-        });
-
-        async function initializeApp() {
-            // Check for saved session
-            await checkSavedSession();
-            
-            // Initialize clock
-            updateClock();
-            setInterval(updateClock, 60000);
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Show welcome message
-            setTimeout(() => {
-                if (!currentUser) {
-                    showNotification('Willkommen beim Bundeswehr RP System', 'info');
-                }
-            }, 1000);
-        }
-
-        async function checkSavedSession() {
-            const savedUser = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'user');
-            const savedToken = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token');
-            
-            if (savedUser && savedToken) {
-                try {
-                    const user = JSON.parse(savedUser);
-                    
-                    // Check if token is still valid (simplified)
-                    const tokenExpiry = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-                    if (tokenExpiry && Date.now() < parseInt(tokenExpiry)) {
-                        // Auto-login
-                        await handleLoginSuccess(user);
-                        showNotification('Willkommen zurück, ' + user.display_name, 'success');
-                        return true;
-                    } else {
-                        // Token expired
-                        localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
-                        localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-                    }
-                } catch (e) {
-                    console.error('Error parsing saved user:', e);
-                }
-            }
-            
-            return false;
-        }
-
-        function setupEventListeners() {
-            console.log('Setting up event listeners...');
-            
-            // Login button
-            document.getElementById('loginButton').addEventListener('click', login);
-            
-            // Application button
-            document.getElementById('applicationButton').addEventListener('click', showApplicationForm);
-            
-            // NEU: Visitor button
-            document.getElementById('visitorButton').addEventListener('click', showVisitorForm);
-            
-            // Back to login buttons
-            document.getElementById('backToLoginButton').addEventListener('click', showLoginForm);
-            document.getElementById('backToLoginButton2')?.addEventListener('click', showLoginForm);
-            
-            // Sidebar toggle
-            document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-            
-            // Logout button
-            document.getElementById('logoutButton').addEventListener('click', logout);
-            
-            // Show ID buttons
-            document.getElementById('showIDButton').addEventListener('click', showMilitaryID);
-            document.getElementById('showIDButton2').addEventListener('click', showMilitaryID);
-            document.getElementById('closeIDModal').addEventListener('click', hideMilitaryID);
-            
-            // NEU: Visitor ID modal
-            document.getElementById('closeVisitorModal').addEventListener('click', hideVisitorIDModal);
-            
-            // NEU: Request visitor button
-            document.getElementById('requestVisitorBtn')?.addEventListener('click', showVisitorFormFromApp);
-            
-            // Navigation buttons
-            document.querySelectorAll('.nav-item[data-page]').forEach(button => {
-                button.addEventListener('click', function() {
-                    showPage(this.getAttribute('data-page'));
-                });
-            });
-            
-            // NEU: Visitor request tabs
-            document.querySelectorAll('.visitor-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    setVisitorRequestFilter(this.getAttribute('data-filter'));
-                });
-            });
-            
-            // Login form enter key
-            document.getElementById('loginUsername')?.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') login();
-            });
-            
-            document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') login();
-            });
-            
-            console.log('Event listeners set up successfully');
-        }
-
-        // ======================
-        // AUTHENTICATION - KORRIGIERT
-        // ======================
-        async function login() {
-            console.log('Login function called');
-            
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            console.log('Username:', username);
-            console.log('Password:', password ? '***' : 'empty');
-            
-            if (!username || !password) {
-                showError('loginError', 'Bitte Benutzername und Passwort eingeben');
-                return;
-            }
-            
-            showLoading();
-            
-            try {
-                console.log('Querying Supabase for user:', username);
-                
-                // User aus Supabase holen - PASSEND ZU UNSERER TABELLENSTRUKTUR
-                const { data: users, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('username', username)
-                    .eq('password', password)
-                    .limit(1);
-                
-                console.log('Supabase response:', { data: users, error });
-                
-                if (error) {
-                    console.error('Supabase error:', error);
-                    throw new Error('Datenbankfehler: ' + error.message);
-                }
-                
-                if (users && users.length > 0) {
-                    const user = users[0];
-                    console.log('User found:', user);
-                    
-                    // Create session
-                    const token = 'supabase_token_' + Date.now();
-                    const tokenExpiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
-                    
-                    // Store session
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(user));
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token', token);
-                    localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token_expiry', tokenExpiry.toString());
-                    
-                    // Handle login success
-                    await handleLoginSuccess(user);
-                    hideError('loginError');
-                    
-                    showNotification('Erfolgreich eingeloggt', 'success');
-                } else {
-                    console.log('No user found or password incorrect');
-                    throw new Error('Falscher Benutzername oder Passwort');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showError('loginError', error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function handleLoginSuccess(user) {
-            console.log('Login success for user:', user);
-            currentUser = user;
-            
-            // Update UI
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            
-            // Update user display
-            updateUserDisplay(user);
-            
-            // Check permissions
-            checkPermissions(user.role);
-            
-            // Load initial data from Supabase
-            await Promise.all([
-                loadDashboard(),
-                loadVisitors(),
-                loadVisitorRequests()
-            ]);
-            
-            // Show dashboard
-            showPage('dashboard');
-        }
-
-        function logout() {
-            if (confirm('Möchtest du dich wirklich ausloggen?')) {
-                // Clear session
-                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
-                localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-                
-                // Reset UI
-                currentUser = null;
-                document.getElementById('mainApp').classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('hidden');
-                
-                // Clear forms
-                document.getElementById('loginUsername').value = '';
-                document.getElementById('loginPassword').value = '';
-                hideError('loginError');
-                
-                showNotification('Erfolgreich ausgeloggt', 'info');
-            }
-        }
-
-
-
-        // ======================
-        // DEBUG HELPER
-        // ======================
-        console.log('Script loaded! Testing buttons...');
-
-        // Test ob Event Listener gesetzt werden
+        // Initialize clock
+        updateClock();
+        setInterval(updateClock, 60000);
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Show welcome message
         setTimeout(() => {
-            const loginBtn = document.getElementById('loginButton');
-            const appBtn = document.getElementById('applicationButton');
-            const visitorBtn = document.getElementById('visitorButton');
-    
-            console.log('Buttons found:', {
-                loginButton: loginBtn ? 'YES' : 'NO',
-                applicationButton: appBtn ? 'YES' : 'NO',
-                visitorButton: visitorBtn ? 'YES' : 'NO'
-            });
-    
-            // Manuelle Event Listener für Test
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function(e) {
-                    console.log('LOGIN BUTTON CLICKED!', e);
-                    alert('Login Button funktioniert! Jetzt wird eingeloggt...');
-                    login(); // Die eigentliche Funktion
-                });
-            }
-    
-            if (appBtn) {
-                appBtn.addEventListener('click', function(e) {
-                    console.log('APPLICATION BUTTON CLICKED!', e);
-                    alert('Bewerbung Button funktioniert!');
-                    showApplicationForm();
-                });
-            }
-    
-            if (visitorBtn) {
-                visitorBtn.addEventListener('click', function(e) {
-                    console.log('VISITOR BUTTON CLICKED!', e);
-                    alert('Besucher Button funktioniert!');
-                    showVisitorForm();
-                });
+            if (!currentUser) {
+                showNotification('Willkommen beim Bundeswehr RP System', 'info');
             }
         }, 1000);
+    }
+
+    async function checkSavedSession() {
+        const savedUser = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'user');
+        const savedToken = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token');
         
-        // ======================
-        // VISITOR SYSTEM - NEUE FUNKTIONEN
-        // ======================
-        function showVisitorForm() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('visitorForm').classList.remove('hidden');
-            
-            const content = `
-                <form id="visitorFormElement">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Roblox Display Name *</label>
-                            <input type="text" id="visitorDisplayName" required
-                                   class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                   placeholder="Dein Roblox Display Name">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Roblox Username *</label>
-                            <input type="text" id="visitorRobloxUsername" required
-                                   class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                   placeholder="@username">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Grund des Besuchs *</label>
-                            <textarea id="visitorReason" rows="4" required
-                                      class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                      placeholder="Warum benötigst du einen Besucherausweis?"></textarea>
-                        </div>
-                        
-                        <div id="visitorFormError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm"></div>
-                        
-                        <div class="flex gap-4 pt-4">
-                            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-blue-700">
-                                <i class="fas fa-paper-plane mr-2"></i>Antrag absenden
-                            </button>
-                            <button type="button" id="cancelVisitorFormBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
-                                Abbrechen
-                            </button>
-                        </div>
-                        
-                        <p class="text-sm text-ios-text-secondary text-center">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Dein Antrag wird von der Leitung geprüft. Du wirst per Roblox benachrichtigt.
-                        </p>
-                    </div>
-                </form>
-            `;
-            
-            document.getElementById('visitorContent').innerHTML = content;
-            
-            // Add event listeners
-            document.getElementById('visitorFormElement').addEventListener('submit', function(event) {
-                event.preventDefault();
-                submitVisitorRequest();
-            });
-            
-            document.getElementById('cancelVisitorFormBtn').addEventListener('click', showLoginForm);
-        }
-
-        function showVisitorFormFromApp() {
-            showNotification('Bitte logge dich aus, um einen Besucherausweis zu beantragen', 'info');
-            setTimeout(() => {
-                logout();
-                setTimeout(() => {
-                    document.getElementById('visitorButton').click();
-                }, 500);
-            }, 1000);
-        }
-
-        async function submitVisitorRequest() {
-            const displayName = document.getElementById('visitorDisplayName').value;
-            const robloxUsername = document.getElementById('visitorRobloxUsername').value;
-            const reason = document.getElementById('visitorReason').value;
-            
-            if (!displayName || !robloxUsername || !reason) {
-                document.getElementById('visitorFormError').textContent = 'Bitte fülle alle Felder aus';
-                document.getElementById('visitorFormError').classList.remove('hidden');
-                return;
-            }
-            
+        if (savedUser && savedToken) {
             try {
-                // Generate visitor ID
-                const { data: lastVisitor } = await supabase
-                    .from('visitor_requests')
-                    .select('visitor_id')
-                    .order('created_at', { ascending: false })
-                    .limit(1);
+                const user = JSON.parse(savedUser);
                 
-                let nextId = 1000;
-                if (lastVisitor && lastVisitor[0] && lastVisitor[0].visitor_id) {
-                    const lastId = parseInt(lastVisitor[0].visitor_id.split('-')[1]);
-                    nextId = lastId + 1;
+                // Check if token is still valid (simplified)
+                const tokenExpiry = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
+                if (tokenExpiry && Date.now() < parseInt(tokenExpiry)) {
+                    // Auto-login
+                    await handleLoginSuccess(user);
+                    showNotification('Willkommen zurück, ' + user.display_name, 'success');
+                    return true;
+                } else {
+                    // Token expired
+                    localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
+                    localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
                 }
-                
-                const visitorId = 'VIS-' + nextId.toString().padStart(4, '0');
-                
-                const visitorRequest = {
-                    visitor_id: visitorId,
-                    display_name: displayName,
-                    roblox_username: robloxUsername,
-                    reason: reason,
-                    status: 'pending',
-                    created_at: new Date().toISOString(),
-                    request_date: new Date().toLocaleDateString('de-DE')
-                };
-                
-                const { data, error } = await supabase
-                    .from('visitor_requests')
-                    .insert([visitorRequest]);
-                
-                if (error) throw error;
-                
-                // Store locally for status checking
-                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request', JSON.stringify(visitorRequest));
-                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'visitor_status', 'pending');
-                
-                showNotification('Besucherausweis-Anfrage erfolgreich eingereicht!', 'success');
-                
-                setTimeout(() => {
-                    showLoginForm();
-                    showNotification('Die Leitung wird deinen Antrag prüfen.', 'info');
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Error submitting visitor request:', error);
-                showNotification('Fehler beim Einreichen der Anfrage', 'error');
+            } catch (e) {
+                console.error('Error parsing saved user:', e);
             }
         }
+        
+        return false;
+    }
 
-        async function loadVisitors() {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                
-                const { data: visitorsData, error } = await supabase
-                    .from('visitor_requests')
-                    .select('*')
-                    .eq('status', 'accepted')
-                    .gte('valid_until', today) // Nur gültige Ausweise
-                    .order('valid_until', { ascending: true });
-                
-                if (error) throw error;
-                
-                visitors = visitorsData || [];
-                
-                // Update UI
-                const container = document.getElementById('visitorsList');
-                if (container) {
-                    renderVisitors(visitors, container);
-                }
-                
-                return visitors;
-            } catch (error) {
-                console.error('Error loading visitors:', error);
-                showNotification('Fehler beim Laden der Besucher', 'error');
-                return [];
-            }
-        }
-
-        async function loadVisitorRequests(filter = 'pending') {
-            try {
-                let query = supabase
-                    .from('visitor_requests')
-                    .select('*');
-                
-                if (filter !== 'all') {
-                    query = query.eq('status', filter);
-                }
-                
-                const { data: requests, error } = await query;
-                
-                if (error) throw error;
-                
-                visitorRequests = requests || [];
-                
-                // Update counts
-                const pendingCount = visitorRequests.filter(req => req.status === 'pending').length;
-                document.getElementById('pendingVisitorRequests').textContent = pendingCount;
-                document.getElementById('pendingVisitorCount').textContent = pendingCount;
-                
-                const pendingVisitorBadge = document.getElementById('pendingVisitorBadge');
-                if (pendingVisitorBadge) {
-                    pendingVisitorBadge.textContent = pendingCount;
-                    pendingVisitorBadge.classList.toggle('hidden', pendingCount === 0);
-                }
-                
-                // Update UI
-                const container = document.getElementById('visitorRequestsList');
-                if (container) {
-                    renderVisitorRequests(visitorRequests, container);
-                }
-                
-                return visitorRequests;
-            } catch (error) {
-                console.error('Error loading visitor requests:', error);
-                showNotification('Fehler beim Laden der Besucher-Anfragen', 'error');
-                return [];
-            }
-        }
-
-        function renderVisitors(visitors, container) {
-            if (visitors.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-ios-text-secondary">
-                        <i class="fas fa-user-tag text-4xl mb-4"></i>
-                        <p class="text-lg mb-2">Keine aktiven Besucherausweise</p>
-                        <p class="text-sm">Es sind keine gültigen Besucherausweise vorhanden.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            visitors.forEach(visitor => {
-                const validUntil = new Date(visitor.valid_until);
-                const today = new Date();
-                const daysLeft = Math.ceil((validUntil - today) / (1000 * 60 * 60 * 24));
-                
-                html += `
-                    <div class="border border-ios-border rounded-ios-sm p-5 hover:shadow-md transition-shadow">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg">${visitor.display_name}</h3>
-                                <p class="text-ios-text-secondary">
-                                    <i class="fab fa-roblox mr-1"></i>${visitor.roblox_username}
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-id-card mr-1"></i>${visitor.visitor_id}
-                                </p>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                                daysLeft < 3 ? 'bg-red-100 text-red-800' :
-                                daysLeft < 7 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-green-100 text-green-800'
-                            }">
-                                Gültig: ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm font-medium mb-2">Grund:</p>
-                            <div class="bg-gray-50 p-3 rounded-ios-sm">${visitor.reason}</div>
-                        </div>
-                        
-                        <div class="flex justify-between items-center pt-4 border-t border-ios-border">
-                            <div class="text-ios-text-secondary text-sm">
-                                <i class="fas fa-calendar-alt mr-1"></i>
-                                Gültig bis: ${validUntil.toLocaleDateString('de-DE')}
-                            </div>
-                            <button data-visitor-id="${visitor.id}" class="view-visitor-btn text-blue-600 hover:text-blue-800 font-medium">
-                                <i class="fas fa-eye mr-1"></i>Ausweis ansehen
-                            </button>
-                        </div>
-                    </div>
-                `;
+    function setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Login button
+        document.getElementById('loginButton').addEventListener('click', login);
+        
+        // Application button
+        document.getElementById('applicationButton').addEventListener('click', showApplicationForm);
+        
+        // NEU: Visitor button
+        document.getElementById('visitorButton').addEventListener('click', showVisitorForm);
+        
+        // Back to login buttons
+        document.getElementById('backToLoginButton').addEventListener('click', showLoginForm);
+        document.getElementById('backToLoginButton2')?.addEventListener('click', showLoginForm);
+        
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+        
+        // Logout button
+        document.getElementById('logoutButton').addEventListener('click', logout);
+        
+        // Show ID buttons
+        document.getElementById('showIDButton').addEventListener('click', showMilitaryID);
+        document.getElementById('showIDButton2').addEventListener('click', showMilitaryID);
+        document.getElementById('closeIDModal').addEventListener('click', hideMilitaryID);
+        
+        // NEU: Visitor ID modal
+        document.getElementById('closeVisitorModal').addEventListener('click', hideVisitorIDModal);
+        
+        // NEU: Request visitor button
+        document.getElementById('requestVisitorBtn')?.addEventListener('click', showVisitorFormFromApp);
+        
+        // Navigation buttons
+        document.querySelectorAll('.nav-item[data-page]').forEach(button => {
+            button.addEventListener('click', function() {
+                showPage(this.getAttribute('data-page'));
             });
-            
-            container.innerHTML = html;
-            
-            // Add event listeners
-            container.querySelectorAll('.view-visitor-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const visitorId = this.getAttribute('data-visitor-id');
-                    showVisitorID(visitorId);
-                });
+        });
+        
+        // NEU: Visitor request tabs
+        document.querySelectorAll('.visitor-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                setVisitorRequestFilter(this.getAttribute('data-filter'));
             });
-        }
+        });
+        
+        // Login form enter key
+        document.getElementById('loginUsername')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        console.log('Event listeners set up successfully');
+    }
 
-        function renderVisitorRequests(requests, container) {
-            if (requests.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-ios-text-secondary">
-                        <i class="fas fa-id-card text-4xl mb-4"></i>
-                        <p class="text-lg mb-2">Keine ${filter === 'pending' ? 'ausstehenden' : filter === 'accepted' ? 'angenommenen' : 'abgelehnten'} Anfragen</p>
-                    </div>
-                `;
-                return;
+    // ======================
+    // AUTHENTICATION - KORRIGIERT
+    // ======================
+    async function login() {
+        console.log('Login function called');
+        
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        console.log('Username:', username);
+        console.log('Password:', password ? '***' : 'empty');
+        
+        if (!username || !password) {
+            showError('loginError', 'Bitte Benutzername und Passwort eingeben');
+            return;
+        }
+        
+        showLoading();
+        
+        try {
+            console.log('Querying SupabaseClient for user:', username);
+            
+            // User aus SupabaseClient holen - PASSEND ZU UNSERER TABELLENSTRUKTUR
+            const { data: users, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .limit(1);
+            
+            console.log('SupabaseClient response:', { data: users, error });
+            
+            if (error) {
+                console.error('SupabaseClient error:', error);
+                throw new Error('Datenbankfehler: ' + error.message);
             }
             
-            let html = '';
-            requests.forEach(request => {
-                html += `
-                    <div class="border border-ios-border rounded-ios-sm p-5">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg">${request.display_name}</h3>
-                                <p class="text-ios-text-secondary">
-                                    <i class="fab fa-roblox mr-1"></i>${request.roblox_username}
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-calendar-alt mr-1"></i>${request.request_date}
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-id-card mr-1"></i>${request.visitor_id}
-                                </p>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                                request.status === 'pending' ? 'status-pending' :
-                                request.status === 'accepted' ? 'status-accepted' :
-                                'status-rejected'
-                            }">
-                                ${request.status === 'pending' ? 'Ausstehend' :
-                                  request.status === 'accepted' ? 'Angenommen' : 'Abgelehnt'}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm font-medium mb-2">Grund des Besuchs:</p>
-                            <div class="bg-gray-50 p-3 rounded-ios-sm">${request.reason}</div>
-                        </div>
-                        
-                        ${request.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
-                            <div class="flex gap-3 pt-4 border-t border-ios-border">
-                                <button data-request-id="${request.id}" class="accept-visitor-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
-                                    <i class="fas fa-check mr-2"></i>Genehmigen
-                                </button>
-                                <button data-request-id="${request.id}" class="reject-visitor-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
-                                    <i class="fas fa-times mr-2"></i>Ablehnen
-                                </button>
-                            </div>
-                        ` : ''}
-                        
-                        ${request.status === 'accepted' ? `
-                            <div class="bg-green-50 border border-green-200 rounded-ios-sm p-3 mt-3">
-                                <p class="font-medium text-green-800 mb-1">Besucherausweis genehmigt</p>
-                                <p class="text-sm text-green-600">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
-                                ${request.notes ? `<p class="text-sm text-green-600 mt-1">Bemerkungen: ${request.notes}</p>` : ''}
-                            </div>
-                        ` : ''}
-                        
-                        ${request.status === 'rejected' && request.rejection_reason ? `
-                            <div class="bg-red-50 border border-red-200 rounded-ios-sm p-3 mt-3">
-                                <p class="font-medium text-red-800 mb-1">Abgelehnt</p>
-                                <p class="text-sm text-red-600">Grund: ${request.rejection_reason}</p>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-            
-            // Add event listeners
-            container.querySelectorAll('.accept-visitor-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const requestId = this.getAttribute('data-request-id');
-                    showAcceptVisitorModal(requestId);
-                });
-            });
-            
-            container.querySelectorAll('.reject-visitor-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const requestId = this.getAttribute('data-request-id');
-                    showRejectVisitorModal(requestId);
-                });
-            });
-        }
-
-        function showAcceptVisitorModal(requestId) {
-            const request = visitorRequests.find(r => r.id === requestId);
-            if (!request) return;
-            
-            // Set minimum date to tomorrow
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
-            
-            document.getElementById('visitorValidUntil').min = minDate;
-            document.getElementById('visitorValidUntil').value = minDate;
-            
-            document.getElementById('acceptVisitorInfo').innerHTML = `
-                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                    <p class="font-medium">${request.display_name}</p>
-                    <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
-                    <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
-                    <p class="text-sm text-ios-text-secondary mt-2">Grund: ${request.reason}</p>
-                </div>
-            `;
-            
-            document.getElementById('acceptVisitorModal').classList.remove('hidden');
-            currentAcceptVisitorId = requestId;
-            
-            // Add event listeners for modal buttons
-            document.getElementById('acceptVisitorConfirmBtn').onclick = acceptVisitorConfirm;
-            document.getElementById('cancelVisitorBtn').onclick = hideAcceptVisitorModal;
-            document.getElementById('closeAcceptVisitorModal').onclick = hideAcceptVisitorModal;
-        }
-
-        function hideAcceptVisitorModal() {
-            document.getElementById('acceptVisitorModal').classList.add('hidden');
-            document.getElementById('visitorAcceptError').classList.add('hidden');
-            currentAcceptVisitorId = null;
-        }
-
-        async function acceptVisitorConfirm() {
-            const validUntil = document.getElementById('visitorValidUntil').value;
-            const notes = document.getElementById('visitorNotes').value;
-            
-            if (!validUntil) {
-                document.getElementById('visitorAcceptError').classList.remove('hidden');
-                return;
-            }
-            
-            try {
-                const request = visitorRequests.find(r => r.id === currentAcceptVisitorId);
-                if (!request) return;
+            if (users && users.length > 0) {
+                const user = users[0];
+                console.log('User found:', user);
                 
-                const { error } = await supabase
-                    .from('visitor_requests')
-                    .update({ 
-                        status: 'accepted',
-                        valid_until: validUntil,
-                        notes: notes,
-                        reviewed_by: currentUser.id,
-                        reviewed_at: new Date().toISOString()
-                    })
-                    .eq('id', currentAcceptVisitorId);
+                // Create session
+                const token = 'supabaseClient_token_' + Date.now();
+                const tokenExpiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
                 
-                if (error) throw error;
+                // Store session
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(user));
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token', token);
+                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token_expiry', tokenExpiry.toString());
                 
-                hideAcceptVisitorModal();
-                showNotification('Besucherausweis genehmigt', 'success');
+                // Handle login success
+                await handleLoginSuccess(user);
+                hideError('loginError');
                 
-                await Promise.all([
-                    loadVisitorRequests(),
-                    loadVisitors()
-                ]);
-                
-            } catch (error) {
-                console.error('Error accepting visitor request:', error);
-                showNotification('Fehler beim Genehmigen des Ausweises', 'error');
-            }
-        }
-
-        function showRejectVisitorModal(requestId) {
-            const request = visitorRequests.find(r => r.id === requestId);
-            if (!request) return;
-            
-            document.getElementById('rejectVisitorInfo').innerHTML = `
-                <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                    <p class="font-medium">${request.display_name}</p>
-                    <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
-                    <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
-                </div>
-            `;
-            
-            document.getElementById('rejectVisitorModal').classList.remove('hidden');
-            currentRejectVisitorId = requestId;
-            
-            // Add event listeners
-            document.getElementById('rejectVisitorConfirmBtn').onclick = rejectVisitorConfirm;
-            document.getElementById('cancelVisitorRejectBtn').onclick = hideRejectVisitorModal;
-            document.getElementById('closeRejectVisitorModal').onclick = hideRejectVisitorModal;
-        }
-
-        function hideRejectVisitorModal() {
-            document.getElementById('rejectVisitorModal').classList.add('hidden');
-            document.getElementById('visitorRejectError').classList.add('hidden');
-            currentRejectVisitorId = null;
-        }
-
-        async function rejectVisitorConfirm() {
-            const reason = document.getElementById('rejectVisitorReason').value;
-            
-            if (!reason) {
-                document.getElementById('visitorRejectError').classList.remove('hidden');
-                return;
-            }
-            
-            try {
-                const { error } = await supabase
-                    .from('visitor_requests')
-                    .update({ 
-                        status: 'rejected',
-                        rejection_reason: reason,
-                        reviewed_by: currentUser.id,
-                        reviewed_at: new Date().toISOString()
-                    })
-                    .eq('id', currentRejectVisitorId);
-                
-                if (error) throw error;
-                
-                hideRejectVisitorModal();
-                showNotification('Besucherausweis abgelehnt', 'info');
-                
-                await loadVisitorRequests();
-                
-            } catch (error) {
-                console.error('Error rejecting visitor request:', error);
-                showNotification('Fehler beim Ablehnen des Ausweises', 'error');
-            }
-        }
-
-        function showVisitorID(visitorId) {
-            const visitor = visitors.find(v => v.id === visitorId);
-            if (!visitor) return;
-            
-            document.getElementById('modalVisitorName').textContent = visitor.display_name;
-            document.getElementById('modalVisitorRoblox').textContent = visitor.roblox_username;
-            document.getElementById('modalVisitorFullID').textContent = visitor.visitor_id;
-            document.getElementById('modalVisitorID').textContent = visitor.visitor_id;
-            
-            const visitorIdParts = visitor.visitor_id.split('-');
-            document.getElementById('modalVisitorNumber').textContent = visitorIdParts.length > 1 ? visitorIdParts[1] : '0000';
-            
-            if (visitor.created_at) {
-                const issuedDate = new Date(visitor.created_at);
-                document.getElementById('modalVisitorIssued').textContent = issuedDate.toLocaleDateString('de-DE');
-            }
-            
-            if (visitor.valid_until) {
-                const validUntil = new Date(visitor.valid_until);
-                document.getElementById('modalVisitorValidUntil').textContent = validUntil.toLocaleDateString('de-DE');
-                
-                const today = new Date();
-                const isExpired = validUntil < today;
-                const statusEl = document.getElementById('modalVisitorStatus');
-                statusEl.textContent = isExpired ? 'Abgelaufen' : 'Aktiv';
-                statusEl.className = isExpired ? 
-                    'px-2 py-1 rounded-full text-xs font-semibold bg-red-500' : 
-                    'px-2 py-1 rounded-full text-xs font-semibold bg-green-500';
-            }
-            
-            document.getElementById('visitorIDModal').classList.remove('hidden');
-        }
-
-        function hideVisitorIDModal() {
-            document.getElementById('visitorIDModal').classList.add('hidden');
-        }
-
-        // ======================
-        // HELPER FUNCTIONS
-        // ======================
-        function updateClock() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('de-DE', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            const dateStr = now.toLocaleDateString('de-DE', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            
-            const timeEl = document.getElementById('currentTime');
-            const dateEl = document.getElementById('currentDate');
-            
-            if (timeEl) timeEl.textContent = timeStr;
-            if (dateEl) dateEl.textContent = dateStr;
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            
-            isSidebarCollapsed = !isSidebarCollapsed;
-            
-            if (isSidebarCollapsed) {
-                sidebar.classList.remove('sidebar-expanded');
-                sidebar.classList.add('sidebar-collapsed');
-                mainContent.classList.remove('main-expanded');
-                mainContent.classList.add('main-collapsed');
-                
-                sidebar.querySelectorAll('span:not(.absolute)').forEach(span => {
-                    if (!span.closest('#userID')) {
-                        span.classList.add('hidden');
-                    }
-                });
+                showNotification('Erfolgreich eingeloggt', 'success');
             } else {
-                sidebar.classList.remove('sidebar-collapsed');
-                sidebar.classList.add('sidebar-expanded');
-                mainContent.classList.remove('main-collapsed');
-                mainContent.classList.add('main-expanded');
-                
-                sidebar.querySelectorAll('span').forEach(span => {
-                    span.classList.remove('hidden');
-                });
+                console.log('No user found or password incorrect');
+                throw new Error('Falscher Benutzername oder Passwort');
             }
+        } catch (error) {
+            console.error('Login error:', error);
+            showError('loginError', error.message);
+        } finally {
+            hideLoading();
         }
+    }
 
-        function showPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            const pageElement = document.getElementById(page + 'Page');
-            if (pageElement) {
-                pageElement.classList.remove('hidden');
-            }
-            
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('bg-gray-50', 'text-ios-primary');
-            });
-            
-            // Load page data if needed
-            if (page === 'dashboard') loadDashboard();
-            if (page === 'visitors') loadVisitors();
-            if (page === 'visitorRequests') loadVisitorRequests();
-            
-            currentPage = page;
-        }
+    async function handleLoginSuccess(user) {
+        console.log('Login success for user:', user);
+        currentUser = user;
+        
+        // Update UI
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        
+        // Update user display
+        updateUserDisplay(user);
+        
+        // Check permissions
+        checkPermissions(user.role);
+        
+        // Load initial data from SupabaseClient
+        await Promise.all([
+            loadDashboard(),
+            loadVisitors(),
+            loadVisitorRequests()
+        ]);
+        
+        // Show dashboard
+        showPage('dashboard');
+    }
 
-        function setVisitorRequestFilter(filter) {
-            document.querySelectorAll('.visitor-tab').forEach(tab => {
-                tab.classList.remove('border-b-2', 'border-blue-600', 'text-blue-600');
-                tab.classList.add('border-transparent', 'text-ios-text-secondary');
-            });
+    function logout() {
+        if (confirm('Möchtest du dich wirklich ausloggen?')) {
+            // Clear session
+            localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
+            localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
             
-            const activeTab = document.querySelector(`.visitor-tab[data-filter="${filter}"]`);
-            if (activeTab) {
-                activeTab.classList.add('border-b-2', 'border-blue-600', 'text-blue-600');
-                activeTab.classList.remove('border-transparent', 'text-ios-text-secondary');
-            }
-            
-            loadVisitorRequests(filter);
-        }
-
-        function showLoginForm() {
-            document.getElementById('applicationForm').classList.add('hidden');
-            document.getElementById('visitorForm').classList.add('hidden');
+            // Reset UI
+            currentUser = null;
+            document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
+            
+            // Clear forms
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            hideError('loginError');
+            
+            showNotification('Erfolgreich ausgeloggt', 'info');
+        }
+    }
+
+
+
+    // ======================
+    // DEBUG HELPER
+    // ======================
+    console.log('Script loaded! Testing buttons...');
+
+    // Test ob Event Listener gesetzt werden
+    setTimeout(() => {
+        const loginBtn = document.getElementById('loginButton');
+        const appBtn = document.getElementById('applicationButton');
+        const visitorBtn = document.getElementById('visitorButton');
+
+        console.log('Buttons found:', {
+            loginButton: loginBtn ? 'YES' : 'NO',
+            applicationButton: appBtn ? 'YES' : 'NO',
+            visitorButton: visitorBtn ? 'YES' : 'NO'
+        });
+
+        // Manuelle Event Listener für Test
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                console.log('LOGIN BUTTON CLICKED!', e);
+                alert('Login Button funktioniert! Jetzt wird eingeloggt...');
+                login(); // Die eigentliche Funktion
+            });
         }
 
-        function updateUserDisplay(user) {
-            const initials = user.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
-            document.getElementById('userAvatar').textContent = initials.substring(0, 2);
-            document.getElementById('userInitials').textContent = initials.substring(0, 2);
-            
-            document.getElementById('userDisplayName').textContent = user.display_name;
-            document.getElementById('userName').textContent = user.display_name;
-            document.getElementById('userRank').textContent = user.rank;
-            document.getElementById('userRankSmall').textContent = `Rang: ${user.rank}`;
-            document.getElementById('userDivision').textContent = `Division: ${user.division}`;
-            document.getElementById('userID').textContent = user.soldier_id;
-            
-            document.getElementById('staminaValue').textContent = user.stamina;
-            document.getElementById('dashboardStamina').textContent = user.stamina;
-            
-            document.getElementById('idName').textContent = user.display_name;
-            document.getElementById('idRank').textContent = user.rank;
-            document.getElementById('idUnit').textContent = user.division;
-            document.getElementById('idNumber').textContent = user.soldier_id;
-            
-            if (user.service_start) {
-                const startDate = new Date(user.service_start);
-                const now = new Date();
-                const months = (now.getFullYear() - startDate.getFullYear()) * 12 + 
-                              (now.getMonth() - startDate.getMonth());
-                document.getElementById('serviceTime').textContent = `${months} Monat${months !== 1 ? 'e' : ''}`;
-                document.getElementById('idStartDate').textContent = new Date(user.service_start).toLocaleDateString('de-DE');
-            }
+        if (appBtn) {
+            appBtn.addEventListener('click', function(e) {
+                console.log('APPLICATION BUTTON CLICKED!', e);
+                alert('Bewerbung Button funktioniert!');
+                showApplicationForm();
+            });
         }
 
-        function checkPermissions(role) {
-            const managementSection = document.getElementById('managementSection');
-            
-            if (role === 'admin' || role === 'leader') {
-                if (managementSection) managementSection.classList.remove('hidden');
-            } else {
-                if (managementSection) managementSection.classList.add('hidden');
-            }
+        if (visitorBtn) {
+            visitorBtn.addEventListener('click', function(e) {
+                console.log('VISITOR BUTTON CLICKED!', e);
+                alert('Besucher Button funktioniert!');
+                showVisitorForm();
+            });
         }
-
-        async function loadDashboard() {
-            if (!currentUser) return;
-            
-            // Update user display
-            updateUserDisplay(currentUser);
-            
-            // Load visitor status in settings
-            await loadVisitorStatus();
-        }
-
-        async function loadVisitorStatus() {
-            const statusContainer = document.getElementById('visitorStatus');
-            if (!statusContainer) return;
-            
-            const lastVisitorRequest = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request');
-            const visitorStatus = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'visitor_status');
-            
-            if (lastVisitorRequest && visitorStatus) {
-                try {
-                    const request = JSON.parse(lastVisitorRequest);
+    }, 1000);
+    
+    // ======================
+    // VISITOR SYSTEM - NEUE FUNKTIONEN
+    // ======================
+    function showVisitorForm() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('visitorForm').classList.remove('hidden');
+        
+        const content = `
+            <form id="visitorFormElement">
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Roblox Display Name *</label>
+                        <input type="text" id="visitorDisplayName" required
+                               class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                               placeholder="Dein Roblox Display Name">
+                    </div>
                     
-                    let statusText = '';
-                    let statusClass = '';
-                    let statusIcon = '';
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Roblox Username *</label>
+                        <input type="text" id="visitorRobloxUsername" required
+                               class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                               placeholder="@username">
+                    </div>
                     
-                    switch(visitorStatus) {
-                        case 'pending':
-                            statusText = 'In Bearbeitung';
-                            statusClass = 'status-pending';
-                            statusIcon = 'fa-clock';
-                            break;
-                        case 'accepted':
-                            statusText = 'Genehmigt';
-                            statusClass = 'status-accepted';
-                            statusIcon = 'fa-check-circle';
-                            break;
-                        case 'rejected':
-                            statusText = 'Abgelehnt';
-                            statusClass = 'status-rejected';
-                            statusIcon = 'fa-times-circle';
-                            break;
-                    }
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Grund des Besuchs *</label>
+                        <textarea id="visitorReason" rows="4" required
+                                  class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                                  placeholder="Warum benötigst du einen Besucherausweis?"></textarea>
+                    </div>
                     
-                    statusContainer.innerHTML = `
-                        <div class="p-4 rounded-ios-sm ${statusClass}">
-                            <div class="flex items-center gap-3">
-                                <i class="fas ${statusIcon} text-xl"></i>
-                                <div>
-                                    <p class="font-medium">Besucherausweis-Status: ${statusText}</p>
-                                    <p class="text-sm mt-1">ID: ${request.visitor_id}</p>
-                                    <p class="text-sm mt-1">Eingereicht am: ${request.request_date}</p>
-                                    ${visitorStatus === 'accepted' && request.valid_until ? `
-                                        <p class="text-sm mt-1">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
-                                    ` : ''}
-                                    ${visitorStatus === 'rejected' && request.rejection_reason ? `
-                                        <p class="text-sm mt-1">Grund: ${request.rejection_reason}</p>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } catch (e) {
-                    console.error('Error loading visitor status:', e);
-                }
-            } else {
-                statusContainer.innerHTML = `
-                    <div class="text-center py-8 text-ios-text-secondary">
-                        <i class="fas fa-id-card text-3xl mb-3"></i>
-                        <p>Keine aktive Besucherausweis-Anfrage</p>
-                        <button id="newVisitorRequestBtn" class="mt-4 text-blue-600 hover:text-blue-800 font-medium">
-                            Besucherausweis beantragen →
+                    <div id="visitorFormError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm"></div>
+                    
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-blue-700">
+                            <i class="fas fa-paper-plane mr-2"></i>Antrag absenden
+                        </button>
+                        <button type="button" id="cancelVisitorFormBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                            Abbrechen
                         </button>
                     </div>
-                `;
-                
-                document.getElementById('newVisitorRequestBtn')?.addEventListener('click', function() {
-                    document.getElementById('mainApp').classList.add('hidden');
-                    document.getElementById('loginScreen').classList.remove('hidden');
-                    setTimeout(() => {
-                        document.getElementById('visitorButton').click();
-                    }, 500);
-                });
-            }
-        }
+                    
+                    <p class="text-sm text-ios-text-secondary text-center">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Dein Antrag wird von der Leitung geprüft. Du wirst per Roblox benachrichtigt.
+                    </p>
+                </div>
+            </form>
+        `;
+        
+        document.getElementById('visitorContent').innerHTML = content;
+        
+        // Add event listeners
+        document.getElementById('visitorFormElement').addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitVisitorRequest();
+        });
+        
+        document.getElementById('cancelVisitorFormBtn').addEventListener('click', showLoginForm);
+    }
 
-        function showMilitaryID() {
-            if (!currentUser) return;
+    function showVisitorFormFromApp() {
+        showNotification('Bitte logge dich aus, um einen Besucherausweis zu beantragen', 'info');
+        setTimeout(() => {
+            logout();
+            setTimeout(() => {
+                document.getElementById('visitorButton').click();
+            }, 500);
+        }, 1000);
+    }
+
+    async function submitVisitorRequest() {
+        const displayName = document.getElementById('visitorDisplayName').value;
+        const robloxUsername = document.getElementById('visitorRobloxUsername').value;
+        const reason = document.getElementById('visitorReason').value;
+        
+        if (!displayName || !robloxUsername || !reason) {
+            document.getElementById('visitorFormError').textContent = 'Bitte fülle alle Felder aus';
+            document.getElementById('visitorFormError').classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            // Generate visitor ID
+            const { data: lastVisitor } = await supabaseClient
+                .from('visitor_requests')
+                .select('visitor_id')
+                .order('created_at', { ascending: false })
+                .limit(1);
             
-            // ... existing military ID code ...
-        }
-
-        function hideMilitaryID() {
-            document.getElementById('militaryIDModal').classList.add('hidden');
-        }
-
-        function showError(elementId, message) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                const span = element.querySelector('span');
-                if (span) {
-                    span.textContent = message;
-                }
-                element.classList.remove('hidden');
+            let nextId = 1000;
+            if (lastVisitor && lastVisitor[0] && lastVisitor[0].visitor_id) {
+                const lastId = parseInt(lastVisitor[0].visitor_id.split('-')[1]);
+                nextId = lastId + 1;
             }
-        }
-
-        function hideError(elementId) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.classList.add('hidden');
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            const container = document.getElementById('notificationContainer');
-            const id = 'notif_' + Date.now();
             
-            const icons = {
-                success: 'check-circle',
-                error: 'exclamation-circle',
-                warning: 'exclamation-triangle',
-                info: 'info-circle'
+            const visitorId = 'VIS-' + nextId.toString().padStart(4, '0');
+            
+            const visitorRequest = {
+                visitor_id: visitorId,
+                display_name: displayName,
+                roblox_username: robloxUsername,
+                reason: reason,
+                status: 'pending',
+                created_at: new Date().toISOString(),
+                request_date: new Date().toLocaleDateString('de-DE')
             };
             
-            const colors = {
-                success: 'green',
-                error: 'red',
-                warning: 'yellow',
-                info: 'blue'
-            };
+            const { data, error } = await supabaseClient
+                .from('visitor_requests')
+                .insert([visitorRequest]);
             
-            const notification = document.createElement('div');
-            notification.id = id;
-            notification.className = `ios-card rounded-ios-sm p-4 slide-in border-l-4 border-${colors[type]}-500`;
+            if (error) throw error;
             
-            notification.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-${icons[type]} text-${colors[type]}-500 mt-0.5"></i>
-                    <div class="flex-1">
-                        <p class="font-medium">${message}</p>
+            // Store locally for status checking
+            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request', JSON.stringify(visitorRequest));
+            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'visitor_status', 'pending');
+            
+            showNotification('Besucherausweis-Anfrage erfolgreich eingereicht!', 'success');
+            
+            setTimeout(() => {
+                showLoginForm();
+                showNotification('Die Leitung wird deinen Antrag prüfen.', 'info');
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Error submitting visitor request:', error);
+            showNotification('Fehler beim Einreichen der Anfrage', 'error');
+        }
+    }
+
+    async function loadVisitors() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            
+            const { data: visitorsData, error } = await supabaseClient
+                .from('visitor_requests')
+                .select('*')
+                .eq('status', 'accepted')
+                .gte('valid_until', today) // Nur gültige Ausweise
+                .order('valid_until', { ascending: true });
+            
+            if (error) throw error;
+            
+            visitors = visitorsData || [];
+            
+            // Update UI
+            const container = document.getElementById('visitorsList');
+            if (container) {
+                renderVisitors(visitors, container);
+            }
+            
+            return visitors;
+        } catch (error) {
+            console.error('Error loading visitors:', error);
+            showNotification('Fehler beim Laden der Besucher', 'error');
+            return [];
+        }
+    }
+
+    async function loadVisitorRequests(filter = 'pending') {
+        try {
+            let query = supabaseClient
+                .from('visitor_requests')
+                .select('*');
+            
+            if (filter !== 'all') {
+                query = query.eq('status', filter);
+            }
+            
+            const { data: requests, error } = await query;
+            
+            if (error) throw error;
+            
+            visitorRequests = requests || [];
+            
+            // Update counts
+            const pendingCount = visitorRequests.filter(req => req.status === 'pending').length;
+            document.getElementById('pendingVisitorRequests').textContent = pendingCount;
+            document.getElementById('pendingVisitorCount').textContent = pendingCount;
+            
+            const pendingVisitorBadge = document.getElementById('pendingVisitorBadge');
+            if (pendingVisitorBadge) {
+                pendingVisitorBadge.textContent = pendingCount;
+                pendingVisitorBadge.classList.toggle('hidden', pendingCount === 0);
+            }
+            
+            // Update UI
+            const container = document.getElementById('visitorRequestsList');
+            if (container) {
+                renderVisitorRequests(visitorRequests, container);
+            }
+            
+            return visitorRequests;
+        } catch (error) {
+            console.error('Error loading visitor requests:', error);
+            showNotification('Fehler beim Laden der Besucher-Anfragen', 'error');
+            return [];
+        }
+    }
+
+    function renderVisitors(visitors, container) {
+        if (visitors.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 text-ios-text-secondary">
+                    <i class="fas fa-user-tag text-4xl mb-4"></i>
+                    <p class="text-lg mb-2">Keine aktiven Besucherausweise</p>
+                    <p class="text-sm">Es sind keine gültigen Besucherausweise vorhanden.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        visitors.forEach(visitor => {
+            const validUntil = new Date(visitor.valid_until);
+            const today = new Date();
+            const daysLeft = Math.ceil((validUntil - today) / (1000 * 60 * 60 * 24));
+            
+            html += `
+                <div class="border border-ios-border rounded-ios-sm p-5 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg">${visitor.display_name}</h3>
+                            <p class="text-ios-text-secondary">
+                                <i class="fab fa-roblox mr-1"></i>${visitor.roblox_username}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-id-card mr-1"></i>${visitor.visitor_id}
+                            </p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${
+                            daysLeft < 3 ? 'bg-red-100 text-red-800' :
+                            daysLeft < 7 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            Gültig: ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}
+                        </span>
                     </div>
-                    <button class="close-notification-btn text-ios-text-secondary hover:text-ios-text">
-                        <i class="fas fa-times"></i>
+                    
+                    <div class="mb-4">
+                        <p class="text-sm font-medium mb-2">Grund:</p>
+                        <div class="bg-gray-50 p-3 rounded-ios-sm">${visitor.reason}</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pt-4 border-t border-ios-border">
+                        <div class="text-ios-text-secondary text-sm">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            Gültig bis: ${validUntil.toLocaleDateString('de-DE')}
+                        </div>
+                        <button data-visitor-id="${visitor.id}" class="view-visitor-btn text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-eye mr-1"></i>Ausweis ansehen
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Add event listeners
+        container.querySelectorAll('.view-visitor-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const visitorId = this.getAttribute('data-visitor-id');
+                showVisitorID(visitorId);
+            });
+        });
+    }
+
+    function renderVisitorRequests(requests, container) {
+        if (requests.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 text-ios-text-secondary">
+                    <i class="fas fa-id-card text-4xl mb-4"></i>
+                    <p class="text-lg mb-2">Keine ${filter === 'pending' ? 'ausstehenden' : filter === 'accepted' ? 'angenommenen' : 'abgelehnten'} Anfragen</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        requests.forEach(request => {
+            html += `
+                <div class="border border-ios-border rounded-ios-sm p-5">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg">${request.display_name}</h3>
+                            <p class="text-ios-text-secondary">
+                                <i class="fab fa-roblox mr-1"></i>${request.roblox_username}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-calendar-alt mr-1"></i>${request.request_date}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-id-card mr-1"></i>${request.visitor_id}
+                            </p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${
+                            request.status === 'pending' ? 'status-pending' :
+                            request.status === 'accepted' ? 'status-accepted' :
+                            'status-rejected'
+                        }">
+                            ${request.status === 'pending' ? 'Ausstehend' :
+                              request.status === 'accepted' ? 'Angenommen' : 'Abgelehnt'}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-sm font-medium mb-2">Grund des Besuchs:</p>
+                        <div class="bg-gray-50 p-3 rounded-ios-sm">${request.reason}</div>
+                    </div>
+                    
+                    ${request.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
+                        <div class="flex gap-3 pt-4 border-t border-ios-border">
+                            <button data-request-id="${request.id}" class="accept-visitor-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
+                                <i class="fas fa-check mr-2"></i>Genehmigen
+                            </button>
+                            <button data-request-id="${request.id}" class="reject-visitor-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
+                                <i class="fas fa-times mr-2"></i>Ablehnen
+                            </button>
+                        </div>
+                    ` : ''}
+                    
+                    ${request.status === 'accepted' ? `
+                        <div class="bg-green-50 border border-green-200 rounded-ios-sm p-3 mt-3">
+                            <p class="font-medium text-green-800 mb-1">Besucherausweis genehmigt</p>
+                            <p class="text-sm text-green-600">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
+                            ${request.notes ? `<p class="text-sm text-green-600 mt-1">Bemerkungen: ${request.notes}</p>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    ${request.status === 'rejected' && request.rejection_reason ? `
+                        <div class="bg-red-50 border border-red-200 rounded-ios-sm p-3 mt-3">
+                            <p class="font-medium text-red-800 mb-1">Abgelehnt</p>
+                            <p class="text-sm text-red-600">Grund: ${request.rejection_reason}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Add event listeners
+        container.querySelectorAll('.accept-visitor-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const requestId = this.getAttribute('data-request-id');
+                showAcceptVisitorModal(requestId);
+            });
+        });
+        
+        container.querySelectorAll('.reject-visitor-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const requestId = this.getAttribute('data-request-id');
+                showRejectVisitorModal(requestId);
+            });
+        });
+    }
+
+    function showAcceptVisitorModal(requestId) {
+        const request = visitorRequests.find(r => r.id === requestId);
+        if (!request) return;
+        
+        // Set minimum date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+        
+        document.getElementById('visitorValidUntil').min = minDate;
+        document.getElementById('visitorValidUntil').value = minDate;
+        
+        document.getElementById('acceptVisitorInfo').innerHTML = `
+            <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
+                <p class="font-medium">${request.display_name}</p>
+                <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
+                <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
+                <p class="text-sm text-ios-text-secondary mt-2">Grund: ${request.reason}</p>
+            </div>
+        `;
+        
+        document.getElementById('acceptVisitorModal').classList.remove('hidden');
+        currentAcceptVisitorId = requestId;
+        
+        // Add event listeners for modal buttons
+        document.getElementById('acceptVisitorConfirmBtn').onclick = acceptVisitorConfirm;
+        document.getElementById('cancelVisitorBtn').onclick = hideAcceptVisitorModal;
+        document.getElementById('closeAcceptVisitorModal').onclick = hideAcceptVisitorModal;
+    }
+
+    function hideAcceptVisitorModal() {
+        document.getElementById('acceptVisitorModal').classList.add('hidden');
+        document.getElementById('visitorAcceptError').classList.add('hidden');
+        currentAcceptVisitorId = null;
+    }
+
+    async function acceptVisitorConfirm() {
+        const validUntil = document.getElementById('visitorValidUntil').value;
+        const notes = document.getElementById('visitorNotes').value;
+        
+        if (!validUntil) {
+            document.getElementById('visitorAcceptError').classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            const request = visitorRequests.find(r => r.id === currentAcceptVisitorId);
+            if (!request) return;
+            
+            const { error } = await supabaseClient
+                .from('visitor_requests')
+                .update({ 
+                    status: 'accepted',
+                    valid_until: validUntil,
+                    notes: notes,
+                    reviewed_by: currentUser.id,
+                    reviewed_at: new Date().toISOString()
+                })
+                .eq('id', currentAcceptVisitorId);
+            
+            if (error) throw error;
+            
+            hideAcceptVisitorModal();
+            showNotification('Besucherausweis genehmigt', 'success');
+            
+            await Promise.all([
+                loadVisitorRequests(),
+                loadVisitors()
+            ]);
+            
+        } catch (error) {
+            console.error('Error accepting visitor request:', error);
+            showNotification('Fehler beim Genehmigen des Ausweises', 'error');
+        }
+    }
+
+    function showRejectVisitorModal(requestId) {
+        const request = visitorRequests.find(r => r.id === requestId);
+        if (!request) return;
+        
+        document.getElementById('rejectVisitorInfo').innerHTML = `
+            <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
+                <p class="font-medium">${request.display_name}</p>
+                <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
+                <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
+            </div>
+        `;
+        
+        document.getElementById('rejectVisitorModal').classList.remove('hidden');
+        currentRejectVisitorId = requestId;
+        
+        // Add event listeners
+        document.getElementById('rejectVisitorConfirmBtn').onclick = rejectVisitorConfirm;
+        document.getElementById('cancelVisitorRejectBtn').onclick = hideRejectVisitorModal;
+        document.getElementById('closeRejectVisitorModal').onclick = hideRejectVisitorModal;
+    }
+
+    function hideRejectVisitorModal() {
+        document.getElementById('rejectVisitorModal').classList.add('hidden');
+        document.getElementById('visitorRejectError').classList.add('hidden');
+        currentRejectVisitorId = null;
+    }
+
+    async function rejectVisitorConfirm() {
+        const reason = document.getElementById('rejectVisitorReason').value;
+        
+        if (!reason) {
+            document.getElementById('visitorRejectError').classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            const { error } = await supabaseClient
+                .from('visitor_requests')
+                .update({ 
+                    status: 'rejected',
+                    rejection_reason: reason,
+                    reviewed_by: currentUser.id,
+                    reviewed_at: new Date().toISOString()
+                })
+                .eq('id', currentRejectVisitorId);
+            
+            if (error) throw error;
+            
+            hideRejectVisitorModal();
+            showNotification('Besucherausweis abgelehnt', 'info');
+            
+            await loadVisitorRequests();
+            
+        } catch (error) {
+            console.error('Error rejecting visitor request:', error);
+            showNotification('Fehler beim Ablehnen des Ausweises', 'error');
+        }
+    }
+
+    function showVisitorID(visitorId) {
+        const visitor = visitors.find(v => v.id === visitorId);
+        if (!visitor) return;
+        
+        document.getElementById('modalVisitorName').textContent = visitor.display_name;
+        document.getElementById('modalVisitorRoblox').textContent = visitor.roblox_username;
+        document.getElementById('modalVisitorFullID').textContent = visitor.visitor_id;
+        document.getElementById('modalVisitorID').textContent = visitor.visitor_id;
+        
+        const visitorIdParts = visitor.visitor_id.split('-');
+        document.getElementById('modalVisitorNumber').textContent = visitorIdParts.length > 1 ? visitorIdParts[1] : '0000';
+        
+        if (visitor.created_at) {
+            const issuedDate = new Date(visitor.created_at);
+            document.getElementById('modalVisitorIssued').textContent = issuedDate.toLocaleDateString('de-DE');
+        }
+        
+        if (visitor.valid_until) {
+            const validUntil = new Date(visitor.valid_until);
+            document.getElementById('modalVisitorValidUntil').textContent = validUntil.toLocaleDateString('de-DE');
+            
+            const today = new Date();
+            const isExpired = validUntil < today;
+            const statusEl = document.getElementById('modalVisitorStatus');
+            statusEl.textContent = isExpired ? 'Abgelaufen' : 'Aktiv';
+            statusEl.className = isExpired ? 
+                'px-2 py-1 rounded-full text-xs font-semibold bg-red-500' : 
+                'px-2 py-1 rounded-full text-xs font-semibold bg-green-500';
+        }
+        
+        document.getElementById('visitorIDModal').classList.remove('hidden');
+    }
+
+    function hideVisitorIDModal() {
+        document.getElementById('visitorIDModal').classList.add('hidden');
+    }
+
+    // ======================
+    // HELPER FUNCTIONS
+    // ======================
+    function updateClock() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('de-DE', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        const dateStr = now.toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        const timeEl = document.getElementById('currentTime');
+        const dateEl = document.getElementById('currentDate');
+        
+        if (timeEl) timeEl.textContent = timeStr;
+        if (dateEl) dateEl.textContent = dateStr;
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        
+        isSidebarCollapsed = !isSidebarCollapsed;
+        
+        if (isSidebarCollapsed) {
+            sidebar.classList.remove('sidebar-expanded');
+            sidebar.classList.add('sidebar-collapsed');
+            mainContent.classList.remove('main-expanded');
+            mainContent.classList.add('main-collapsed');
+            
+            sidebar.querySelectorAll('span:not(.absolute)').forEach(span => {
+                if (!span.closest('#userID')) {
+                    span.classList.add('hidden');
+                }
+            });
+        } else {
+            sidebar.classList.remove('sidebar-collapsed');
+            sidebar.classList.add('sidebar-expanded');
+            mainContent.classList.remove('main-collapsed');
+            mainContent.classList.add('main-expanded');
+            
+            sidebar.querySelectorAll('span').forEach(span => {
+                span.classList.remove('hidden');
+            });
+        }
+    }
+
+    function showPage(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        const pageElement = document.getElementById(page + 'Page');
+        if (pageElement) {
+            pageElement.classList.remove('hidden');
+        }
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('bg-gray-50', 'text-ios-primary');
+        });
+        
+        // Load page data if needed
+        if (page === 'dashboard') loadDashboard();
+        if (page === 'visitors') loadVisitors();
+        if (page === 'visitorRequests') loadVisitorRequests();
+        
+        currentPage = page;
+    }
+
+    function setVisitorRequestFilter(filter) {
+        document.querySelectorAll('.visitor-tab').forEach(tab => {
+            tab.classList.remove('border-b-2', 'border-blue-600', 'text-blue-600');
+            tab.classList.add('border-transparent', 'text-ios-text-secondary');
+        });
+        
+        const activeTab = document.querySelector(`.visitor-tab[data-filter="${filter}"]`);
+        if (activeTab) {
+            activeTab.classList.add('border-b-2', 'border-blue-600', 'text-blue-600');
+            activeTab.classList.remove('border-transparent', 'text-ios-text-secondary');
+        }
+        
+        loadVisitorRequests(filter);
+    }
+
+    function showLoginForm() {
+        document.getElementById('applicationForm').classList.add('hidden');
+        document.getElementById('visitorForm').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    function updateUserDisplay(user) {
+        const initials = user.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
+        document.getElementById('userAvatar').textContent = initials.substring(0, 2);
+        document.getElementById('userInitials').textContent = initials.substring(0, 2);
+        
+        document.getElementById('userDisplayName').textContent = user.display_name;
+        document.getElementById('userName').textContent = user.display_name;
+        document.getElementById('userRank').textContent = user.rank;
+        document.getElementById('userRankSmall').textContent = `Rang: ${user.rank}`;
+        document.getElementById('userDivision').textContent = `Division: ${user.division}`;
+        document.getElementById('userID').textContent = user.soldier_id;
+        
+        document.getElementById('staminaValue').textContent = user.stamina;
+        document.getElementById('dashboardStamina').textContent = user.stamina;
+        
+        document.getElementById('idName').textContent = user.display_name;
+        document.getElementById('idRank').textContent = user.rank;
+        document.getElementById('idUnit').textContent = user.division;
+        document.getElementById('idNumber').textContent = user.soldier_id;
+        
+        if (user.service_start) {
+            const startDate = new Date(user.service_start);
+            const now = new Date();
+            const months = (now.getFullYear() - startDate.getFullYear()) * 12 + 
+                          (now.getMonth() - startDate.getMonth());
+            document.getElementById('serviceTime').textContent = `${months} Monat${months !== 1 ? 'e' : ''}`;
+            document.getElementById('idStartDate').textContent = new Date(user.service_start).toLocaleDateString('de-DE');
+        }
+    }
+
+    function checkPermissions(role) {
+        const managementSection = document.getElementById('managementSection');
+        
+        if (role === 'admin' || role === 'leader') {
+            if (managementSection) managementSection.classList.remove('hidden');
+        } else {
+            if (managementSection) managementSection.classList.add('hidden');
+        }
+    }
+
+    async function loadDashboard() {
+        if (!currentUser) return;
+        
+        // Update user display
+        updateUserDisplay(currentUser);
+        
+        // Load visitor status in settings
+        await loadVisitorStatus();
+    }
+
+    async function loadVisitorStatus() {
+        const statusContainer = document.getElementById('visitorStatus');
+        if (!statusContainer) return;
+        
+        const lastVisitorRequest = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request');
+        const visitorStatus = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'visitor_status');
+        
+        if (lastVisitorRequest && visitorStatus) {
+            try {
+                const request = JSON.parse(lastVisitorRequest);
+                
+                let statusText = '';
+                let statusClass = '';
+                let statusIcon = '';
+                
+                switch(visitorStatus) {
+                    case 'pending':
+                        statusText = 'In Bearbeitung';
+                        statusClass = 'status-pending';
+                        statusIcon = 'fa-clock';
+                        break;
+                    case 'accepted':
+                        statusText = 'Genehmigt';
+                        statusClass = 'status-accepted';
+                        statusIcon = 'fa-check-circle';
+                        break;
+                    case 'rejected':
+                        statusText = 'Abgelehnt';
+                        statusClass = 'status-rejected';
+                        statusIcon = 'fa-times-circle';
+                        break;
+                }
+                
+                statusContainer.innerHTML = `
+                    <div class="p-4 rounded-ios-sm ${statusClass}">
+                        <div class="flex items-center gap-3">
+                            <i class="fas ${statusIcon} text-xl"></i>
+                            <div>
+                                <p class="font-medium">Besucherausweis-Status: ${statusText}</p>
+                                <p class="text-sm mt-1">ID: ${request.visitor_id}</p>
+                                <p class="text-sm mt-1">Eingereicht am: ${request.request_date}</p>
+                                ${visitorStatus === 'accepted' && request.valid_until ? `
+                                    <p class="text-sm mt-1">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
+                                ` : ''}
+                                ${visitorStatus === 'rejected' && request.rejection_reason ? `
+                                    <p class="text-sm mt-1">Grund: ${request.rejection_reason}</p>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Error loading visitor status:', e);
+            }
+        } else {
+            statusContainer.innerHTML = `
+                <div class="text-center py-8 text-ios-text-secondary">
+                    <i class="fas fa-id-card text-3xl mb-3"></i>
+                    <p>Keine aktive Besucherausweis-Anfrage</p>
+                    <button id="newVisitorRequestBtn" class="mt-4 text-blue-600 hover:text-blue-800 font-medium">
+                        Besucherausweis beantragen →
                     </button>
                 </div>
             `;
             
-            container.appendChild(notification);
-            
-            notification.querySelector('.close-notification-btn').addEventListener('click', function() {
-                notification.remove();
+            document.getElementById('newVisitorRequestBtn')?.addEventListener('click', function() {
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('visitorButton').click();
+                }, 500);
             });
-            
-            setTimeout(() => {
-                const notif = document.getElementById(id);
-                if (notif) {
-                    notif.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                    setTimeout(() => notif.remove(), 300);
-                }
-            }, 5000);
         }
+    }
 
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
+    function showMilitaryID() {
+        if (!currentUser) return;
+        
+        // ... existing military ID code ...
+    }
+
+    function hideMilitaryID() {
+        document.getElementById('militaryIDModal').classList.add('hidden');
+    }
+
+    function showError(elementId, message) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            const span = element.querySelector('span');
+            if (span) {
+                span.textContent = message;
+            }
+            element.classList.remove('hidden');
         }
+    }
 
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.add('hidden');
+    function hideError(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.add('hidden');
         }
+    }
 
-        // ======================
-        // DATABASE SETUP SQL
-        // ======================
-        const databaseSetupSQL = `
-        -- Create tables for Bundeswehr RP System
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notificationContainer');
+        const id = 'notif_' + Date.now();
         
-        -- Users table (für Login)
-        CREATE TABLE IF NOT EXISTS users (
-            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            display_name VARCHAR(100) NOT NULL,
-            rank VARCHAR(50) DEFAULT 'Schütze',
-            division VARCHAR(50) DEFAULT 'Heer',
-            stamina INTEGER DEFAULT 0,
-            role VARCHAR(20) DEFAULT 'soldier' CHECK (role IN ('soldier', 'leader', 'admin')),
-            soldier_id VARCHAR(20) UNIQUE NOT NULL,
-            roblox_username VARCHAR(100),
-            service_start DATE DEFAULT CURRENT_DATE,
-            created_at TIMESTAMP DEFAULT NOW()
-        );
+        const icons = {
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
         
-        -- Visitor requests table (NEU für Besucherausweise)
-        CREATE TABLE IF NOT EXISTS visitor_requests (
-            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-            visitor_id VARCHAR(20) UNIQUE NOT NULL,
-            display_name VARCHAR(100) NOT NULL,
-            roblox_username VARCHAR(100) NOT NULL,
-            reason TEXT NOT NULL,
-            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
-            valid_until DATE,
-            notes TEXT,
-            rejection_reason TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            request_date VARCHAR(50),
-            reviewed_by UUID REFERENCES users(id),
-            reviewed_at TIMESTAMP
-        );
+        const colors = {
+            success: 'green',
+            error: 'red',
+            warning: 'yellow',
+            info: 'blue'
+        };
         
-        -- Create test admin account (password: admin123)
-        INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
-        VALUES (
-            'admin',
-            'admin123',
-            'Oberst Markus Schmidt',
-            'Oberst',
-            'Heer',
-            'admin',
-            'BW-0001'
-        ) ON CONFLICT (username) DO NOTHING;
+        const notification = document.createElement('div');
+        notification.id = id;
+        notification.className = `ios-card rounded-ios-sm p-4 slide-in border-l-4 border-${colors[type]}-500`;
         
-        -- Create test soldier account (password: soldat123)
-        INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
-        VALUES (
-            'soldat',
-            'soldat123',
-            'Gefreiter Thomas Weber',
-            'Gefreiter',
-            'Marine',
-            'soldier',
-            'BW-0002'
-        ) ON CONFLICT (username) DO NOTHING;
-        
-        -- Test visitor request
-        INSERT INTO visitor_requests (visitor_id, display_name, roblox_username, reason, status, request_date)
-        VALUES (
-            'VIS-1000',
-            'Max Mustermann',
-            'MaxMuster123',
-            'Besuch der Kaserne für Information über die Bundeswehr',
-            'pending',
-            '${new Date().toLocaleDateString('de-DE')}'
-        ) ON CONFLICT (visitor_id) DO NOTHING;
+        notification.innerHTML = `
+            <div class="flex items-start gap-3">
+                <i class="fas fa-${icons[type]} text-${colors[type]}-500 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="font-medium">${message}</p>
+                </div>
+                <button class="close-notification-btn text-ios-text-secondary hover:text-ios-text">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
-
-        // Make SQL available globally
-        window.databaseSetupSQL = databaseSetupSQL;
-        console.log('Database setup SQL available at window.databaseSetupSQL');
         
-        // Debug: Check if Supabase is working
-        console.log('Script fully loaded. Supabase:', supabase);
-        console.log('Test credentials:');
-        console.log('Admin: username=admin, password=admin123');
-        console.log('Soldier: username=soldat, password=soldat123');
-    </script>
+        container.appendChild(notification);
+        
+        notification.querySelector('.close-notification-btn').addEventListener('click', function() {
+            notification.remove();
+        });
+        
+        setTimeout(() => {
+            const notif = document.getElementById(id);
+            if (notif) {
+                notif.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => notif.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    // ======================
+    // DATABASE SETUP SQL
+    // ======================
+    const databaseSetupSQL = `
+    -- Create tables for Bundeswehr RP System
+    
+    -- Users table (für Login)
+    CREATE TABLE IF NOT EXISTS users (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        display_name VARCHAR(100) NOT NULL,
+        rank VARCHAR(50) DEFAULT 'Schütze',
+        division VARCHAR(50) DEFAULT 'Heer',
+        stamina INTEGER DEFAULT 0,
+        role VARCHAR(20) DEFAULT 'soldier' CHECK (role IN ('soldier', 'leader', 'admin')),
+        soldier_id VARCHAR(20) UNIQUE NOT NULL,
+        roblox_username VARCHAR(100),
+        service_start DATE DEFAULT CURRENT_DATE,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    
+    -- Visitor requests table (NEU für Besucherausweise)
+    CREATE TABLE IF NOT EXISTS visitor_requests (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        visitor_id VARCHAR(20) UNIQUE NOT NULL,
+        display_name VARCHAR(100) NOT NULL,
+        roblox_username VARCHAR(100) NOT NULL,
+        reason TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+        valid_until DATE,
+        notes TEXT,
+        rejection_reason TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        request_date VARCHAR(50),
+        reviewed_by UUID REFERENCES users(id),
+        reviewed_at TIMESTAMP
+    );
+    
+    -- Create test admin account (password: admin123)
+    INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
+    VALUES (
+        'admin',
+        'admin123',
+        'Oberst Markus Schmidt',
+        'Oberst',
+        'Heer',
+        'admin',
+        'BW-0001'
+    ) ON CONFLICT (username) DO NOTHING;
+    
+    -- Create test soldier account (password: soldat123)
+    INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
+    VALUES (
+        'soldat',
+        'soldat123',
+        'Gefreiter Thomas Weber',
+        'Gefreiter',
+        'Marine',
+        'soldier',
+        'BW-0002'
+    ) ON CONFLICT (username) DO NOTHING;
+    
+    -- Test visitor request
+    INSERT INTO visitor_requests (visitor_id, display_name, roblox_username, reason, status, request_date)
+    VALUES (
+        'VIS-1000',
+        'Max Mustermann',
+        'MaxMuster123',
+        'Besuch der Kaserne für Information über die Bundeswehr',
+        'pending',
+        '${new Date().toLocaleDateString('de-DE')}'
+    ) ON CONFLICT (visitor_id) DO NOTHING;
+    `;
+
+    // Make SQL available globally
+    window.databaseSetupSQL = databaseSetupSQL;
+    console.log('Database setup SQL available at window.databaseSetupSQL');
+    
+    // Debug: Check if SupabaseClient is working
+    console.log('Script fully loaded. SupabaseClient:', supabaseClient);
+    console.log('Test credentials:');
+    console.log('Admin: username=admin, password=admin123');
+    console.log('Soldier: username=soldat, password=soldat123');
+</script>
+
 </body>
 </html>
