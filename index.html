@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundeswehr RP - Management System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ios: {
+                            bg: '#f2f2f7',
+                            card: '#ffffff',
+                            primary: '#007aff',
+                            secondary: '#5856d6',
+                            success: '#34c759',
+                            warning: '#ff9500',
+                            danger: '#ff3b30',
+                            text: '#000000',
+                            'text-secondary': '#8e8e93',
+                            border: '#c7c7cc'
+                        }
+                    },
+                    borderRadius: {
+                        'ios': '14px',
+                        'ios-sm': '10px',
+                        'ios-lg': '20px'
+                    },
+                    boxShadow: {
+                        'ios': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                        'ios-lg': '0 10px 40px rgba(0, 0, 0, 0.12)',
+                        'ios-xl': '0 20px 60px rgba(0, 0, 0, 0.15)'
+                    },
+                    backdropBlur: {
+                        'ios': '20px'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* iOS Design System */
+        * {
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        
+        .ios-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .ios-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #007aff, #5856d6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #007aff, #5856d6);
+        }
+        
+        .stamina-gradient {
+            background: linear-gradient(90deg, #34c759, #32d74b);
+        }
+        
+        .rank-gradient-1 { background: linear-gradient(135deg, #8e8e93, #aeaeb2); }
+        .rank-gradient-2 { background: linear-gradient(135deg, #34c759, #30d158); }
+        .rank-gradient-3 { background: linear-gradient(135deg, #007aff, #0a84ff); }
+        .rank-gradient-4 { background: linear-gradient(135deg, #5856d6, #5e5ce6); }
+        .rank-gradient-5 { background: linear-gradient(135deg, #ff9500, #ff9f0a); }
+        .rank-gradient-6 { background: linear-gradient(135deg, #ff3b30, #ff453a); }
+        
+        .page-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        .page-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .sticky-nav {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-ios-bg min-h-screen font-sans text-ios-text overflow-x-hidden">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 gradient-bg">
+        <div class="ios-card rounded-ios-lg shadow-ios-xl p-6 sm:p-8 w-full max-w-md mx-4">
+            <!-- Logo -->
+            <div class="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-6 sm:mb-8 rounded-3xl gradient-primary flex items-center justify-center shadow-lg pulse">
+                <i class="fas fa-shield-alt text-white text-4xl sm:text-5xl"></i>
+            </div>
+            
+            <h1 class="text-3xl sm:text-4xl font-bold text-center mb-2 gradient-text">Bundeswehr RP</h1>
+            <p class="text-ios-text-secondary text-center mb-8 text-sm sm:text-base">Militärisches Rollenspiel Management</p>
+            
+            <!-- Buttons -->
+            <div class="space-y-4">
+                <button onclick="showApplicationModal()" class="ios-glass w-full gradient-primary text-white py-3 sm:py-4 rounded-ios-sm font-semibold text-base sm:text-lg flex items-center justify-center gap-3 hover:shadow-ios-lg hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-file-signature"></i>
+                    Bewerben
+                </button>
+                
+                <button onclick="showLoginModal()" class="ios-glass w-full bg-white/90 text-ios-primary border border-ios-primary py-3 sm:py-4 rounded-ios-sm font-semibold text-base sm:text-lg flex items-center justify-center gap-3 hover:shadow-ios-lg hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Einloggen
+                </button>
+            </div>
+            
+            <div class="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-ios-border text-center text-ios-text-secondary text-xs sm:text-sm">
+                <p><i class="fas fa-lock mr-2"></i>Sicheres System • Nur autorisiertes Personal</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="hidden min-h-screen">
+        <!-- Top Navigation -->
+        <nav class="sticky-nav ios-glass border-b border-ios-border px-4 sm:px-6 py-3 flex justify-between items-center">
+            <!-- Left: Time -->
+            <div class="flex items-center gap-3">
+                <div id="currentTime" class="font-semibold text-lg">00:00</div>
+                <div class="h-6 w-px bg-ios-border"></div>
+                <div class="text-ios-text-secondary text-sm hidden sm:block">
+                    <span id="currentDate">01.01.2024</span>
+                </div>
+            </div>
+            
+            <!-- Right: User Info -->
+            <div class="flex items-center gap-3">
+                <div id="userStamina" class="hidden sm:flex items-center gap-2 bg-ios-success/10 px-3 py-1.5 rounded-full">
+                    <div class="w-2 h-2 bg-ios-success rounded-full"></div>
+                    <span class="font-semibold text-sm">Ausdauer: <span id="staminaValue">100</span>/100</span>
+                </div>
+                <button onclick="logout()" class="text-ios-danger hover:bg-ios-danger/10 p-2 rounded-ios-sm">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Layout -->
+        <div class="flex">
+            <!-- Sidebar -->
+            <div class="hidden sm:block w-64 ios-glass border-r border-ios-border min-h-[calc(100vh-64px)] p-4">
+                <!-- User Profile -->
+                <div class="mb-6 p-4 rounded-ios bg-white/50">
+                    <div id="userAvatar" class="w-16 h-16 rounded-full gradient-primary flex items-center justify-center text-white text-2xl font-bold mb-3 mx-auto">
+                        BW
+                    </div>
+                    <h2 id="userDisplayName" class="text-center font-bold text-lg mb-1">Lade...</h2>
+                    <div id="userRank" class="text-center text-ios-text-secondary text-sm mb-2">Rang: -</div>
+                    <div id="userDivision" class="text-center text-ios-text-secondary text-sm mb-3">Division: -</div>
+                    <div class="flex justify-center">
+                        <div class="bg-ios-primary/10 text-ios-primary px-3 py-1 rounded-full text-xs font-semibold">
+                            <i class="fas fa-user-shield mr-1"></i>
+                            <span id="userRole">Soldat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="space-y-1">
+                    <button onclick="showPage('dashboard')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                        <i class="fas fa-home w-5 text-center"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    
+                    <button onclick="showPage('missions')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                        <i class="fas fa-crosshairs w-5 text-center"></i>
+                        <span>Einsätze</span>
+                    </button>
+                    
+                    <button onclick="showPage('training')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                        <i class="fas fa-dumbbell w-5 text-center"></i>
+                        <span>Training</span>
+                    </button>
+                    
+                    <button onclick="showPage('personnel')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span>Personal</span>
+                    </button>
+                    
+                    <div id="managementNav" class="hidden">
+                        <div class="text-xs font-semibold text-ios-text-secondary uppercase tracking-wider px-3 py-2">Leitung</div>
+                        <button onclick="showPage('management')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                            <i class="fas fa-cogs w-5 text-center"></i>
+                            <span>Management</span>
+                        </button>
+                        
+                        <button onclick="showPage('applications')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                            <i class="fas fa-file-alt w-5 text-center"></i>
+                            <span>Bewerbungen</span>
+                            <span id="pendingAppsBadge" class="ml-auto bg-ios-danger text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
+                        </button>
+                        
+                        <button onclick="showPage('promotions')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                            <i class="fas fa-star w-5 text-center"></i>
+                            <span>Beförderungen</span>
+                        </button>
+                    </div>
+                    
+                    <button onclick="showPage('settings')" class="nav-btn w-full text-left p-3 rounded-ios-sm flex items-center gap-3 hover:bg-ios-primary/10 text-ios-text">
+                        <i class="fas fa-cog w-5 text-center"></i>
+                        <span>Einstellungen</span>
+                    </button>
+                </nav>
+                
+                <!-- Mobile Menu (hidden on desktop) -->
+                <div class="sm:hidden fixed bottom-0 left-0 right-0 ios-glass border-t border-ios-border p-2 flex justify-around">
+                    <button onclick="showPage('dashboard')" class="flex flex-col items-center p-2">
+                        <i class="fas fa-home"></i>
+                        <span class="text-xs mt-1">Home</span>
+                    </button>
+                    <button onclick="showPage('missions')" class="flex flex-col items-center p-2">
+                        <i class="fas fa-crosshairs"></i>
+                        <span class="text-xs mt-1">Einsätze</span>
+                    </button>
+                    <button onclick="showPage('personnel')" class="flex flex-col items-center p-2">
+                        <i class="fas fa-users"></i>
+                        <span class="text-xs mt-1">Personal</span>
+                    </button>
+                    <button onclick="showPage('settings')" class="flex flex-col items-center p-2">
+                        <i class="fas fa-cog"></i>
+                        <span class="text-xs mt-1">Einstellungen</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 p-4 sm:p-6">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Dashboard</h1>
+                        <p class="text-ios-text-secondary">Willkommen zurück, <span id="greetingName">Soldat</span></p>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="ios-card rounded-ios p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-ios-text-secondary text-sm">Aktueller Rang</p>
+                                    <h3 id="dashboardRank" class="text-xl font-bold">Gefreiter</h3>
+                                </div>
+                                <div class="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
+                                    <i class="fas fa-rank-star text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-ios-text-secondary text-sm">Ausdauer</p>
+                                    <h3 class="text-xl font-bold"><span id="dashboardStamina">100</span>/100</h3>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-ios-success/20 flex items-center justify-center">
+                                    <i class="fas fa-heartbeat text-ios-success"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="h-2 bg-ios-border rounded-full overflow-hidden">
+                                    <div id="staminaBar" class="stamina-gradient h-full rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-ios-text-secondary text-sm">Division</p>
+                                    <h3 id="dashboardDivision" class="text-xl font-bold">Heer</h3>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-ios-primary/20 flex items-center justify-center">
+                                    <i class="fas fa-flag text-ios-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-ios-text-secondary text-sm">Dienstzeit</p>
+                                    <h3 id="dashboardServiceTime" class="text-xl font-bold">1 Monat</h3>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-ios-warning/20 flex items-center justify-center">
+                                    <i class="fas fa-clock text-ios-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Missions -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold mb-4">Aktive Einsätze</h2>
+                        <div id="activeMissions" class="space-y-3">
+                            <!-- Missions will be loaded here -->
+                            <div class="ios-card rounded-ios p-4">
+                                <p class="text-ios-text-secondary text-center">Keine aktiven Einsätze</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div>
+                        <h2 class="text-xl font-bold mb-4">Letzte Aktivitäten</h2>
+                        <div id="recentActivity" class="space-y-3">
+                            <div class="ios-card rounded-ios p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-ios-success/20 flex items-center justify-center">
+                                        <i class="fas fa-check text-ios-success"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Erfolgreich eingeloggt</p>
+                                        <p class="text-ios-text-secondary text-sm">Gerade eben</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Missions Page -->
+                <div id="missionsPage" class="page hidden">
+                    <div class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Einsätze</h1>
+                            <p class="text-ios-text-secondary">Aktuelle und geplante Missionen</p>
+                        </div>
+                        <button id="createMissionBtn" class="hidden gradient-primary text-white px-4 py-2 rounded-ios-sm font-semibold hover:shadow-ios-lg">
+                            <i class="fas fa-plus mr-2"></i>Neuer Einsatz
+                        </button>
+                    </div>
+                    
+                    <!-- Mission Tabs -->
+                    <div class="flex border-b border-ios-border mb-6">
+                        <button onclick="showMissionTab('active')" class="mission-tab active px-4 py-2 font-medium border-b-2 border-ios-primary">
+                            Aktiv
+                        </button>
+                        <button onclick="showMissionTab('planned')" class="mission-tab px-4 py-2 font-medium text-ios-text-secondary">
+                            Geplant
+                        </button>
+                        <button onclick="showMissionTab('completed')" class="mission-tab px-4 py-2 font-medium text-ios-text-secondary">
+                            Abgeschlossen
+                        </button>
+                    </div>
+                    
+                    <!-- Missions Container -->
+                    <div id="missionsContainer">
+                        <!-- Missions will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Training Page -->
+                <div id="trainingPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Training</h1>
+                        <p class="text-ios-text-secondary">Verbessere deine Fähigkeiten und Ausdauer</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="ios-card rounded-ios p-6">
+                            <h2 class="text-xl font-bold mb-4">Ausdauer-Übungen</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 rounded-ios-sm bg-ios-bg">
+                                    <div>
+                                        <p class="font-medium">Liegestütze</p>
+                                        <p class="text-ios-text-secondary text-sm">+1 Ausdauer pro 20 Wiederholungen</p>
+                                    </div>
+                                    <button onclick="completeExercise('pushups')" class="bg-ios-success text-white px-4 py-2 rounded-ios-sm font-semibold hover:bg-ios-success/90">
+                                        Absolvieren
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 rounded-ios-sm bg-ios-bg">
+                                    <div>
+                                        <p class="font-medium">Klimmzüge</p>
+                                        <p class="text-ios-text-secondary text-sm">+2 Ausdauer pro 10 Wiederholungen</p>
+                                    </div>
+                                    <button onclick="completeExercise('pullups')" class="bg-ios-success text-white px-4 py-2 rounded-ios-sm font-semibold hover:bg-ios-success/90">
+                                        Absolvieren
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 rounded-ios-sm bg-ios-bg">
+                                    <div>
+                                        <p class="font-medium">5km Lauf</p>
+                                        <p class="text-ios-text-secondary text-sm">+3 Ausdauer pro Lauf</p>
+                                    </div>
+                                    <button onclick="completeExercise('running')" class="bg-ios-success text-white px-4 py-2 rounded-ios-sm font-semibold hover:bg-ios-success/90">
+                                        Absolvieren
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6">
+                            <h2 class="text-xl font-bold mb-4">Ausdauer-Verlauf</h2>
+                            <div class="h-64 flex items-center justify-center">
+                                <p class="text-ios-text-secondary">Diagramm wird geladen...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personnel Page -->
+                <div id="personnelPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Personal</h1>
+                        <p class="text-ios-text-secondary">Übersicht aller Soldaten</p>
+                    </div>
+                    
+                    <div class="ios-card rounded-ios p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="relative flex-1 max-w-md">
+                                <input type="text" id="personnelSearch" placeholder="Personal suchen..." 
+                                       class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                <i class="fas fa-search absolute right-3 top-3 text-ios-text-secondary"></i>
+                            </div>
+                            <select id="divisionFilter" class="ml-4 px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                <option value="">Alle Divisionen</option>
+                                <option value="Heer">Heer</option>
+                                <option value="Marine">Marine</option>
+                                <option value="Luftwaffe">Luftwaffe</option>
+                            </select>
+                        </div>
+                        
+                        <div id="personnelList" class="space-y-3">
+                            <!-- Personnel will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Management Page -->
+                <div id="managementPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Management</h1>
+                        <p class="text-ios-text-secondary">Leitungsebene - Systemverwaltung</p>
+                    </div>
+                    
+                    <!-- Management Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showPage('applications')">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-full bg-ios-primary/20 flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-ios-primary text-xl"></i>
+                                </div>
+                                <span id="pendingAppsCount" class="bg-ios-danger text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Bewerbungen</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Neue Bewerbungen prüfen und bearbeiten</p>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showPage('promotions')">
+                            <div class="w-12 h-12 rounded-full bg-ios-warning/20 flex items-center justify-center mb-4">
+                                <i class="fas fa-star text-ios-warning text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Beförderungen</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Ränge verwalten und befördern</p>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showCreateUserModal()">
+                            <div class="w-12 h-12 rounded-full bg-ios-success/20 flex items-center justify-center mb-4">
+                                <i class="fas fa-user-plus text-ios-success text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Neuer Account</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Neue Benutzerkonten erstellen</p>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showMissionManagement()">
+                            <div class="w-12 h-12 rounded-full bg-ios-secondary/20 flex items-center justify-center mb-4">
+                                <i class="fas fa-crosshairs text-ios-secondary text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Einsatzverwaltung</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Missionen erstellen und verwalten</p>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showDivisionManagement()">
+                            <div class="w-12 h-12 rounded-full bg-ios-success/20 flex items-center justify-center mb-4">
+                                <i class="fas fa-flag text-ios-success text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Divisionen</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Divisionen verwalten und zuweisen</p>
+                        </div>
+                        
+                        <div class="ios-card rounded-ios p-6 hover:shadow-ios-lg cursor-pointer" onclick="showSystemSettings()">
+                            <div class="w-12 h-12 rounded-full bg-ios-text/20 flex items-center justify-center mb-4">
+                                <i class="fas fa-cogs text-ios-text text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Systemeinstellungen</h3>
+                            <p class="text-ios-text-secondary text-sm mb-4">Globale Systemkonfiguration</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="ios-card rounded-ios p-6">
+                        <h2 class="text-xl font-bold mb-4">Systemstatistiken</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center p-4">
+                                <div class="text-3xl font-bold gradient-text mb-1" id="totalUsers">0</div>
+                                <p class="text-ios-text-secondary text-sm">Aktive Soldaten</p>
+                            </div>
+                            <div class="text-center p-4">
+                                <div class="text-3xl font-bold gradient-text mb-1" id="totalMissions">0</div>
+                                <p class="text-ios-text-secondary text-sm">Aktive Einsätze</p>
+                            </div>
+                            <div class="text-center p-4">
+                                <div class="text-3xl font-bold gradient-text mb-1" id="avgStamina">0</div>
+                                <p class="text-ios-text-secondary text-sm">Ø Ausdauer</p>
+                            </div>
+                            <div class="text-center p-4">
+                                <div class="text-3xl font-bold gradient-text mb-1" id="pendingActions">0</div>
+                                <p class="text-ios-text-secondary text-sm">Ausstehende Aktionen</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applications Page -->
+                <div id="applicationsPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Bewerbungen</h1>
+                        <p class="text-ios-text-secondary">Neue Bewerbungen prüfen und bearbeiten</p>
+                    </div>
+                    
+                    <div class="ios-card rounded-ios p-6">
+                        <div id="applicationsList">
+                            <!-- Applications will be loaded here -->
+                            <p class="text-center text-ios-text-secondary py-8">Keine neuen Bewerbungen</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotions Page -->
+                <div id="promotionsPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Beförderungen</h1>
+                        <p class="text-ios-text-secondary">Personal befördern und Ränge verwalten</p>
+                    </div>
+                    
+                    <div class="ios-card rounded-ios p-6">
+                        <!-- Rank Structure -->
+                        <div class="mb-8">
+                            <h2 class="text-lg font-bold mb-4">Ranghierarchie</h2>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                <!-- Ranks will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Promotion Interface -->
+                        <div>
+                            <h2 class="text-lg font-bold mb-4">Beförderung durchführen</h2>
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Soldat auswählen</label>
+                                        <select id="promotionUser" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                            <option value="">-- Soldat wählen --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Neuer Rang</label>
+                                        <select id="promotionRank" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                            <option value="">-- Rang wählen --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Grund (optional)</label>
+                                    <textarea id="promotionReason" rows="3" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Grund für die Beförderung..."></textarea>
+                                </div>
+                                <button onclick="executePromotion()" class="gradient-primary text-white px-6 py-3 rounded-ios-sm font-semibold hover:shadow-ios-lg">
+                                    <i class="fas fa-star mr-2"></i>Beförderung durchführen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="settingsPage" class="page hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Einstellungen</h1>
+                        <p class="text-ios-text-secondary">Persönliche Einstellungen und Account</p>
+                    </div>
+                    
+                    <div class="ios-card rounded-ios p-6">
+                        <div class="space-y-6">
+                            <!-- Profile Settings -->
+                            <div>
+                                <h2 class="text-lg font-bold mb-4">Profil</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Anzeigename</label>
+                                        <input type="text" id="displayNameInput" class="w-full max-w-md px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Max Mustermann">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Roblox Username</label>
+                                        <input type="text" id="robloxUsername" class="w-full max-w-md px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="RobloxName">
+                                    </div>
+                                    <button onclick="updateProfile()" class="bg-ios-primary text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-ios-primary/90">
+                                        Profil speichern
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Password Change -->
+                            <div class="pt-6 border-t border-ios-border">
+                                <h2 class="text-lg font-bold mb-4">Passwort ändern</h2>
+                                <div class="space-y-4 max-w-md">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Aktuelles Passwort</label>
+                                        <input type="password" id="currentPassword" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Neues Passwort</label>
+                                        <input type="password" id="newPassword" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Passwort bestätigen</label>
+                                        <input type="password" id="confirmPassword" class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                                    </div>
+                                    <button onclick="changePassword()" class="bg-ios-warning text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-ios-warning/90">
+                                        Passwort ändern
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Danger Zone -->
+                            <div class="pt-6 border-t border-ios-border">
+                                <h2 class="text-lg font-bold mb-4 text-ios-danger">Gefahrenzone</h2>
+                                <div class="bg-ios-danger/10 border border-ios-danger/20 rounded-ios-sm p-4">
+                                    <p class="text-ios-danger mb-4"><i class="fas fa-exclamation-triangle mr-2"></i>Diese Aktionen können nicht rückgängig gemacht werden</p>
+                                    <button onclick="requestDischarge()" class="bg-ios-danger text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-ios-danger/90">
+                                        <i class="fas fa-user-slash mr-2"></i>Entlassung beantragen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="ios-card rounded-ios-lg shadow-ios-xl w-full max-w-md p-6 slide-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold gradient-text">Einloggen</h2>
+                <button onclick="hideLoginModal()" class="text-ios-text-secondary hover:text-ios-text p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="loginUsername" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Benutzername">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Passwort</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="••••••••">
+                </div>
+                
+                <div id="loginError" class="hidden bg-ios-danger/10 border border-ios-danger/20 text-ios-danger p-3 rounded-ios-sm">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>Falscher Benutzername oder Passwort</span>
+                </div>
+                
+                <button onclick="login()" class="w-full gradient-primary text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-ios-lg mt-4">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Einloggen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div id="applicationModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="ios-card rounded-ios-lg shadow-ios-xl w-full max-w-2xl p-6 slide-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold gradient-text">Bewerbung</h2>
+                <button onclick="hideApplicationModal()" class="text-ios-text-secondary hover:text-ios-text p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Roblox Username *</label>
+                        <input type="text" id="appRoblox" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Dein Roblox Name">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Anzeigename *</label>
+                        <input type="text" id="appDisplayName" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Max Mustermann">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bewerbungstext *</label>
+                    <textarea id="appText" rows="6" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary" placeholder="Warum möchtest du der Bundeswehr beitreten? Erzähle etwas über dich..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Altersgruppe</label>
+                    <select id="appAgeGroup" class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary">
+                        <option value="">Bitte wählen</option>
+                        <option value="under18">Unter 18</option>
+                        <option value="18-25">18-25 Jahre</option>
+                        <option value="26-35">26-35 Jahre</option>
+                        <option value="over35">Über 35 Jahre</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bevorzugte Division</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <label class="flex items-center p-3 border border-ios-border rounded-ios-sm cursor-pointer hover:bg-ios-bg">
+                            <input type="radio" name="division" value="Heer" class="mr-3">
+                            <div>
+                                <div class="font-medium">Heer</div>
+                                <div class="text-ios-text-secondary text-sm">Landstreitkräfte</div>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-ios-border rounded-ios-sm cursor-pointer hover:bg-ios-bg">
+                            <input type="radio" name="division" value="Marine" class="mr-3">
+                            <div>
+                                <div class="font-medium">Marine</div>
+                                <div class="text-ios-text-secondary text-sm">Seestreitkräfte</div>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-ios-border rounded-ios-sm cursor-pointer hover:bg-ios-bg">
+                            <input type="radio" name="division" value="Luftwaffe" class="mr-3">
+                            <div>
+                                <div class="font-medium">Luftwaffe</div>
+                                <div class="text-ios-text-secondary text-sm">Luftstreitkräfte</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="appError" class="hidden bg-ios-danger/10 border border-ios-danger/20 text-ios-danger p-3 rounded-ios-sm">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>Bitte fülle alle erforderlichen Felder aus</span>
+                </div>
+                
+                <div id="appSuccess" class="hidden bg-ios-success/10 border border-ios-success/20 text-ios-success p-3 rounded-ios-sm">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Bewerbung erfolgreich eingereicht!</span>
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button onclick="submitApplication()" class="flex-1 gradient-primary text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-ios-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>Bewerbung absenden
+                    </button>
+                    <button onclick="hideApplicationModal()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold text-lg hover:bg-ios-primary/10">
+                        Abbrechen
+                    </button>
+                </div>
+                
+                <p class="text-ios-text-secondary text-sm text-center pt-4">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Deine Bewerbung wird von der Leitung geprüft. Du erhältst eine Nachricht, sobald sie bearbeitet wurde.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Mission Modal -->
+    <div id="createMissionModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="ios-card rounded-ios-lg shadow-ios-xl w-full max-w-2xl p-6 slide-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold gradient-text">Neuer Einsatz</h2>
+                <button onclick="hideCreateMissionModal()" class="text-ios-text-secondary hover:text-ios-text p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Mission creation form will be added here -->
+                <div class="text-center py-12 text-ios-text-secondary">
+                    <i class="fas fa-tools text-4xl mb-4"></i>
+                    <p>Mission-Erstellung wird in der Vollversion implementiert</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="ios-card rounded-ios-lg shadow-ios-xl w-full max-w-2xl p-6 slide-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold gradient-text">Neuen Account erstellen</h2>
+                <button onclick="hideCreateUserModal()" class="text-ios-text-secondary hover:text-ios-text p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- User creation form will be added here -->
+                <div class="text-center py-12 text-ios-text-secondary">
+                    <i class="fas fa-tools text-4xl mb-4"></i>
+                    <p>Account-Erstellung wird in der Vollversion implementiert</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-3 w-80 sm:w-96"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center">
+        <div class="ios-card rounded-ios-lg p-8 flex flex-col items-center">
+            <div class="w-16 h-16 rounded-full border-4 border-ios-primary border-t-transparent animate-spin mb-4"></div>
+            <p class="font-semibold">Lade...</p>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script>
+        // ======================
+        // SUPABASE CONFIGURATION
+        // ======================
+        // HINWEIS: Du musst in Supabase Dashboard unter Project Settings → API
+        // den "anon public" Key hier einfügen und RLS Policies einrichten
+        
+        const SUPABASE_URL = 'https://db.bxgkgqnoebjoshkuaidq.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Hier den öffentlichen Key eintragen
+        
+        // Initialisiere Supabase Client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase Client initialisiert');
+        } catch (error) {
+            console.error('Supabase Initialisierungsfehler:', error);
+            showNotification('Datenbankverbindung fehlgeschlagen', 'error');
+        }
+
+        // ======================
+        // APP STATE & VARIABLES
+        // ======================
+        let currentUser = null;
+        let currentPage = 'dashboard';
+        let missions = [];
+        let personnel = [];
+        let applications = [];
+        let ranks = [];
+        let divisions = ['Heer', 'Marine', 'Luftwaffe'];
+
+        // ======================
+        // INITIALIZATION
+        // ======================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            // Prüfe auf gespeicherte Login-Daten
+            const savedToken = localStorage.getItem('bw_token');
+            if (savedToken) {
+                await autoLogin(savedToken);
+            }
+            
+            // Starte Uhr
+            updateClock();
+            setInterval(updateClock, 60000);
+            
+            // Initialisiere Event Listeners
+            initializeEventListeners();
+            
+            // Initialisiere Testdaten (falls keine DB)
+            if (!supabase) {
+                initializeTestData();
+            }
+        }
+
+        function initializeEventListeners() {
+            // Nav Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-ios-primary/20', 'text-ios-primary'));
+                    this.classList.add('bg-ios-primary/20', 'text-ios-primary');
+                });
+            });
+            
+            // Mission Tabs
+            document.querySelectorAll('.mission-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.mission-tab').forEach(t => {
+                        t.classList.remove('active', 'border-ios-primary', 'text-ios-text');
+                        t.classList.add('text-ios-text-secondary');
+                    });
+                    this.classList.add('active', 'border-ios-primary', 'text-ios-text');
+                    this.classList.remove('text-ios-text-secondary');
+                });
+            });
+            
+            // Enter key in login
+            document.getElementById('loginUsername')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            
+            document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+        }
+
+        function initializeTestData() {
+            // Test-Account für Admin
+            const testAdmin = {
+                id: 'test-admin-001',
+                username: 'admin_test',
+                display_name: 'Oberst Meyer',
+                rank: 'Oberst',
+                division: 'Heer',
+                role: 'admin',
+                stamina: 95,
+                roblox_username: 'AdminMeyer_BW'
+            };
+            
+            // Simuliere Login für Entwicklung
+            if (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
+                console.log('Testmodus aktiviert - Admin Login simuliert');
+                handleLoginSuccess(testAdmin);
+            }
+            
+            // Test-Missionen
+            missions = [
+                {
+                    id: '1',
+                    title: 'Patrouille Grenzgebiet',
+                    description: 'Routine-Patrouille entlang der östlichen Grenze',
+                    location: 'Grenzgebiet Alpha',
+                    type: 'Patrouille',
+                    difficulty: 'Mittel',
+                    start_time: new Date(Date.now() + 3600000).toISOString(),
+                    status: 'active',
+                    participants: ['test-admin-001']
+                },
+                {
+                    id: '2',
+                    title: 'Übung: Nachtmanöver',
+                    description: 'Taktische Übung unter Nachtbedingungen',
+                    location: 'Übungsgelände Bravo',
+                    type: 'Training',
+                    difficulty: 'Hoch',
+                    start_time: new Date(Date.now() + 86400000).toISOString(),
+                    status: 'planned'
+                }
+            ];
+            
+            // Test-Personal
+            personnel = [
+                { id: '1', name: 'Gefreiter Schmidt', rank: 'Gefreiter', division: 'Heer', stamina: 85 },
+                { id: '2', name: 'Hauptgefreiter Müller', rank: 'Hauptgefreiter', division: 'Marine', stamina: 92 },
+                { id: '3', name: 'Obergefreiter Weber', rank: 'Obergefreiter', division: 'Luftwaffe', stamina: 78 }
+            ];
+            
+            // Test-Bewerbungen
+            applications = [
+                { id: '1', roblox_username: 'SoldierJohn', display_name: 'John Miller', status: 'pending' },
+                { id: '2', roblox_username: 'BW_Aspirant', display_name: 'Lisa Schmidt', status: 'pending' }
+            ];
+            
+            // Ränge
+            ranks = [
+                { id: 1, name: 'Schütze', level: 1 },
+                { id: 2, name: 'Gefreiter', level: 2 },
+                { id: 3, name: 'Obergefreiter', level: 3 },
+                { id: 4, name: 'Hauptgefreiter', level: 4 },
+                { id: 5, name: 'Stabsgefreiter', level: 5 },
+                { id: 6, name: 'Oberstabsgefreiter', level: 6 },
+                { id: 7, name: 'Unteroffizier', level: 7 },
+                { id: 8, name: 'Stabsunteroffizier', level: 8 },
+                { id: 9, name: 'Feldwebel', level: 9 },
+                { id: 10, name: 'Oberfeldwebel', level: 10 },
+                { id: 11, name: 'Hauptfeldwebel', level: 11 },
+                { id: 12, name: 'Stabsfeldwebel', level: 12 },
+                { id: 13, name: 'Oberstabsfeldwebel', level: 13 },
+                { id: 14, name: 'Leutnant', level: 14 },
+                { id: 15, name: 'Oberleutnant', level: 15 },
+                { id: 16, name: 'Hauptmann', level: 16 },
+                { id: 17, name: 'Stabshauptmann', level: 17 },
+                { id: 18, name: 'Major', level: 18 },
+                { id: 19, name: 'Oberstleutnant', level: 19 },
+                { id: 20, name: 'Oberst', level: 20 },
+                { id: 21, name: 'Brigadegeneral', level: 21 },
+                { id: 22, name: 'Generalmajor', level: 22 },
+                { id: 23, name: 'Generalleutnant', level: 23 },
+                { id: 24, name: 'General', level: 24 }
+            ];
+        }
+
+        // ======================
+        // DATABASE FUNCTIONS
+        // ======================
+        async function setupDatabase() {
+            if (!supabase) {
+                showNotification('Datenbank nicht verfügbar', 'error');
+                return false;
+            }
+
+            try {
+                // Prüfe Verbindung
+                const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    console.error('Datenbankfehler:', error);
+                    showNotification('Datenbankfehler - Tabellen müssen erstellt werden', 'warning');
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Datenbank-Setup-Fehler:', error);
+                return false;
+            }
+        }
+
+        async function createTables() {
+            // Diese Funktion erstellt alle benötigten Tabellen
+            // Wird normalerweise über SQL direkt in Supabase gemacht
+            showNotification('Tabellen werden erstellt...', 'info');
+            
+            // In einer echten Implementierung würden wir hier SQL ausführen
+            // Für diese Demo simulieren wir nur
+            setTimeout(() => {
+                showNotification('Tabellen erfolgreich erstellt', 'success');
+            }, 2000);
+        }
+
+        // ======================
+        // AUTHENTICATION
+        // ======================
+        async function autoLogin(token) {
+            showLoading();
+            try {
+                // Versuche Session wiederherzustellen
+                if (supabase) {
+                    const { data: { user }, error } = await supabase.auth.getUser(token);
+                    
+                    if (!error && user) {
+                        const userData = await getUserData(user.id);
+                        if (userData) {
+                            handleLoginSuccess(userData);
+                            return true;
+                        }
+                    }
+                }
+                
+                // Fallback zu Testdaten
+                if (token === 'test_token') {
+                    const testAdmin = {
+                        id: 'test-admin-001',
+                        username: 'admin_test',
+                        display_name: 'Oberst Meyer',
+                        rank: 'Oberst',
+                        division: 'Heer',
+                        role: 'admin',
+                        stamina: 95
+                    };
+                    handleLoginSuccess(testAdmin);
+                    return true;
+                }
+                
+                return false;
+            } catch (error) {
+                console.error('Auto-Login Fehler:', error);
+                return false;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('loginError').innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span>Bitte Benutzername und Passwort eingeben</span>';
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                let userData = null;
+                
+                if (supabase) {
+                    // Echte Supabase Auth
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: username + '@bundeswehr.rp', // In deiner DB müssten echte Emails gespeichert sein
+                        password: password
+                    });
+                    
+                    if (error) throw error;
+                    
+                    if (data.user) {
+                        userData = await getUserData(data.user.id);
+                    }
+                } else {
+                    // Test-Login für Entwicklung
+                    if (username === 'admin_test' && password === 'bundeswehr123') {
+                        userData = {
+                            id: 'test-admin-001',
+                            username: 'admin_test',
+                            display_name: 'Oberst Meyer',
+                            rank: 'Oberst',
+                            division: 'Heer',
+                            role: 'admin',
+                            stamina: 95,
+                            roblox_username: 'AdminMeyer_BW'
+                        };
+                    } else if (username === 'soldat' && password === 'soldat123') {
+                        userData = {
+                            id: 'test-soldier-001',
+                            username: 'soldat',
+                            display_name: 'Gefreiter Schmidt',
+                            rank: 'Gefreiter',
+                            division: 'Heer',
+                            role: 'soldier',
+                            stamina: 85,
+                            roblox_username: 'SoldierSchmidt'
+                        };
+                    } else {
+                        throw new Error('Falsche Login-Daten');
+                    }
+                }
+                
+                if (userData) {
+                    // Speichere Token
+                    localStorage.setItem('bw_token', 'test_token_' + Date.now());
+                    localStorage.setItem('bw_user', JSON.stringify(userData));
+                    
+                    handleLoginSuccess(userData);
+                    hideLoginModal();
+                    showNotification('Erfolgreich eingeloggt', 'success');
+                } else {
+                    throw new Error('Benutzer nicht gefunden');
+                }
+                
+            } catch (error) {
+                console.error('Login Fehler:', error);
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('loginError').innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i><span>${error.message}</span>`;
+                document.getElementById('loginPassword').classList.add('shake');
+                setTimeout(() => document.getElementById('loginPassword').classList.remove('shake'), 500);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function getUserData(userId) {
+            if (!supabase) {
+                // Testdaten zurückgeben
+                return {
+                    id: userId,
+                    username: userId === 'test-admin-001' ? 'admin_test' : 'soldat',
+                    display_name: userId === 'test-admin-001' ? 'Oberst Meyer' : 'Gefreiter Schmidt',
+                    rank: userId === 'test-admin-001' ? 'Oberst' : 'Gefreiter',
+                    division: 'Heer',
+                    role: userId === 'test-admin-001' ? 'admin' : 'soldier',
+                    stamina: userId === 'test-admin-001' ? 95 : 85,
+                    roblox_username: userId === 'test-admin-001' ? 'AdminMeyer_BW' : 'SoldierSchmidt',
+                    created_at: new Date().toISOString()
+                };
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+                
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Benutzerdaten Fehler:', error);
+                return null;
+            }
+        }
+
+        function handleLoginSuccess(user) {
+            currentUser = user;
+            
+            // UI Updates
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            
+            // User Info setzen
+            updateUserDisplay(user);
+            
+            // Berechtigungen prüfen
+            checkPermissions(user.role);
+            
+            // Daten laden
+            loadDashboardData();
+            loadMissions();
+            loadPersonnel();
+            loadApplications();
+            loadRanks();
+            
+            // Ersten Page anzeigen
+            showPage('dashboard');
+        }
+
+        function logout() {
+            if (confirm('Möchtest du dich wirklich ausloggen?')) {
+                localStorage.removeItem('bw_token');
+                localStorage.removeItem('bw_user');
+                
+                currentUser = null;
+                
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+                
+                // Formulare zurücksetzen
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginError').classList.add('hidden');
+                
+                showNotification('Erfolgreich ausgeloggt', 'info');
+            }
+        }
+
+        // ======================
+        // UI FUNCTIONS
+        // ======================
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('de-DE');
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        function updateUserDisplay(user) {
+            // Avatar Initialen
+            const initials = user.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.getElementById('userAvatar').textContent = initials.substring(0, 2);
+            
+            // Name und Rang
+            document.getElementById('userDisplayName').textContent = user.display_name;
+            document.getElementById('userRank').textContent = `Rang: ${user.rank}`;
+            document.getElementById('userDivision').textContent = `Division: ${user.division}`;
+            document.getElementById('userRole').textContent = user.role === 'admin' ? 'Leitung' : 'Soldat';
+            
+            // Dashboard Updates
+            document.getElementById('greetingName').textContent = user.display_name.split(' ')[1] || user.display_name;
+            document.getElementById('dashboardRank').textContent = user.rank;
+            document.getElementById('dashboardDivision').textContent = user.division;
+            document.getElementById('dashboardStamina').textContent = user.stamina;
+            
+            // Ausdauer Updates
+            updateStaminaDisplay(user.stamina);
+            
+            // Settings Form
+            document.getElementById('displayNameInput').value = user.display_name;
+            if (user.roblox_username) {
+                document.getElementById('robloxUsername').value = user.roblox_username;
+            }
+        }
+
+        function updateStaminaDisplay(stamina) {
+            document.getElementById('staminaValue').textContent = stamina;
+            document.getElementById('staminaBar').style.width = `${stamina}%`;
+            
+            // Farbe basierend auf Ausdauer
+            const bar = document.getElementById('staminaBar');
+            if (stamina < 30) {
+                bar.className = 'h-full rounded-full bg-ios-danger';
+            } else if (stamina < 60) {
+                bar.className = 'h-full rounded-full bg-ios-warning';
+            } else {
+                bar.className = 'stamina-gradient h-full rounded-full';
+            }
+        }
+
+        function checkPermissions(role) {
+            const managementNav = document.getElementById('managementNav');
+            const createMissionBtn = document.getElementById('createMissionBtn');
+            
+            if (role === 'admin' || role === 'leader') {
+                managementNav.classList.remove('hidden');
+                if (createMissionBtn) createMissionBtn.classList.remove('hidden');
+            } else {
+                managementNav.classList.add('hidden');
+                if (createMissionBtn) createMissionBtn.classList.add('hidden');
+            }
+        }
+
+        function showPage(page) {
+            // Alte Page ausblenden
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            
+            // Neue Page anzeigen
+            document.getElementById(page + 'Page').classList.remove('hidden');
+            
+            // Seite spezifische Daten laden
+            switch(page) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'missions':
+                    loadMissions();
+                    break;
+                case 'personnel':
+                    loadPersonnel();
+                    break;
+                case 'management':
+                    loadManagementStats();
+                    break;
+                case 'applications':
+                    loadApplications();
+                    break;
+                case 'promotions':
+                    loadPromotionData();
+                    break;
+            }
+            
+            currentPage = page;
+        }
+
+        function showMissionTab(tab) {
+            // In einer Vollimplementierung würde hier der Tab-Inhalt geladen werden
+            showNotification(`Mission-Tab: ${tab}`, 'info');
+        }
+
+        // ======================
+        // MODAL FUNCTIONS
+        // ======================
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginUsername').focus();
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        function showApplicationModal() {
+            document.getElementById('applicationModal').classList.remove('hidden');
+            document.getElementById('appRoblox').focus();
+        }
+
+        function hideApplicationModal() {
+            document.getElementById('applicationModal').classList.add('hidden');
+            document.getElementById('appError').classList.add('hidden');
+            document.getElementById('appSuccess').classList.add('hidden');
+            
+            // Formular zurücksetzen
+            document.getElementById('appRoblox').value = '';
+            document.getElementById('appDisplayName').value = '';
+            document.getElementById('appText').value = '';
+            document.getElementById('appAgeGroup').value = '';
+            document.querySelectorAll('input[name="division"]').forEach(r => r.checked = false);
+        }
+
+        function showCreateMissionModal() {
+            document.getElementById('createMissionModal').classList.remove('hidden');
+        }
+
+        function hideCreateMissionModal() {
+            document.getElementById('createMissionModal').classList.add('hidden');
+        }
+
+        function showCreateUserModal() {
+            document.getElementById('createUserModal').classList.remove('hidden');
+        }
+
+        function hideCreateUserModal() {
+            document.getElementById('createUserModal').classList.add('hidden');
+        }
+
+        // ======================
+        // DATA LOADING FUNCTIONS
+        // ======================
+        async function loadDashboardData() {
+            if (!currentUser) return;
+            
+            // Aktive Missionen laden
+            const activeMissionsContainer = document.getElementById('activeMissions');
+            if (activeMissionsContainer) {
+                const activeMissions = missions.filter(m => m.status === 'active');
+                
+                if (activeMissions.length > 0) {
+                    let html = '';
+                    activeMissions.forEach(mission => {
+                        html += `
+                            <div class="ios-card rounded-ios p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 class="font-bold text-lg">${mission.title}</h3>
+                                        <p class="text-ios-text-secondary text-sm">${mission.location} • ${mission.type}</p>
+                                    </div>
+                                    <span class="bg-ios-primary text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                        ${mission.difficulty}
+                                    </span>
+                                </div>
+                                <p class="mb-3">${mission.description}</p>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-ios-text-secondary">
+                                        <i class="far fa-clock mr-1"></i>
+                                        ${new Date(mission.start_time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <button onclick="joinMission('${mission.id}')" class="text-ios-primary hover:text-ios-primary/80 font-medium">
+                                        <i class="fas fa-plus mr-1"></i>Beitreten
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    activeMissionsContainer.innerHTML = html;
+                }
+            }
+            
+            // Dienstzeit berechnen (Beispiel)
+            if (currentUser.created_at) {
+                const joinDate = new Date(currentUser.created_at);
+                const months = (new Date().getFullYear() - joinDate.getFullYear()) * 12 + 
+                              (new Date().getMonth() - joinDate.getMonth());
+                const serviceTime = months === 0 ? 'Neu' : `${months} Monat${months !== 1 ? 'e' : ''}`;
+                document.getElementById('dashboardServiceTime').textContent = serviceTime;
+            }
+        }
+
+        async function loadMissions() {
+            // Hier würden Missionen aus der DB geladen
+            const missionsContainer = document.getElementById('missionsContainer');
+            if (missionsContainer) {
+                let html = '';
+                
+                missions.forEach(mission => {
+                    const startTime = new Date(mission.start_time);
+                    const now = new Date();
+                    const timeDiff = startTime - now;
+                    const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
+                    
+                    html += `
+                        <div class="ios-card rounded-ios p-4 mb-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-bold text-xl">${mission.title}</h3>
+                                    <div class="flex items-center gap-3 mt-1">
+                                        <span class="text-ios-text-secondary text-sm">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>${mission.location}
+                                        </span>
+                                        <span class="text-ios-text-secondary text-sm">
+                                            <i class="fas fa-tag mr-1"></i>${mission.type}
+                                        </span>
+                                        <span class="bg-${mission.difficulty === 'Hoch' ? 'ios-danger' : mission.difficulty === 'Mittel' ? 'ios-warning' : 'ios-success'}/10 text-${mission.difficulty === 'Hoch' ? 'ios-danger' : mission.difficulty === 'Mittel' ? 'ios-warning' : 'ios-success'} px-2 py-0.5 rounded-full text-xs font-semibold">
+                                            ${mission.difficulty}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="bg-${mission.status === 'active' ? 'ios-success' : mission.status === 'completed' ? 'ios-text-secondary' : 'ios-primary'}/10 text-${mission.status === 'active' ? 'ios-success' : mission.status === 'completed' ? 'ios-text-secondary' : 'ios-primary'} px-3 py-1 rounded-full text-sm font-semibold">
+                                    ${mission.status === 'active' ? 'Aktiv' : mission.status === 'completed' ? 'Abgeschlossen' : 'Geplant'}
+                                </span>
+                            </div>
+                            
+                            <p class="mb-4">${mission.description}</p>
+                            
+                            <div class="flex justify-between items-center pt-3 border-t border-ios-border">
+                                <div class="text-ios-text-secondary text-sm">
+                                    <i class="far fa-clock mr-1"></i>
+                                    ${startTime.toLocaleDateString('de-DE')} ${startTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                    ${hoursUntil > 0 ? ` (in ${hoursUntil}h)` : ''}
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    ${mission.status === 'active' ? `
+                                        <button onclick="completeMission('${mission.id}')" class="bg-ios-success text-white px-4 py-1.5 rounded-ios-sm text-sm font-semibold hover:bg-ios-success/90">
+                                            <i class="fas fa-check mr-1"></i>Abschließen
+                                        </button>
+                                    ` : ''}
+                                    
+                                    ${currentUser?.role === 'admin' ? `
+                                        <button onclick="editMission('${mission.id}')" class="bg-ios-primary text-white px-4 py-1.5 rounded-ios-sm text-sm font-semibold hover:bg-ios-primary/90">
+                                            <i class="fas fa-edit mr-1"></i>Bearbeiten
+                                        </button>
+                                        <button onclick="deleteMission('${mission.id}')" class="bg-ios-danger text-white px-4 py-1.5 rounded-ios-sm text-sm font-semibold hover:bg-ios-danger/90">
+                                            <i class="fas fa-trash mr-1"></i>Löschen
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                missionsContainer.innerHTML = html || '<p class="text-center text-ios-text-secondary py-8">Keine Einsätze verfügbar</p>';
+            }
+        }
+
+        async function loadPersonnel() {
+            const personnelList = document.getElementById('personnelList');
+            if (!personnelList) return;
+            
+            let html = '';
+            
+            personnel.forEach(soldier => {
+                html += `
+                    <div class="flex items-center justify-between p-3 hover:bg-ios-bg rounded-ios-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full ${getRankGradient(soldier.rank)} flex items-center justify-center text-white font-bold text-sm">
+                                ${soldier.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                            </div>
+                            <div>
+                                <div class="font-medium">${soldier.name}</div>
+                                <div class="text-ios-text-secondary text-sm flex items-center gap-3">
+                                    <span>${soldier.rank}</span>
+                                    <span>•</span>
+                                    <span>${soldier.division}</span>
+                                    <span>•</span>
+                                    <span><i class="fas fa-heartbeat mr-1"></i>${soldier.stamina} Ausdauer</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${currentUser?.role === 'admin' ? `
+                            <div class="flex gap-2">
+                                <button onclick="viewSoldier('${soldier.id}')" class="text-ios-primary hover:text-ios-primary/80 p-2">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="promoteSoldier('${soldier.id}')" class="text-ios-warning hover:text-ios-warning/80 p-2">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button onclick="updateStamina('${soldier.id}', 1)" class="text-ios-success hover:text-ios-success/80 p-2" title="+1 Ausdauer">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            personnelList.innerHTML = html || '<p class="text-center text-ios-text-secondary py-8">Kein Personal verfügbar</p>';
+        }
+
+        async function loadApplications() {
+            const applicationsList = document.getElementById('applicationsList');
+            if (!applicationsList) return;
+            
+            const pendingApps = applications.filter(app => app.status === 'pending');
+            
+            // Badge update
+            const badge = document.getElementById('pendingAppsBadge');
+            const countBadge = document.getElementById('pendingAppsCount');
+            
+            if (pendingApps.length > 0) {
+                if (badge) {
+                    badge.textContent = pendingApps.length;
+                    badge.classList.remove('hidden');
+                }
+                if (countBadge) {
+                    countBadge.textContent = pendingApps.length;
+                }
+                
+                let html = '';
+                pendingApps.forEach(app => {
+                    html += `
+                        <div class="border border-ios-border rounded-ios-sm p-4 mb-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-bold text-lg">${app.display_name}</h3>
+                                    <p class="text-ios-text-secondary">
+                                        <i class="fab fa-roblox mr-1"></i>${app.roblox_username}
+                                    </p>
+                                </div>
+                                <span class="bg-ios-warning/10 text-ios-warning px-3 py-1 rounded-full text-sm font-semibold">
+                                    Ausstehend
+                                </span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <p class="text-sm text-ios-text-secondary mb-2">Bewerbungstext:</p>
+                                <p class="bg-ios-bg p-3 rounded-ios-sm">${app.application_text || 'Kein Text angegeben'}</p>
+                            </div>
+                            
+                            <div class="flex gap-3 pt-3 border-t border-ios-border">
+                                <button onclick="acceptApplication('${app.id}')" class="flex-1 bg-ios-success text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-success/90">
+                                    <i class="fas fa-check mr-2"></i>Annehmen
+                                </button>
+                                <button onclick="rejectApplication('${app.id}')" class="flex-1 bg-ios-danger text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-danger/90">
+                                    <i class="fas fa-times mr-2"></i>Ablehnen
+                                </button>
+                                <button onclick="viewApplication('${app.id}')" class="flex-1 bg-ios-primary text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-primary/90">
+                                    <i class="fas fa-eye mr-2"></i>Details
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                applicationsList.innerHTML = html;
+            } else {
+                if (badge) badge.classList.add('hidden');
+                if (countBadge) countBadge.textContent = '0';
+                applicationsList.innerHTML = '<p class="text-center text-ios-text-secondary py-8">Keine neuen Bewerbungen</p>';
+            }
+        }
+
+        async function loadRanks() {
+            const ranksContainer = document.querySelector('#promotionsPage .grid');
+            if (!ranksContainer) return;
+            
+            let html = '';
+            ranks.forEach(rank => {
+                html += `
+                    <div class="text-center p-3 rounded-ios-sm bg-ios-bg">
+                        <div class="font-bold text-lg mb-1">${rank.name}</div>
+                        <div class="text-ios-text-secondary text-sm">Stufe ${rank.level}</div>
+                    </div>
+                `;
+            });
+            
+            ranksContainer.innerHTML = html;
+            
+            // Beförderungs-Selects füllen
+            const rankSelect = document.getElementById('promotionRank');
+            if (rankSelect) {
+                rankSelect.innerHTML = '<option value="">-- Rang wählen --</option>' +
+                    ranks.map(r => `<option value="${r.id}">${r.name} (Stufe ${r.level})</option>`).join('');
+            }
+            
+            // User-Select für Beförderungen füllen
+            const userSelect = document.getElementById('promotionUser');
+            if (userSelect) {
+                userSelect.innerHTML = '<option value="">-- Soldat wählen --</option>' +
+                    personnel.map(p => `<option value="${p.id}">${p.name} (${p.rank})</option>`).join('');
+            }
+        }
+
+        async function loadManagementStats() {
+            // Statistik-Werte setzen
+            document.getElementById('totalUsers').textContent = personnel.length;
+            document.getElementById('totalMissions').textContent = missions.filter(m => m.status === 'active').length;
+            
+            const avgStamina = personnel.length > 0 ? 
+                Math.round(personnel.reduce((sum, p) => sum + p.stamina, 0) / personnel.length) : 0;
+            document.getElementById('avgStamina').textContent = avgStamina;
+            
+            const pendingCount = applications.filter(a => a.status === 'pending').length;
+            document.getElementById('pendingActions').textContent = pendingCount;
+        }
+
+        async function loadPromotionData() {
+            // In einer Vollimplementierung würde hier die Beförderungs-History geladen
+        }
+
+        // ======================
+        // ACTION FUNCTIONS
+        // ======================
+        async function submitApplication() {
+            const roblox = document.getElementById('appRoblox').value;
+            const displayName = document.getElementById('appDisplayName').value;
+            const appText = document.getElementById('appText').value;
+            
+            if (!roblox || !displayName || !appText) {
+                document.getElementById('appError').classList.remove('hidden');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // In einer echten Implementierung: Daten an Supabase senden
+                const newApp = {
+                    id: 'app_' + Date.now(),
+                    roblox_username: roblox,
+                    display_name: displayName,
+                    application_text: appText,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                };
+                
+                applications.push(newApp);
+                
+                // Erfolgsmeldung
+                document.getElementById('appError').classList.add('hidden');
+                document.getElementById('appSuccess').classList.remove('hidden');
+                
+                // Formular zurücksetzen nach 2 Sekunden
+                setTimeout(() => {
+                    hideApplicationModal();
+                    showNotification('Bewerbung erfolgreich eingereicht!', 'success');
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Bewerbungsfehler:', error);
+                showNotification('Fehler beim Absenden der Bewerbung', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function completeExercise(type) {
+            if (!currentUser) return;
+            
+            let staminaIncrease = 0;
+            let message = '';
+            
+            switch(type) {
+                case 'pushups':
+                    staminaIncrease = 1;
+                    message = 'Liegestütze absolviert! +1 Ausdauer';
+                    break;
+                case 'pullups':
+                    staminaIncrease = 2;
+                    message = 'Klimmzüge absolviert! +2 Ausdauer';
+                    break;
+                case 'running':
+                    staminaIncrease = 3;
+                    message = '5km Lauf absolviert! +3 Ausdauer';
+                    break;
+            }
+            
+            // Ausdauer aktualisieren
+            currentUser.stamina = Math.min(100, currentUser.stamina + staminaIncrease);
+            updateStaminaDisplay(currentUser.stamina);
+            
+            // In DB speichern (in Vollimplementierung)
+            if (supabase) {
+                // Hier würde der Supabase Update kommen
+            }
+            
+            // Benachrichtigung
+            showNotification(message, 'success');
+            
+            // UI Updates
+            document.getElementById('dashboardStamina').textContent = currentUser.stamina;
+            document.getElementById('staminaValue').textContent = currentUser.stamina;
+            
+            // Log-Eintrag
+            addActivityLog(`Übung absolviert: ${message}`);
+        }
+
+        async function joinMission(missionId) {
+            const mission = missions.find(m => m.id === missionId);
+            if (!mission) return;
+            
+            showNotification(`Mission "${mission.title}" beigetreten`, 'success');
+            addActivityLog(`Mission "${mission.title}" beigetreten`);
+        }
+
+        async function completeMission(missionId) {
+            if (confirm('Mission als abgeschlossen markieren?')) {
+                const mission = missions.find(m => m.id === missionId);
+                if (mission) {
+                    mission.status = 'completed';
+                    showNotification(`Mission "${mission.title}" abgeschlossen`, 'success');
+                    loadMissions();
+                    loadDashboardData();
+                }
+            }
+        }
+
+        async function acceptApplication(appId) {
+            if (confirm('Bewerbung annehmen und Account erstellen?')) {
+                const appIndex = applications.findIndex(a => a.id === appId);
+                if (appIndex !== -1) {
+                    applications[appIndex].status = 'accepted';
+                    
+                    // In einer Vollimplementierung würde hier ein User angelegt
+                    showNotification('Bewerbung angenommen', 'success');
+                    loadApplications();
+                    loadManagementStats();
+                }
+            }
+        }
+
+        async function rejectApplication(appId) {
+            if (confirm('Bewerbung ablehnen?')) {
+                const appIndex = applications.findIndex(a => a.id === appId);
+                if (appIndex !== -1) {
+                    applications[appIndex].status = 'rejected';
+                    showNotification('Bewerbung abgelehnt', 'info');
+                    loadApplications();
+                    loadManagementStats();
+                }
+            }
+        }
+
+        async function updateStamina(soldierId, amount) {
+            const soldier = personnel.find(p => p.id === soldierId);
+            if (soldier) {
+                soldier.stamina = Math.min(100, soldier.stamina + amount);
+                showNotification(`${soldier.name}: +${amount} Ausdauer`, 'success');
+                loadPersonnel();
+                
+                // In Vollimplementierung: Supabase Update
+            }
+        }
+
+        async function executePromotion() {
+            const userId = document.getElementById('promotionUser').value;
+            const rankId = document.getElementById('promotionRank').value;
+            const reason = document.getElementById('promotionReason').value;
+            
+            if (!userId || !rankId) {
+                showNotification('Bitte Soldat und Rang auswählen', 'warning');
+                return;
+            }
+            
+            const soldier = personnel.find(p => p.id === userId);
+            const newRank = ranks.find(r => r.id == rankId);
+            
+            if (!soldier || !newRank) {
+                showNotification('Fehler: Soldat oder Rang nicht gefunden', 'error');
+                return;
+            }
+            
+            if (confirm(`${soldier.name} zum ${newRank.name} befördern?`)) {
+                const oldRank = soldier.rank;
+                soldier.rank = newRank.name;
+                
+                showNotification(`${soldier.name} zum ${newRank.name} befördert!`, 'success');
+                
+                // Formular zurücksetzen
+                document.getElementById('promotionUser').value = '';
+                document.getElementById('promotionRank').value = '';
+                document.getElementById('promotionReason').value = '';
+                
+                // UI aktualisieren
+                loadPersonnel();
+                
+                // Log-Eintrag
+                addActivityLog(`${soldier.name} von ${oldRank} zu ${newRank.name} befördert${reason ? ` (Grund: ${reason})` : ''}`);
+            }
+        }
+
+        async function updateProfile() {
+            const newDisplayName = document.getElementById('displayNameInput').value;
+            const robloxUsername = document.getElementById('robloxUsername').value;
+            
+            if (!newDisplayName) {
+                showNotification('Bitte einen Anzeigenamen eingeben', 'warning');
+                return;
+            }
+            
+            currentUser.display_name = newDisplayName;
+            currentUser.roblox_username = robloxUsername;
+            
+            // UI aktualisieren
+            updateUserDisplay(currentUser);
+            
+            // In DB speichern (in Vollimplementierung)
+            
+            showNotification('Profil aktualisiert', 'success');
+        }
+
+        async function changePassword() {
+            showNotification('Passwortänderung wird in der Vollversion implementiert', 'info');
+        }
+
+        async function requestDischarge() {
+            if (confirm('Wirklich eine Entlassung beantragen? Diese Aktion muss von der Leitung bestätigt werden.')) {
+                showNotification('Entlassung beantragt. Die Leitung wird sich bei dir melden.', 'warning');
+            }
+        }
+
+        // ======================
+        // HELPER FUNCTIONS
+        // ======================
+        function getRankGradient(rankName) {
+            // Vereinfachte Zuordnung von Rängen zu Farben
+            if (rankName.includes('General') || rankName.includes('Oberst')) return 'rank-gradient-6';
+            if (rankName.includes('Major') || rankName.includes('Hauptmann') || rankName.includes('Leutnant')) return 'rank-gradient-5';
+            if (rankName.includes('Feldwebel')) return 'rank-gradient-4';
+            if (rankName.includes('Unteroffizier')) return 'rank-gradient-3';
+            if (rankName.includes('gefreiter') || rankName.includes('Gefreiter')) return 'rank-gradient-2';
+            return 'rank-gradient-1';
+        }
+
+        function addActivityLog(message) {
+            const activityContainer = document.getElementById('recentActivity');
+            if (activityContainer) {
+                const logEntry = `
+                    <div class="ios-card rounded-ios p-4 slide-in">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-ios-primary/20 flex items-center justify-center">
+                                <i class="fas fa-history text-ios-primary"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">${message}</p>
+                                <p class="text-ios-text-secondary text-sm">Gerade eben</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Füge am Anfang ein
+                activityContainer.innerHTML = logEntry + activityContainer.innerHTML;
+                
+                // Limit auf 5 Einträge
+                const entries = activityContainer.querySelectorAll('.ios-card');
+                if (entries.length > 5) {
+                    entries[5].remove();
+                }
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            
+            const notification = document.createElement('div');
+            notification.className = `ios-card rounded-ios p-4 slide-in border-l-4 ${type === 'error' ? 'border-ios-danger' : type === 'success' ? 'border-ios-success' : type === 'warning' ? 'border-ios-warning' : 'border-ios-primary'}`;
+            
+            const icon = type === 'error' ? 'exclamation-circle' : 
+                        type === 'success' ? 'check-circle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            notification.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-${icon} text-${type === 'error' ? 'ios-danger' : type === 'success' ? 'ios-success' : type === 'warning' ? 'ios-warning' : 'ios-primary'} mt-0.5"></i>
+                    <div class="flex-1">
+                        <p class="font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-ios-text-secondary hover:text-ios-text">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Auto-remove nach 5 Sekunden
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        // ======================
+        // DATABASE SETUP SCRIPT
+        // ======================
+        // Diese Funktion erstellt die Tabellen in Supabase
+        // Sie muss manuell in der Supabase SQL Console ausgeführt werden
+        const databaseSetupSQL = `
+        -- 1. Users Tabelle
+        CREATE TABLE IF NOT EXISTS users (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            display_name VARCHAR(100) NOT NULL,
+            rank VARCHAR(50) DEFAULT 'Schütze',
+            division VARCHAR(50) DEFAULT 'Heer',
+            stamina INTEGER DEFAULT 100 CHECK (stamina >= 0 AND stamina <= 100),
+            role VARCHAR(20) DEFAULT 'soldier' CHECK (role IN ('soldier', 'leader', 'admin')),
+            roblox_username VARCHAR(100),
+            created_at TIMESTAMP DEFAULT NOW(),
+            last_login TIMESTAMP
+        );
+
+        -- 2. Bewerbungen
+        CREATE TABLE IF NOT EXISTS applications (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            roblox_username VARCHAR(100) NOT NULL,
+            display_name VARCHAR(100) NOT NULL,
+            application_text TEXT NOT NULL,
+            age_group VARCHAR(20),
+            preferred_division VARCHAR(50),
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+            reviewed_by UUID REFERENCES users(id),
+            reviewed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- 3. Einsätze
+        CREATE TABLE IF NOT EXISTS missions (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT NOT NULL,
+            location VARCHAR(200),
+            mission_type VARCHAR(50),
+            difficulty VARCHAR(20) CHECK (difficulty IN ('Niedrig', 'Mittel', 'Hoch')),
+            start_time TIMESTAMP NOT NULL,
+            end_time TIMESTAMP,
+            created_by UUID REFERENCES users(id) NOT NULL,
+            status VARCHAR(20) DEFAULT 'planned' CHECK (status IN ('planned', 'active', 'completed', 'cancelled')),
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- 4. Ränge Tabelle
+        CREATE TABLE IF NOT EXISTS ranks (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            level INTEGER UNIQUE NOT NULL
+        );
+
+        -- 5. Standard-Ränge einfügen
+        INSERT INTO ranks (name, level) VALUES
+        ('Schütze', 1),
+        ('Gefreiter', 2),
+        ('Obergefreiter', 3),
+        ('Hauptgefreiter', 4),
+        ('Stabsgefreiter', 5),
+        ('Oberstabsgefreiter', 6),
+        ('Unteroffizier', 7),
+        ('Stabsunteroffizier', 8),
+        ('Feldwebel', 9),
+        ('Oberfeldwebel', 10),
+        ('Hauptfeldwebel', 11),
+        ('Stabsfeldwebel', 12),
+        ('Oberstabsfeldwebel', 13),
+        ('Leutnant', 14),
+        ('Oberleutnant', 15),
+        ('Hauptmann', 16),
+        ('Stabshauptmann', 17),
+        ('Major', 18),
+        ('Oberstleutnant', 19),
+        ('Oberst', 20),
+        ('Brigadegeneral', 21),
+        ('Generalmajor', 22),
+        ('Generalleutnant', 23),
+        ('General', 24)
+        ON CONFLICT DO NOTHING;
+
+        -- 6. Aktivitäten-Log
+        CREATE TABLE IF NOT EXISTS activity_log (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            user_id UUID REFERENCES users(id),
+            activity_type VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- Test-Admin Account (Passwort: bundeswehr123)
+        INSERT INTO users (username, password_hash, display_name, rank, division, role, stamina) 
+        VALUES ('admin_test', '$2b$10$YourHashedPasswordHere', 'Oberst Meyer', 'Oberst', 'Heer', 'admin', 95)
+        ON CONFLICT DO NOTHING;
+        `;
+
+        // Exportiere für Konsole
+        window.databaseSetupSQL = databaseSetupSQL;
+
+        // ======================
+        // STARTUP
+        // ======================
+        // Starte die App
+        console.log('Bundeswehr RP System gestartet');
+        console.log('Um die Datenbank einzurichten, führe das SQL-Skript in der Supabase SQL Console aus');
+        console.log('SQL-Skript verfügbar unter: window.databaseSetupSQL');
+    </script>
+</body>
+</html>
