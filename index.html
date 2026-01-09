@@ -6,7 +6,7 @@
     <title>Bundeswehr RP</title>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -802,7 +802,73 @@
 
     <!-- Military ID Modal -->
     <div id="militaryIDModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <!-- Content bleibt gleich -->
+        <div class="military-id rounded-ios-xl shadow-2xl w-full max-w-md p-0 overflow-hidden slide-in">
+            <!-- ID Header -->
+            <div class="military-id-header px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold">BUNDESWEHR RP</h2>
+                        <p class="text-sm opacity-80">Truppenausweis</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs opacity-80">Personal Nr.</div>
+                        <div id="modalSoldierID" class="id-number font-mono text-sm">#BW-0001</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ID Content -->
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-xs opacity-80 mb-1">Name</div>
+                        <div id="modalSoldierName" class="text-xl font-bold">-</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs opacity-80 mb-1">Dienstgrad</div>
+                            <div id="modalSoldierRank" class="font-semibold">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs opacity-80 mb-1">Division</div>
+                            <div id="modalSoldierDivision" class="font-semibold">-</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-xs opacity-80 mb-1">Soldaten-ID</div>
+                        <div id="modalSoldierFullID" class="font-mono">BW-<span id="modalSoldierNumber">0001</span></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs opacity-80 mb-1">Dienstbeginn</div>
+                            <div id="modalSoldierStart" class="font-semibold">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs opacity-80 mb-1">Status</div>
+                            <div class="px-2 py-1 rounded-full text-xs font-semibold bg-green-500">Aktiv</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-white/10">
+                        <div class="text-xs opacity-80 mb-2">Unterschrift des Kommandanten</div>
+                        <div class="h-8 border-b border-white/30"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ID Footer -->
+            <div class="px-6 py-3 bg-black/20 text-center text-xs opacity-80">
+                Dieser Ausweis ist Eigentum der Bundeswehr RP und muss stets mitgeführt werden.
+            </div>
+            
+            <!-- Close Button -->
+            <button id="closeIDModal" class="absolute top-4 right-4 text-white/70 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
     </div>
 
     <!-- NEU: Visitor ID Modal -->
@@ -1252,48 +1318,93 @@
         }
 
         // ======================
-        // DEBUG HELPER
+        // APPLICATION FORM FUNCTIONS - KORRIGIERT
         // ======================
-        console.log('Script loaded! Testing buttons...');
-
-        // Test ob Event Listener gesetzt werden
-        setTimeout(() => {
-            const loginBtn = document.getElementById('loginButton');
-            const appBtn = document.getElementById('applicationButton');
-            const visitorBtn = document.getElementById('visitorButton');
-    
-            console.log('Buttons found:', {
-                loginButton: loginBtn ? 'YES' : 'NO',
-                applicationButton: appBtn ? 'YES' : 'NO',
-                visitorButton: visitorBtn ? 'YES' : 'NO'
+        function showApplicationForm() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('applicationForm').classList.remove('hidden');
+            
+            const content = `
+                <form id="applicationFormElement">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Vollständiger Name *</label>
+                            <input type="text" id="applicantName" required
+                                   class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                                   placeholder="Max Mustermann">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Roblox Username *</label>
+                            <input type="text" id="applicantRoblox" required
+                                   class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                                   placeholder="@username">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Alter *</label>
+                            <input type="number" id="applicantAge" required min="16" max="60"
+                                   class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                                   placeholder="18">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Bevorzugte Division *</label>
+                            <select id="applicantDivision" required
+                                    class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20">
+                                <option value="">Bitte wählen</option>
+                                <option value="Heer">Heer</option>
+                                <option value="Marine">Marine</option>
+                                <option value="Luftwaffe">Luftwaffe</option>
+                                <option value="Sanitätsdienst">Sanitätsdienst</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Warum möchtest du der Bundeswehr beitreten? *</label>
+                            <textarea id="applicantReason" rows="4" required
+                                      class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
+                                      placeholder="Erkläre deine Motivation..."></textarea>
+                        </div>
+                        
+                        <div id="applicationFormError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm"></div>
+                        
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" class="flex-1 bg-bw-green text-white py-3 rounded-ios-sm font-semibold hover:bg-green-800">
+                                <i class="fas fa-paper-plane mr-2"></i>Bewerbung absenden
+                            </button>
+                            <button type="button" id="cancelApplicationBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                                Abbrechen
+                            </button>
+                        </div>
+                        
+                        <p class="text-sm text-ios-text-secondary text-center">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Deine Bewerbung wird von der Leitung geprüft. Du wirst per Roblox benachrichtigt.
+                        </p>
+                    </div>
+                </form>
+            `;
+            
+            document.getElementById('applicationContent').innerHTML = content;
+            
+            // Add event listeners
+            document.getElementById('applicationFormElement').addEventListener('submit', function(event) {
+                event.preventDefault();
+                submitApplication();
             });
-    
-            // Manuelle Event Listener für Test
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function(e) {
-                    console.log('LOGIN BUTTON CLICKED!', e);
-                    alert('Login Button funktioniert! Jetzt wird eingeloggt...');
-                    login(); // Die eigentliche Funktion
-                });
-            }
-    
-            if (appBtn) {
-                appBtn.addEventListener('click', function(e) {
-                    console.log('APPLICATION BUTTON CLICKED!', e);
-                    alert('Bewerbung Button funktioniert!');
-                    showApplicationForm();
-                });
-            }
-    
-            if (visitorBtn) {
-                visitorBtn.addEventListener('click', function(e) {
-                    console.log('VISITOR BUTTON CLICKED!', e);
-                    alert('Besucher Button funktioniert!');
-                    showVisitorForm();
-                });
-            }
-        }, 1000);
-        
+            
+            document.getElementById('cancelApplicationBtn').addEventListener('click', showLoginForm);
+        }
+
+        function submitApplication() {
+            // Placeholder für Bewerbungslogik
+            showNotification('Bewerbungsfunktion wird noch implementiert', 'info');
+            setTimeout(() => {
+                showLoginForm();
+            }, 1500);
+        }
+
         // ======================
         // VISITOR SYSTEM - NEUE FUNKTIONEN
         // ======================
@@ -1942,6 +2053,21 @@
                 document.getElementById('serviceTime').textContent = `${months} Monat${months !== 1 ? 'e' : ''}`;
                 document.getElementById('idStartDate').textContent = new Date(user.service_start).toLocaleDateString('de-DE');
             }
+            
+            // Update military ID modal
+            document.getElementById('modalSoldierName').textContent = user.display_name;
+            document.getElementById('modalSoldierRank').textContent = user.rank;
+            document.getElementById('modalSoldierDivision').textContent = user.division;
+            document.getElementById('modalSoldierFullID').textContent = user.soldier_id;
+            document.getElementById('modalSoldierID').textContent = '#' + user.soldier_id;
+            
+            const soldierIdParts = user.soldier_id.split('-');
+            document.getElementById('modalSoldierNumber').textContent = soldierIdParts.length > 1 ? soldierIdParts[1] : '0000';
+            
+            if (user.service_start) {
+                const startDate = new Date(user.service_start);
+                document.getElementById('modalSoldierStart').textContent = startDate.toLocaleDateString('de-DE');
+            }
         }
 
         function checkPermissions(role) {
@@ -2042,7 +2168,11 @@
         function showMilitaryID() {
             if (!currentUser) return;
             
-            // ... existing military ID code ...
+            // Update modal with current user data
+            updateUserDisplay(currentUser);
+            
+            // Show modal
+            document.getElementById('militaryIDModal').classList.remove('hidden');
         }
 
         function hideMilitaryID() {
