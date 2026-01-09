@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bundeswehr RP - Management System</title>
+    <title>Bundeswehr RP</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -319,14 +319,14 @@
                     <span id="loginErrorText">Falscher Benutzername oder Passwort</span>
                 </div>
                 
-                <button onclick="login()" class="w-full gradient-bw text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-lg transition-shadow">
+                <button id="loginButton" class="w-full gradient-bw text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-lg transition-shadow">
                     <i class="fas fa-sign-in-alt mr-2"></i>Einloggen
                 </button>
             </div>
             
             <!-- Application Button -->
             <div class="mt-6 pt-6 border-t border-ios-border">
-                <button onclick="showApplicationForm()" class="w-full bg-white border-2 border-bw-green text-bw-green py-3 rounded-ios-sm font-semibold text-lg hover:bg-bw-green hover:text-white transition-colors">
+                <button id="applicationButton" class="w-full bg-white border-2 border-bw-green text-bw-green py-3 rounded-ios-sm font-semibold text-lg hover:bg-bw-green hover:text-white transition-colors">
                     <i class="fas fa-file-alt mr-2"></i>Bewerben
                 </button>
             </div>
@@ -345,7 +345,7 @@
                     <h2 class="text-2xl font-bold gradient-text">Bewerbung</h2>
                     <p class="text-ios-text-secondary">Bewerben Sie sich für die Bundeswehr</p>
                 </div>
-                <button onclick="showLoginForm()" class="text-ios-text-secondary hover:text-ios-text">
+                <button id="backToLoginButton" class="text-ios-text-secondary hover:text-ios-text">
                     <i class="fas fa-arrow-left"></i> Zurück
                 </button>
             </div>
@@ -362,11 +362,11 @@
         <nav class="bg-white border-b border-ios-border px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-40">
             <!-- Left: Hamburger menu and ID button -->
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="text-ios-text-secondary hover:text-ios-text p-2">
+                <button id="sidebarToggle" class="text-ios-text-secondary hover:text-ios-text p-2">
                     <i class="fas fa-bars text-lg"></i>
                 </button>
                 
-                <button onclick="showMilitaryID()" class="flex items-center gap-2 text-ios-text hover:text-ios-primary">
+                <button id="showIDButton" class="flex items-center gap-2 text-ios-text hover:text-ios-primary">
                     <i class="fas fa-id-card"></i>
                     <span class="hidden sm:inline text-sm font-medium">Ausweis</span>
                 </button>
@@ -399,7 +399,7 @@
                     </div>
                 </div>
                 
-                <button onclick="logout()" class="text-red-500 hover:text-red-700 p-2" title="Ausloggen">
+                <button id="logoutButton" class="text-red-500 hover:text-red-700 p-2" title="Ausloggen">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
@@ -434,17 +434,17 @@
             <!-- Navigation -->
             <nav class="p-2">
                 <div class="space-y-1">
-                    <button onclick="showPage('dashboard')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <button data-page="dashboard" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                         <i class="fas fa-home w-5 text-center"></i>
                         <span>Dashboard</span>
                     </button>
                     
-                    <button onclick="showPage('missions')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <button data-page="missions" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                         <i class="fas fa-crosshairs w-5 text-center"></i>
                         <span>Einsätze</span>
                     </button>
                     
-                    <button onclick="showPage('personnel')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <button data-page="personnel" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                         <i class="fas fa-users w-5 text-center"></i>
                         <span>Personal</span>
                     </button>
@@ -452,19 +452,19 @@
                     <div id="managementSection" class="hidden">
                         <div class="text-xs font-semibold text-ios-text-secondary uppercase tracking-wider px-4 py-2">Leitung</div>
                         
-                        <button onclick="showPage('management')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                        <button data-page="management" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                             <i class="fas fa-tasks w-5 text-center"></i>
                             <span>Management</span>
                         </button>
                         
-                        <button onclick="showPage('applications')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                        <button data-page="applications" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                             <i class="fas fa-file-alt w-5 text-center"></i>
                             <span>Bewerbungen</span>
                             <span id="pendingAppsBadge" class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
                         </button>
                     </div>
                     
-                    <button onclick="showPage('settings')" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                    <button data-page="settings" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                         <i class="fas fa-cog w-5 text-center"></i>
                         <span>Einstellungen</span>
                     </button>
@@ -487,7 +487,7 @@
                     <div class="ios-card rounded-ios-lg p-5">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-bold">Truppenausweis</h2>
-                            <button onclick="showMilitaryID()" class="text-ios-primary hover:text-ios-primary/80">
+                            <button id="showIDButton2" class="text-ios-primary hover:text-ios-primary/80">
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
@@ -558,7 +558,7 @@
                 <div class="ios-card rounded-ios-lg p-5 mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-bold">Bevorstehende Einsätze</h2>
-                        <button onclick="showPage('missions')" class="text-sm text-ios-primary hover:text-ios-primary/80 font-medium">
+                        <button data-page="missions" class="text-sm text-ios-primary hover:text-ios-primary/80 font-medium">
                             Alle ansehen →
                         </button>
                     </div>
@@ -579,7 +579,7 @@
                         <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Einsätze</h1>
                         <p class="text-ios-text-secondary">Aktive und geplante Missionen</p>
                     </div>
-                    <button id="createMissionBtn" onclick="showCreateMissionModal()" class="hidden gradient-bw text-white px-4 py-2 rounded-ios-sm font-semibold hover:shadow-lg">
+                    <button id="createMissionBtn" class="hidden gradient-bw text-white px-4 py-2 rounded-ios-sm font-semibold hover:shadow-lg">
                         <i class="fas fa-plus mr-2"></i>Neuer Einsatz
                     </button>
                 </div>
@@ -587,16 +587,16 @@
                 <div class="ios-card rounded-ios-lg p-5">
                     <!-- Mission Tabs -->
                     <div class="flex border-b border-ios-border mb-6 -mx-5 px-5">
-                        <button onclick="setMissionFilter('all')" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="all">
+                        <button data-filter="all" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Alle
                         </button>
-                        <button onclick="setMissionFilter('active')" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="active">
+                        <button data-filter="active" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Aktiv
                         </button>
-                        <button onclick="setMissionFilter('upcoming')" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="upcoming">
+                        <button data-filter="upcoming" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Bevorstehend
                         </button>
-                        <button onclick="setMissionFilter('completed')" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="completed">
+                        <button data-filter="completed" class="mission-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Abgeschlossen
                         </button>
                     </div>
@@ -661,7 +661,7 @@
                 
                 <!-- Quick Actions -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <button onclick="showCreateMissionModal()" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
+                    <button id="createMissionBtn2" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
                         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
                             <i class="fas fa-plus text-blue-600"></i>
                         </div>
@@ -669,7 +669,7 @@
                         <p class="text-sm text-ios-text-secondary">Einsatz erstellen und planen</p>
                     </button>
                     
-                    <button onclick="showPage('applications')" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
+                    <button data-page="applications" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
                         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mb-3">
                             <i class="fas fa-file-alt text-green-600"></i>
                         </div>
@@ -679,7 +679,7 @@
                         </p>
                     </button>
                     
-                    <button onclick="showCreateUserModal()" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
+                    <button id="createUserBtn" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
                         <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
                             <i class="fas fa-user-plus text-purple-600"></i>
                         </div>
@@ -687,7 +687,7 @@
                         <p class="text-sm text-ios-text-secondary">Direkt Account erstellen</p>
                     </button>
                     
-                    <button onclick="showReports()" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
+                    <button id="reportsBtn" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
                         <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center mb-3">
                             <i class="fas fa-chart-bar text-orange-600"></i>
                         </div>
@@ -718,13 +718,13 @@
                 <div class="ios-card rounded-ios-lg p-5">
                     <!-- Application Tabs -->
                     <div class="flex border-b border-ios-border mb-6 -mx-5 px-5">
-                        <button onclick="setApplicationFilter('pending')" class="app-tab px-4 py-2 font-medium border-b-2 border-bw-green text-bw-green" data-filter="pending">
+                        <button data-filter="pending" class="app-tab px-4 py-2 font-medium border-b-2 border-bw-green text-bw-green">
                             Ausstehend (<span id="pendingCount">0</span>)
                         </button>
-                        <button onclick="setApplicationFilter('accepted')" class="app-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="accepted">
+                        <button data-filter="accepted" class="app-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Angenommen
                         </button>
-                        <button onclick="setApplicationFilter('rejected')" class="app-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text" data-filter="rejected">
+                        <button data-filter="rejected" class="app-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
                             Abgelehnt
                         </button>
                     </div>
@@ -761,7 +761,7 @@
                                            class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
                                            placeholder="Dein Roblox Name">
                                 </div>
-                                <button onclick="updateProfile()" class="bg-bw-green text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-green-800 transition-colors">
+                                <button id="updateProfileBtn" class="bg-bw-green text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-green-800 transition-colors">
                                     Änderungen speichern
                                 </button>
                             </div>
@@ -845,7 +845,7 @@
             </div>
             
             <!-- Close Button -->
-            <button onclick="hideMilitaryID()" class="absolute top-4 right-4 text-white/70 hover:text-white">
+            <button id="closeIDModal" class="absolute top-4 right-4 text-white/70 hover:text-white">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
@@ -857,7 +857,7 @@
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold gradient-text">Neuer Einsatz</h2>
-                    <button onclick="hideCreateMissionModal()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button id="closeMissionModal" class="text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -945,10 +945,10 @@
                     </div>
                     
                     <div class="flex gap-4 pt-4">
-                        <button onclick="createMission()" class="flex-1 gradient-bw text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-lg">
+                        <button id="createMissionConfirmBtn" class="flex-1 gradient-bw text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-lg">
                             <i class="fas fa-save mr-2"></i>Einsatz erstellen
                         </button>
-                        <button onclick="hideCreateMissionModal()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold text-lg hover:bg-ios-primary/10">
+                        <button id="cancelMissionBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold text-lg hover:bg-ios-primary/10">
                             Abbrechen
                         </button>
                     </div>
@@ -963,7 +963,7 @@
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold gradient-text">Account erstellen</h2>
-                    <button onclick="hideCreateUserModal()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button id="closeUserModal" class="text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -1030,10 +1030,10 @@
                     </div>
                     
                     <div class="flex gap-4 pt-4">
-                        <button onclick="createUser()" class="flex-1 gradient-bw text-white py-3 rounded-ios-sm font-semibold hover:shadow-lg">
+                        <button id="createUserConfirmBtn" class="flex-1 gradient-bw text-white py-3 rounded-ios-sm font-semibold hover:shadow-lg">
                             <i class="fas fa-user-plus mr-2"></i>Account erstellen
                         </button>
-                        <button onclick="hideCreateUserModal()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                        <button id="cancelUserBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
                             Abbrechen
                         </button>
                     </div>
@@ -1048,7 +1048,7 @@
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold gradient-text">Bewerbung annehmen</h2>
-                    <button onclick="hideAcceptApplicationModal()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button id="closeAcceptModal" class="text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -1093,10 +1093,10 @@
                     </div>
                     
                     <div class="flex gap-4 pt-4">
-                        <button onclick="acceptApplicationConfirm()" class="flex-1 bg-green-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-green-700">
+                        <button id="acceptApplicationConfirmBtn" class="flex-1 bg-green-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-green-700">
                             <i class="fas fa-check mr-2"></i>Annehmen & Account erstellen
                         </button>
-                        <button onclick="hideAcceptApplicationModal()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                        <button id="cancelAcceptBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
                             Abbrechen
                         </button>
                     </div>
@@ -1111,7 +1111,7 @@
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold gradient-text">Bewerbung ablehnen</h2>
-                    <button onclick="hideRejectApplicationModal()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button id="closeRejectModal" class="text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -1134,10 +1134,10 @@
                     </div>
                     
                     <div class="flex gap-4 pt-4">
-                        <button onclick="rejectApplicationConfirm()" class="flex-1 bg-red-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-red-700">
+                        <button id="rejectApplicationConfirmBtn" class="flex-1 bg-red-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-red-700">
                             <i class="fas fa-times mr-2"></i>Ablehnen
                         </button>
-                        <button onclick="hideRejectApplicationModal()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                        <button id="cancelRejectBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
                             Abbrechen
                         </button>
                     </div>
@@ -1152,7 +1152,7 @@
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold gradient-text" id="soldierActionsTitle">Aktionen</h2>
-                    <button onclick="hideSoldierActionsModal()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button id="closeSoldierActions" class="text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -1205,6 +1205,9 @@
         let personnel = [];
         let applications = [];
         let isSidebarCollapsed = false;
+        let currentAcceptAppId = null;
+        let currentRejectAppId = null;
+        let currentSoldierId = null;
 
         // ======================
         // INITIALIZATION
@@ -1266,6 +1269,98 @@
         }
 
         function setupEventListeners() {
+            // Login button
+            document.getElementById('loginButton').addEventListener('click', login);
+            
+            // Application button
+            document.getElementById('applicationButton').addEventListener('click', showApplicationForm);
+            
+            // Back to login button
+            document.getElementById('backToLoginButton').addEventListener('click', showLoginForm);
+            
+            // Sidebar toggle
+            document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+            
+            // Logout button
+            document.getElementById('logoutButton').addEventListener('click', logout);
+            
+            // Show ID buttons
+            document.getElementById('showIDButton').addEventListener('click', showMilitaryID);
+            document.getElementById('showIDButton2').addEventListener('click', showMilitaryID);
+            document.getElementById('closeIDModal').addEventListener('click', hideMilitaryID);
+            
+            // Navigation buttons
+            document.querySelectorAll('.nav-item[data-page]').forEach(button => {
+                button.addEventListener('click', function() {
+                    showPage(this.getAttribute('data-page'));
+                });
+            });
+            
+            // Mission tabs
+            document.querySelectorAll('.mission-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    setMissionFilter(this.getAttribute('data-filter'));
+                });
+            });
+            
+            // Application tabs
+            document.querySelectorAll('.app-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    setApplicationFilter(this.getAttribute('data-filter'));
+                });
+            });
+            
+            // Create mission buttons
+            document.getElementById('createMissionBtn').addEventListener('click', showCreateMissionModal);
+            document.getElementById('createMissionBtn2').addEventListener('click', showCreateMissionModal);
+            document.getElementById('closeMissionModal').addEventListener('click', hideCreateMissionModal);
+            document.getElementById('cancelMissionBtn').addEventListener('click', hideCreateMissionModal);
+            document.getElementById('createMissionConfirmBtn').addEventListener('click', createMission);
+            
+            // Create user buttons
+            document.getElementById('createUserBtn').addEventListener('click', showCreateUserModal);
+            document.getElementById('closeUserModal').addEventListener('click', hideCreateUserModal);
+            document.getElementById('cancelUserBtn').addEventListener('click', hideCreateUserModal);
+            document.getElementById('createUserConfirmBtn').addEventListener('click', createUser);
+            
+            // Application management
+            document.getElementById('closeAcceptModal').addEventListener('click', hideAcceptApplicationModal);
+            document.getElementById('cancelAcceptBtn').addEventListener('click', hideAcceptApplicationModal);
+            document.getElementById('acceptApplicationConfirmBtn').addEventListener('click', acceptApplicationConfirm);
+            
+            document.getElementById('closeRejectModal').addEventListener('click', hideRejectApplicationModal);
+            document.getElementById('cancelRejectBtn').addEventListener('click', hideRejectApplicationModal);
+            document.getElementById('rejectApplicationConfirmBtn').addEventListener('click', rejectApplicationConfirm);
+            
+            // Soldier actions
+            document.getElementById('closeSoldierActions').addEventListener('click', hideSoldierActionsModal);
+            
+            // Update profile
+            document.getElementById('updateProfileBtn').addEventListener('click', updateProfile);
+            
+            // Personnel search
+            document.getElementById('personnelSearch').addEventListener('input', filterPersonnel);
+            document.getElementById('divisionFilter').addEventListener('change', filterPersonnel);
+            document.getElementById('rankFilter').addEventListener('change', filterPersonnel);
+            
+            // Mission date/time defaults
+            const today = new Date().toISOString().split('T')[0];
+            const missionDateInput = document.getElementById('missionDate');
+            if (missionDateInput) {
+                missionDateInput.setAttribute('min', today);
+                missionDateInput.value = today;
+            }
+            
+            // Set mission time to next hour
+            const nextHour = new Date();
+            nextHour.setHours(nextHour.getHours() + 1);
+            nextHour.setMinutes(0);
+            const missionTimeInput = document.getElementById('missionTime');
+            if (missionTimeInput) {
+                missionTimeInput.value = 
+                    nextHour.getHours().toString().padStart(2, '0') + ':00';
+            }
+            
             // Login form enter key
             document.getElementById('loginUsername')?.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') login();
@@ -1274,31 +1369,6 @@
             document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') login();
             });
-            
-            // Personnel search
-            document.getElementById('personnelSearch')?.addEventListener('input', function() {
-                filterPersonnel();
-            });
-            
-            document.getElementById('divisionFilter')?.addEventListener('change', function() {
-                filterPersonnel();
-            });
-            
-            document.getElementById('rankFilter')?.addEventListener('change', function() {
-                filterPersonnel();
-            });
-            
-            // Initialize today's date for mission creation
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('missionDate')?.setAttribute('min', today);
-            document.getElementById('missionDate')?.value = today;
-            
-            // Set mission time to next hour
-            const nextHour = new Date();
-            nextHour.setHours(nextHour.getHours() + 1);
-            nextHour.setMinutes(0);
-            document.getElementById('missionTime')?.value = 
-                nextHour.getHours().toString().padStart(2, '0') + ':00';
         }
 
         function loadTestData() {
@@ -1582,7 +1652,7 @@
                 document.getElementById('applicationForm').classList.remove('hidden');
                 
                 const content = `
-                    <form onsubmit="submitApplication(event)">
+                    <form id="applicationFormElement">
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Roblox Username *</label>
@@ -1635,7 +1705,7 @@
                                 <button type="submit" class="flex-1 gradient-bw text-white py-3 rounded-ios-sm font-semibold hover:shadow-lg">
                                     <i class="fas fa-paper-plane mr-2"></i>Bewerbung absenden
                                 </button>
-                                <button type="button" onclick="showLoginForm()" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
+                                <button type="button" id="cancelApplicationBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
                                     Abbrechen
                                 </button>
                             </div>
@@ -1649,6 +1719,14 @@
                 `;
                 
                 document.getElementById('applicationContent').innerHTML = content;
+                
+                // Add event listeners for the new form
+                document.getElementById('applicationFormElement').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    submitApplication();
+                });
+                
+                document.getElementById('cancelApplicationBtn').addEventListener('click', showLoginForm);
             }
         }
 
@@ -1772,7 +1850,7 @@
                     ` : ''}
                     
                     <div class="pt-4 border-t border-ios-border">
-                        <button onclick="showLoginForm()" class="w-full bg-bw-green text-white py-3 rounded-ios-sm font-semibold hover:bg-green-800">
+                        <button id="backToLoginFromStatus" class="w-full bg-bw-green text-white py-3 rounded-ios-sm font-semibold hover:bg-green-800">
                             <i class="fas fa-arrow-left mr-2"></i>Zurück zum Login
                         </button>
                     </div>
@@ -1780,11 +1858,12 @@
             `;
             
             document.getElementById('applicationContent').innerHTML = content;
+            
+            // Add event listener for back button
+            document.getElementById('backToLoginFromStatus').addEventListener('click', showLoginForm);
         }
 
-        function submitApplication(event) {
-            event.preventDefault();
-            
+        function submitApplication() {
             const roblox = document.getElementById('appRoblox').value;
             const displayName = document.getElementById('appDisplayName').value;
             const ageGroup = document.getElementById('appAgeGroup').value;
@@ -2030,6 +2109,15 @@
                         `;
                     });
                     container.innerHTML = html;
+                    
+                    // Add event listeners for join buttons
+                    container.querySelectorAll('button[onclick^="joinMission"]').forEach(button => {
+                        const missionId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                        button.addEventListener('click', function() {
+                            joinMission(missionId);
+                        });
+                        button.removeAttribute('onclick');
+                    });
                 } else {
                     container.innerHTML = `
                         <div class="text-center py-8 text-ios-text-secondary">
@@ -2108,7 +2196,7 @@
                                     
                                     <div class="flex gap-2">
                                         ${!isParticipant && mission.status !== 'completed' ? `
-                                            <button onclick="joinMission('${mission.id}')" class="text-ios-primary hover:text-ios-primary/80 font-medium">
+                                            <button data-mission-id="${mission.id}" class="join-mission-btn text-ios-primary hover:text-ios-primary/80 font-medium">
                                                 <i class="fas fa-plus mr-1"></i>Beitreten
                                             </button>
                                         ` : isParticipant ? `
@@ -2118,10 +2206,10 @@
                                         ` : ''}
                                         
                                         ${isCreator || currentUser?.role === 'admin' ? `
-                                            <button onclick="editMission('${mission.id}')" class="text-ios-warning hover:text-ios-warning/80">
+                                            <button data-mission-id="${mission.id}" class="edit-mission-btn text-ios-warning hover:text-ios-warning/80">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="deleteMission('${mission.id}')" class="text-red-600 hover:text-red-800">
+                                            <button data-mission-id="${mission.id}" class="delete-mission-btn text-red-600 hover:text-red-800">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         ` : ''}
@@ -2131,6 +2219,28 @@
                         `;
                     });
                     container.innerHTML = html;
+                    
+                    // Add event listeners
+                    container.querySelectorAll('.join-mission-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const missionId = this.getAttribute('data-mission-id');
+                            joinMission(missionId);
+                        });
+                    });
+                    
+                    container.querySelectorAll('.edit-mission-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const missionId = this.getAttribute('data-mission-id');
+                            editMission(missionId);
+                        });
+                    });
+                    
+                    container.querySelectorAll('.delete-mission-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const missionId = this.getAttribute('data-mission-id');
+                            deleteMission(missionId);
+                        });
+                    });
                 } else {
                     container.innerHTML = `
                         <div class="text-center py-12 text-ios-text-secondary">
@@ -2182,7 +2292,7 @@
                             
                             ${isAdmin && !isCurrentUser ? `
                                 <div class="relative">
-                                    <button onclick="showSoldierActions('${soldier.id}')" class="text-ios-text-secondary hover:text-ios-text p-2">
+                                    <button data-soldier-id="${soldier.id}" class="soldier-actions-btn text-ios-text-secondary hover:text-ios-text p-2">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                 </div>
@@ -2191,6 +2301,14 @@
                     `;
                 });
                 container.innerHTML = html;
+                
+                // Add event listeners for soldier actions
+                container.querySelectorAll('.soldier-actions-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const soldierId = this.getAttribute('data-soldier-id');
+                        showSoldierActions(soldierId);
+                    });
+                });
             } else {
                 container.innerHTML = `
                     <div class="text-center py-12 text-ios-text-secondary">
@@ -2253,7 +2371,7 @@
                                 
                                 ${isAdmin && !isCurrentUser ? `
                                     <div class="relative">
-                                        <button onclick="showSoldierActions('${soldier.id}')" class="text-ios-text-secondary hover:text-ios-text p-2">
+                                        <button data-soldier-id="${soldier.id}" class="soldier-actions-btn text-ios-text-secondary hover:text-ios-text p-2">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                     </div>
@@ -2262,6 +2380,14 @@
                         `;
                     });
                     container.innerHTML = html;
+                    
+                    // Add event listeners for soldier actions
+                    container.querySelectorAll('.soldier-actions-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const soldierId = this.getAttribute('data-soldier-id');
+                            showSoldierActions(soldierId);
+                        });
+                    });
                 } else {
                     container.innerHTML = `
                         <div class="text-center py-8 text-ios-text-secondary">
@@ -2316,12 +2442,15 @@
             // Update counts
             const pendingCount = applications.filter(app => app.status === 'pending').length;
             document.getElementById('pendingCount').textContent = pendingCount;
-            document.getElementById('pendingAppsBadge').textContent = pendingCount;
-            
-            if (pendingCount > 0) {
-                document.getElementById('pendingAppsBadge').classList.remove('hidden');
-            } else {
-                document.getElementById('pendingAppsBadge').classList.add('hidden');
+            const pendingAppsBadge = document.getElementById('pendingAppsBadge');
+            if (pendingAppsBadge) {
+                pendingAppsBadge.textContent = pendingCount;
+                
+                if (pendingCount > 0) {
+                    pendingAppsBadge.classList.remove('hidden');
+                } else {
+                    pendingAppsBadge.classList.add('hidden');
+                }
             }
             
             const container = document.getElementById('applicationsList');
@@ -2359,13 +2488,13 @@
                                 
                                 ${app.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
                                     <div class="flex gap-3 pt-4 border-t border-ios-border">
-                                        <button onclick="showAcceptApplication('${app.id}')" class="flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
+                                        <button data-app-id="${app.id}" class="accept-app-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
                                             <i class="fas fa-check mr-2"></i>Annehmen
                                         </button>
-                                        <button onclick="showRejectApplication('${app.id}')" class="flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
+                                        <button data-app-id="${app.id}" class="reject-app-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
                                             <i class="fas fa-times mr-2"></i>Ablehnen
                                         </button>
-                                        <button onclick="viewApplicationDetails('${app.id}')" class="flex-1 bg-ios-primary text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-primary/90">
+                                        <button data-app-id="${app.id}" class="view-app-btn flex-1 bg-ios-primary text-white py-2 rounded-ios-sm font-semibold hover:bg-ios-primary/90">
                                             <i class="fas fa-eye mr-2"></i>Details
                                         </button>
                                     </div>
@@ -2388,6 +2517,28 @@
                         `;
                     });
                     container.innerHTML = html;
+                    
+                    // Add event listeners for application buttons
+                    container.querySelectorAll('.accept-app-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appId = this.getAttribute('data-app-id');
+                            showAcceptApplication(appId);
+                        });
+                    });
+                    
+                    container.querySelectorAll('.reject-app-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appId = this.getAttribute('data-app-id');
+                            showRejectApplication(appId);
+                        });
+                    });
+                    
+                    container.querySelectorAll('.view-app-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appId = this.getAttribute('data-app-id');
+                            viewApplicationDetails(appId);
+                        });
+                    });
                 } else {
                     container.innerHTML = `
                         <div class="text-center py-12 text-ios-text-secondary">
@@ -2464,11 +2615,18 @@
                         <div class="text-center py-8 text-ios-text-secondary">
                             <i class="fas fa-file-alt text-3xl mb-3"></i>
                             <p>Keine aktive Bewerbung</p>
-                            <button onclick="showApplicationForm()" class="mt-4 text-ios-primary hover:text-ios-primary/80 font-medium">
+                            <button id="newApplicationBtn" class="mt-4 text-ios-primary hover:text-ios-primary/80 font-medium">
                                 Neue Bewerbung einreichen →
                             </button>
                         </div>
                     `;
+                    
+                    // Add event listener for new application button
+                    document.getElementById('newApplicationBtn').addEventListener('click', function() {
+                        document.getElementById('mainApp').classList.add('hidden');
+                        document.getElementById('loginScreen').classList.remove('hidden');
+                        showApplicationForm();
+                    });
                 }
             }
         }
@@ -2547,6 +2705,18 @@
             }
         }
 
+        function editMission(missionId) {
+            showNotification('Bearbeitungsfunktion wird noch implementiert', 'info');
+        }
+
+        function deleteMission(missionId) {
+            if (confirm('Möchtest du diesen Einsatz wirklich löschen?')) {
+                missions = missions.filter(m => m.id !== missionId);
+                showNotification('Einsatz gelöscht', 'success');
+                loadMissions();
+            }
+        }
+
         // ======================
         // APPLICATION MANAGEMENT
         // ======================
@@ -2563,13 +2733,13 @@
             `;
             
             document.getElementById('acceptApplicationModal').classList.remove('hidden');
-            window.currentAcceptAppId = appId;
+            currentAcceptAppId = appId;
         }
 
         function hideAcceptApplicationModal() {
             document.getElementById('acceptApplicationModal').classList.add('hidden');
             document.getElementById('acceptError').classList.add('hidden');
-            window.currentAcceptAppId = null;
+            currentAcceptAppId = null;
         }
 
         function acceptApplicationConfirm() {
@@ -2583,8 +2753,7 @@
                 return;
             }
             
-            const appId = window.currentAcceptAppId;
-            const app = applications.find(a => a.id === appId);
+            const app = applications.find(a => a.id === currentAcceptAppId);
             
             if (app) {
                 // Update application status
@@ -2668,13 +2837,13 @@
             `;
             
             document.getElementById('rejectApplicationModal').classList.remove('hidden');
-            window.currentRejectAppId = appId;
+            currentRejectAppId = appId;
         }
 
         function hideRejectApplicationModal() {
             document.getElementById('rejectApplicationModal').classList.add('hidden');
             document.getElementById('rejectError').classList.add('hidden');
-            window.currentRejectAppId = null;
+            currentRejectAppId = null;
         }
 
         function rejectApplicationConfirm() {
@@ -2685,8 +2854,7 @@
                 return;
             }
             
-            const appId = window.currentRejectAppId;
-            const app = applications.find(a => a.id === appId);
+            const app = applications.find(a => a.id === currentRejectAppId);
             
             if (app) {
                 // Update application status
@@ -2715,6 +2883,13 @@
             }
         }
 
+        function viewApplicationDetails(appId) {
+            const app = applications.find(a => a.id === appId);
+            if (app) {
+                alert(`Bewerbungsdetails:\n\nName: ${app.display_name}\nRoblox: ${app.roblox_username}\nAltersgruppe: ${app.age_group}\nDivision: ${app.preferred_division}\n\nBewerbungstext:\n${app.application_text}`);
+            }
+        }
+
         // ======================
         // SOLDIER ACTIONS
         // ======================
@@ -2725,27 +2900,27 @@
             document.getElementById('soldierActionsTitle').textContent = `Aktionen für ${soldier.name}`;
             
             const actionsHtml = `
-                <button onclick="promoteSoldier('${soldierId}')" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                <button data-action="promote" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                     <i class="fas fa-star text-yellow-500"></i>
                     <span>Befördern</span>
                 </button>
                 
-                <button onclick="addStamina('${soldierId}', 1)" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                <button data-action="add-stamina" data-amount="1" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                     <i class="fas fa-plus text-green-500"></i>
                     <span>+1 Ausdauer (Pushups)</span>
                 </button>
                 
-                <button onclick="addStamina('${soldierId}', 2)" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                <button data-action="add-stamina" data-amount="2" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                     <i class="fas fa-plus text-green-500"></i>
                     <span>+2 Ausdauer (Klimmzüge)</span>
                 </button>
                 
-                <button onclick="addStamina('${soldierId}', 3)" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                <button data-action="add-stamina" data-amount="3" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                     <i class="fas fa-plus text-green-500"></i>
                     <span>+3 Ausdauer (5km Lauf)</span>
                 </button>
                 
-                <button onclick="editSoldier('${soldierId}')" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
+                <button data-action="edit" data-soldier-id="${soldierId}" class="w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
                     <i class="fas fa-edit text-blue-500"></i>
                     <span>Bearbeiten</span>
                 </button>
@@ -2753,12 +2928,29 @@
             
             document.getElementById('soldierActionsContent').innerHTML = actionsHtml;
             document.getElementById('soldierActionsModal').classList.remove('hidden');
-            window.currentSoldierId = soldierId;
+            currentSoldierId = soldierId;
+            
+            // Add event listeners for action buttons
+            document.querySelectorAll('#soldierActionsContent button[data-action]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    const soldierId = this.getAttribute('data-soldier-id');
+                    
+                    if (action === 'promote') {
+                        promoteSoldier(soldierId);
+                    } else if (action === 'add-stamina') {
+                        const amount = parseInt(this.getAttribute('data-amount'));
+                        addStamina(soldierId, amount);
+                    } else if (action === 'edit') {
+                        editSoldier(soldierId);
+                    }
+                });
+            });
         }
 
         function hideSoldierActionsModal() {
             document.getElementById('soldierActionsModal').classList.add('hidden');
-            window.currentSoldierId = null;
+            currentSoldierId = null;
         }
 
         function promoteSoldier(soldierId) {
@@ -2832,6 +3024,10 @@
             }
         }
 
+        function editSoldier(soldierId) {
+            showNotification('Bearbeitungsfunktion wird noch implementiert', 'info');
+        }
+
         // ======================
         // MILITARY ID
         // ======================
@@ -2841,7 +3037,8 @@
             document.getElementById('modalName').textContent = currentUser.display_name;
             document.getElementById('modalRank').textContent = currentUser.rank;
             document.getElementById('modalUnit').textContent = currentUser.division;
-            document.getElementById('modalPersonnelID').textContent = currentUser.soldier_id.split('-')[1] || '0000';
+            const soldierIdParts = currentUser.soldier_id.split('-');
+            document.getElementById('modalPersonnelID').textContent = soldierIdParts.length > 1 ? soldierIdParts[1] : '0000';
             document.getElementById('modalPersonnelNumber').textContent = currentUser.soldier_id;
             document.getElementById('modalIDNumber').textContent = currentUser.soldier_id;
             
@@ -2975,7 +3172,10 @@
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             if (element) {
-                element.querySelector('span').textContent = message;
+                const span = element.querySelector('span');
+                if (span) {
+                    span.textContent = message;
+                }
                 element.classList.remove('hidden');
             }
         }
@@ -3015,13 +3215,18 @@
                     <div class="flex-1">
                         <p class="font-medium">${message}</p>
                     </div>
-                    <button onclick="document.getElementById('${id}').remove()" class="text-ios-text-secondary hover:text-ios-text">
+                    <button class="close-notification-btn text-ios-text-secondary hover:text-ios-text">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
             
             container.appendChild(notification);
+            
+            // Add event listener for close button
+            notification.querySelector('.close-notification-btn').addEventListener('click', function() {
+                notification.remove();
+            });
             
             // Auto-remove after 5 seconds
             setTimeout(() => {
