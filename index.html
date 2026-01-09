@@ -3,63 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bundeswehr RP</title>
+    <title>Bundeswehr RP - Management System</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
-        // WICHTIG: Funktionen ZUERST definieren, bevor sie aufgerufen werden
-        function login() {
-            console.log('Login-Funktion aufgerufen');
-            alert('Login funktioniert! Test-Account: admin_test / bundeswehr123');
-        }
-        
-        function showApplicationForm() {
-            console.log('Bewerbungsformular aufgerufen');
-            alert('Bewerbung funktioniert!');
-        }
-        
-        function showLoginForm() {
-            console.log('Zurück zum Login');
-            alert('Zurück zum Login');
-        }
-        
-        function logout() {
-            console.log('Logout aufgerufen');
-            alert('Logout funktioniert!');
-        }
-        
-        function showPage(page) {
-            console.log('Seite aufgerufen:', page);
-            alert('Seite: ' + page);
-        }
-        
-        function toggleSidebar() {
-            console.log('Sidebar toggle');
-            alert('Sidebar wird umgeschaltet');
-        }
-        
-        function showMilitaryID() {
-            console.log('Militärausweis aufgerufen');
-            alert('Militärausweis wird angezeigt');
-        }
-        
-        // App Konfiguration - KORREKTE SYNTAX (mit Doppelpunkten)
-        const APP_CONFIG = {
-            appName: 'Bundeswehr RP',
-            version: '1.0.0',
-            localStoragePrefix: 'bw_rp_',
-            defaultStamina: 0
-        };
-        
-        // Tailwind Config - muss in einem separaten script sein
         tailwind.config = {
             theme: {
                 extend: {
@@ -99,60 +47,15 @@
                     }
                 }
             }
-        };
+        }
     </script>
     
-    <style>
-        /* Einfache CSS-Stile */
-        body {
-            background-color: #f5f5f7;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        .ios-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #006400, #008000);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .gradient-bw {
-            background: linear-gradient(135deg, #006400, #004d00);
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
-        }
-
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         /* Modern iOS Design */
         * {
@@ -1277,7 +1180,7 @@
         // ======================
         // APP STATE & CONFIGURATION
         // ======================
-            const APP_CONFIG = {
+        const APP_CONFIG = {
             appName: 'Bundeswehr RP',
             version: '1.0.0',
             localStoragePrefix: 'bw_rp_',
