@@ -6,7 +6,7 @@
     <title>Bundeswehr RP</title>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -1177,17 +1177,21 @@
 
     <!-- Main JavaScript -->
     <script>
-        // ======================
-        // SUPABASE INITIALISIERUNG
-        // ======================
-        const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
-        const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
-        
-        // Supabase Client erstellen
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-        
-        console.log('Supabase Client initialisiert');
 
+       // ======================
+// SUPABASE INITIALISIERUNG
+// ======================
+const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
+
+// Supabase Client erstellen
+window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+const supabase = window.supabaseClient;
+
+console.log('Supabase Client initialisiert', supabase);
+
+        
+        
         // ======================
         // APP STATE & CONFIGURATION
         // ======================
@@ -1385,6 +1389,10 @@
         async function login() {
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
+
+
+            console.log('Login attempt:', username);
+            console.log('Supabase client:', supabase);
             
             if (!username || !password) {
                 showError('loginError', 'Bitte Benutzername und Passwort eingeben');
