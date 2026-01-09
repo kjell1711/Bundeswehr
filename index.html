@@ -982,18 +982,18 @@
 
     <!-- Main JavaScript -->
     <script>
-        // ======================
-        // SUPABASE INITIALISIERUNG - EINMALIG
-        // ======================
-        if (!window.supabaseClient) {
-            const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
-            const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
-    
-            window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-            console.log('Supabase Client initialisiert:', window.supabaseClient);
-        }
 
-        const supabase = window.supabaseClient;
+
+        // ======================
+        // SUPABASE INITIALISIERUNG
+        // ======================
+        const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+        const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
+
+        // Supabase Client erstellen
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+        
         // ======================
         // APP STATE & CONFIGURATION
         // ======================
