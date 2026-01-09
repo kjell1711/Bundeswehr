@@ -8,6 +8,18 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+
+        <script>
+    // EINFACHE FUNKTIONEN ZUERST DEFINIEREN
+    function login() {
+        alert('Login funktioniert!');
+    }
+    
+    function showApplicationForm() {
+        alert('Bewerbung funktioniert!');
+    }
+</script>
+        
         tailwind.config = {
             theme: {
                 extend: {
@@ -1180,8 +1192,8 @@
         // ======================
         // APP STATE & CONFIGURATION
         // ======================
-        const APP_CONFIG = {
-            appName: 'Bundeswehr RP'
+            const APP_CONFIG = {
+            appName: 'Bundeswehr RP',
             version: '1.0.0',
             localStoragePrefix: 'bw_rp_',
             defaultStamina: 0,
