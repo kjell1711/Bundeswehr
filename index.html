@@ -6,7 +6,7 @@
     <title>Bundeswehr RP</title>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -983,16 +983,17 @@
     <!-- Main JavaScript -->
     <script>
         // ======================
-        // SUPABASE INITIALISIERUNG - KORRIGIERT
+        // SUPABASE INITIALISIERUNG - EINMALIG
         // ======================
-        const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
-        const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
-        
-        // Supabase Client erstellen - KEINE Doppeldeklaration
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-        
-        console.log('Supabase Client initialisiert:', supabase);
+        if (!window.supabaseClient) {
+            const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+            const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
+    
+            window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+            console.log('Supabase Client initialisiert:', window.supabaseClient);
+        }
 
+        const supabase = window.supabaseClient;
         // ======================
         // APP STATE & CONFIGURATION
         // ======================
@@ -1253,6 +1254,51 @@
             }
         }
 
+
+
+        // ======================
+        // DEBUG HELPER
+        // ======================
+        console.log('Script loaded! Testing buttons...');
+
+        // Test ob Event Listener gesetzt werden
+        setTimeout(() => {
+            const loginBtn = document.getElementById('loginButton');
+            const appBtn = document.getElementById('applicationButton');
+            const visitorBtn = document.getElementById('visitorButton');
+    
+            console.log('Buttons found:', {
+                loginButton: loginBtn ? 'YES' : 'NO',
+                applicationButton: appBtn ? 'YES' : 'NO',
+                visitorButton: visitorBtn ? 'YES' : 'NO'
+            });
+    
+            // Manuelle Event Listener für Test
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function(e) {
+                    console.log('LOGIN BUTTON CLICKED!', e);
+                    alert('Login Button funktioniert! Jetzt wird eingeloggt...');
+                    login(); // Die eigentliche Funktion
+                });
+            }
+    
+            if (appBtn) {
+                appBtn.addEventListener('click', function(e) {
+                    console.log('APPLICATION BUTTON CLICKED!', e);
+                    alert('Bewerbung Button funktioniert!');
+                    showApplicationForm();
+                });
+            }
+    
+            if (visitorBtn) {
+                visitorBtn.addEventListener('click', function(e) {
+                    console.log('VISITOR BUTTON CLICKED!', e);
+                    alert('Besucher Button funktioniert!');
+                    showVisitorForm();
+                });
+            }
+        }, 1000);
+        
         // ======================
         // VISITOR SYSTEM - NEUE FUNKTIONEN
         // ======================
