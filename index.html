@@ -1252,7 +1252,36 @@
         }
     }
 
+    // ======================
+    // FORM FUNCTIONS
+    // ======================
+    function showApplicationForm() {
+        console.log('showApplicationForm called');
+        // Einfache Implementierung um den Fehler zu beheben
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('applicationForm').classList.remove('hidden');
+        
+        const content = `
+            <div class="text-center py-12">
+                <i class="fas fa-file-alt text-4xl text-ios-text-secondary mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">Bewerbungsformular</h3>
+                <p class="text-ios-text-secondary mb-6">Die Bewerbungsfunktion ist noch in Entwicklung.</p>
+                <button id="backFromAppButton" class="bg-ios-primary text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-blue-700">
+                    <i class="fas fa-arrow-left mr-2"></i>Zurück
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('applicationContent').innerHTML = content;
+        
+        document.getElementById('backFromAppButton').addEventListener('click', showLoginForm);
+    }
 
+    function showLoginForm() {
+        document.getElementById('applicationForm').classList.add('hidden');
+        document.getElementById('visitorForm').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+    }
 
     // ======================
     // DEBUG HELPER
@@ -1909,12 +1938,6 @@
         }
         
         loadVisitorRequests(filter);
-    }
-
-    function showLoginForm() {
-        document.getElementById('applicationForm').classList.add('hidden');
-        document.getElementById('visitorForm').classList.add('hidden');
-        document.getElementById('loginScreen').classList.remove('hidden');
     }
 
     function updateUserDisplay(user) {
