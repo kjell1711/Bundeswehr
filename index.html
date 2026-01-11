@@ -728,8 +728,8 @@
     <!-- Sidebar Navigation -->
     <nav class="sidebar">
         <div class="logo">
-            <h2><i class="fas fa-shield-alt"></i> Bundeswehr RP</h2>
-            <p>Ausbildungspanel v2.0</p>
+            <h2><i class="fas fa-shield-alt"></i> <span id="app-name">Bundeswehr RP</span></h2>
+            <p>Ausbildungspanel <span id="app-version">v2.0</span></p>
         </div>
         
         <ul class="nav-menu">
@@ -766,7 +766,7 @@
         </ul>
         
         <div class="logo">
-            <p style="font-size: 0.7rem;">Bundeswehr Role-Play</p>
+            <p style="font-size: 0.7rem;"><span id="app-name-footer">Bundeswehr Role-Play</span></p>
             <p style="font-size: 0.7rem; color: var(--accent);">Feuerbasierte Datenbank</p>
         </div>
     </nav>
@@ -819,7 +819,7 @@
                 <p class="mb-20">Klicken Sie auf eine Ankündigung, um den Text in die Zwischenablage zu kopieren.</p>
                 
                 <div class="announcement-buttons" id="announcements-list">
-                    <!-- Announcement buttons will be generated dynamically -->
+                    <!-- Announcement buttons will be generated dynamically from config -->
                 </div>
             </div>
         </div>
@@ -872,12 +872,8 @@
                         </button>
                     </div>
                     
-                    <div class="timer-presets">
-                        <button class="timer-preset" data-seconds="30">30s</button>
-                        <button class="timer-preset" data-seconds="60">1m</button>
-                        <button class="timer-preset" data-seconds="120">2m</button>
-                        <button class="timer-preset" data-seconds="300">5m</button>
-                        <button class="timer-preset" data-seconds="600">10m</button>
+                    <div class="timer-presets" id="timer-presets">
+                        <!-- Timer presets will be loaded from config -->
                     </div>
                     
                     <div class="timer-setup">
@@ -904,9 +900,7 @@
                     <h3>Panel-Einstellungen</h3>
                     <label for="theme-select">Theme:</label>
                     <select id="theme-select">
-                        <option value="dark">Dunkel (Standard)</option>
-                        <option value="light">Hell</option>
-                        <option value="military">Militär Grün</option>
+                        <!-- Themes will be loaded from config -->
                     </select>
                     
                     <button id="save-settings-btn" class="timer-btn mt-20">Einstellungen speichern</button>
@@ -915,7 +909,7 @@
                 <div class="setting-item">
                     <h3>Datenbank-Verbindung</h3>
                     <p>Status: <span id="db-status" style="color: var(--accent);">Verbunden</span></p>
-                    <p>Projekt: bundeswehr-f1c17</p>
+                    <p>Projekt: <span id="firebase-project">bundeswehr-f1c17</span></p>
                     <p>Region: Europe-West1</p>
                     
                     <button id="refresh-data-btn" class="timer-btn mt-20">
@@ -926,7 +920,7 @@
                 <div class="setting-item">
                     <h3>Bundeswehr Ränge</h3>
                     <div id="ranks-list">
-                        <!-- Ranks will be listed here -->
+                        <!-- Ranks will be listed from config -->
                     </div>
                 </div>
             </div>
@@ -962,7 +956,7 @@
                 <div class="form-group">
                     <label class="form-label">Rang</label>
                     <select id="new-user-rank" class="form-select">
-                        <!-- Ranks will be populated dynamically -->
+                        <!-- Ranks will be populated from config -->
                     </select>
                 </div>
                 <div class="modal-actions">
@@ -998,92 +992,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAb_HBnu_4GMAWSOMCQk9Ls80_jlYYDiCk",
-            authDomain: "bundeswehr-f1c17.firebaseapp.com",
-            databaseURL: "https://bundeswehr-f1c17-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bundeswehr-f1c17",
-            storageBucket: "bundeswehr-f1c17.firebasestorage.app",
-            messagingSenderId: "255444528262",
-            appId: "1:255444528262:web:33f97ed63a9b0634b57507",
-            measurementId: "G-JMCPJ04VCS"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // Bundeswehr Ränge in aufsteigender Reihenfolge
-        const ranks = [
-            "Schütze",
-            "Gefreiter",
-            "Obergefreiter",
-            "Hauptgefreiter",
-            "Stabsgefreiter",
-            "Oberstabsgefreiter",
-            "Unteroffizier",
-            "Stabsunteroffizier",
-            "Feldwebel",
-            "Oberfeldwebel",
-            "Hauptfeldwebel",
-            "Stabsfeldwebel",
-            "Oberstabsfeldwebel",
-            "Leutnant",
-            "Oberleutnant",
-            "Hauptmann",
-            "Major",
-            "Oberstleutnant",
-            "Oberst",
-            "Brigadegeneral",
-            "Generalmajor",
-            "Generalleutnant",
-            "General"
-        ];
-
-        // Ausbildungsankündigungen
-        const announcements = [
-            {
-                title: "AGA - Willkommen",
-                text: "Willkommen zur Allgemeinen Grundausbildung der Bundeswehr! In den nächsten Wochen werden Sie die Grundlagen des militärischen Dienstes erlernen. Erscheinen Sie pünktlich und in korrekter Uniform."
-            },
-            {
-                title: "Regeln & Disziplin",
-                text: "Wichtige Regeln: 1. Immer pünktlich sein 2. Befehle sofort befolgen 3. Korrekte Anrede verwenden 4. Uniformordnung einhalten 5. Kameradschaft pflegen"
-            },
-            {
-                title: "Marschbefehle",
-                text: "Marschkommandos: 'Achtung!' - Grundstellung einnehmen. 'Rechts um!' - Rechtswendung. 'Links um!' - Linkswendung. 'Im Gleichschritt - Marsch!' - Marschbeginn. 'Halt!' - Marschstopp."
-            },
-            {
-                title: "Waffenhandhabung",
-                text: "Sicherheitsregeln: 1. Waffe immer als geladen behandeln 2. Niemals auf Personen richten 3. Finger außerhalb des Abzugs 4. Sicherung erst im Einsatz lösen"
-            },
-            {
-                title: "Geländeordnung",
-                text: "Im Gelände: 1. Immer Deckung suchen 2. Funkdisziplin wahren 3. auf Gefechtsfeld achten 4. Verwundete melden 5. Munition kontrollieren"
-            },
-            {
-                title: "Dienstgradabzeichen",
-                text: "Erkennen Sie die Dienstgrade: Schütze (kein Abzeichen), Gefreiter (ein Stern), Obergefreiter (zwei Sterne), Hauptgefreiter (drei Sterne). Grüßen Sie Vorgesetzte korrekt."
-            },
-            {
-                title: "Erste Hilfe",
-                text: "Im Ernstfall: 1. Deckung sichern 2. Verwundeten bergen 3. Lebenszeichen prüfen 4. Druckverband anlegen 5. Sanitäter rufen"
-            },
-            {
-                title: "Funkverkehr",
-                text: "Funksprüche: 'Hier Alpha an Bravo, kommen.' - Anruf. 'Hier Bravo, kommen.' - Antwort. 'Verstanden, Ende.' - Bestätigung. 'Wiederholen, Ende.' - Wiederholung anfordern."
-            },
-            {
-                title: "Gefechtsdienst",
-                text: "Gefechtsformationen: 1. Linie - Breitfront 2. Kolonne - Marschformation 3. Keil - Angriffsformation 4. Kreis - Verteidigung"
-            },
-            {
-                title: "Abschlussprüfung",
-                text: "Die AGA endet mit einer Prüfung: Theorie (Dienstgrade, Regeln), Praxis (Marschieren, Waffenhandhabung), körperliche Eignung. Bestehen Sie alle Teile für die Beförderung."
-            }
-        ];
+        // Global config object (will be loaded from config.json)
+        let appConfig = {};
+        let firebaseConfig = {};
+        let ranks = [];
+        let announcements = [];
+        let timerPresets = [];
+        let themes = [];
 
         // Global state
         let currentTimer = 30;
@@ -1091,8 +1006,155 @@
         let isTimerRunning = false;
         let selectedUser = null;
 
+        // Load configuration from config.json
+        async function loadConfig() {
+            try {
+                const response = await fetch('config.json');
+                if (!response.ok) {
+                    throw new Error('Config konnte nicht geladen werden');
+                }
+                
+                const config = await response.json();
+                
+                // Load all config values
+                firebaseConfig = config.firebaseConfig;
+                appConfig = config.appConfig;
+                ranks = config.ranks;
+                announcements = config.announcements;
+                timerPresets = config.timerPresets;
+                themes = config.themes;
+                
+                console.log('Konfiguration erfolgreich geladen');
+                return true;
+            } catch (error) {
+                console.error('Fehler beim Laden der Konfiguration:', error);
+                
+                // Fallback to hardcoded values if config fails
+                loadFallbackConfig();
+                return false;
+            }
+        }
+
+        // Fallback configuration if config.json fails
+        function loadFallbackConfig() {
+            firebaseConfig = {
+                apiKey: "AIzaSyAb_HBnu_4GMAWSOMCQk9Ls80_jlYYDiCk",
+                authDomain: "bundeswehr-f1c17.firebaseapp.com",
+                databaseURL: "https://bundeswehr-f1c17-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "bundeswehr-f1c17",
+                storageBucket: "bundeswehr-f1c17.firebasestorage.app",
+                messagingSenderId: "255444528262",
+                appId: "1:255444528262:web:33f97ed63a9b0634b57507",
+                measurementId: "G-JMCPJ04VCS"
+            };
+            
+            appConfig = {
+                appName: "Bundeswehr Role-Play",
+                appVersion: "2.0",
+                defaultTimerSeconds: 30,
+                searchMinChars: 2,
+                maxPromotionsDisplay: 10
+            };
+            
+            ranks = [
+                "Schütze", "Gefreiter", "Obergefreiter", "Hauptgefreiter", "Stabsgefreiter",
+                "Oberstabsgefreiter", "Unteroffizier", "Stabsunteroffizier", "Feldwebel",
+                "Oberfeldwebel", "Hauptfeldwebel", "Stabsfeldwebel", "Oberstabsfeldwebel",
+                "Leutnant", "Oberleutnant", "Hauptmann", "Major", "Oberstleutnant",
+                "Oberst", "Brigadegeneral", "Generalmajor", "Generalleutnant", "General"
+            ];
+            
+            announcements = [
+                {
+                    title: "AGA - Willkommen",
+                    text: "Willkommen zur Allgemeinen Grundausbildung der Bundeswehr! In den nächsten Wochen werden Sie die Grundlagen des militärischen Dienstes erlernen. Erscheinen Sie pünktlich und in korrekter Uniform."
+                },
+                {
+                    title: "Regeln & Disziplin",
+                    text: "Wichtige Regeln: 1. Immer pünktlich sein 2. Befehle sofort befolgen 3. Korrekte Anrede verwenden 4. Uniformordnung einhalten 5. Kameradschaft pflegen"
+                }
+            ];
+            
+            timerPresets = [
+                { "seconds": 30, "label": "30s" },
+                { "seconds": 60, "label": "1m" },
+                { "seconds": 120, "label": "2m" },
+                { "seconds": 300, "label": "5m" },
+                { "seconds": 600, "label": "10m" }
+            ];
+            
+            themes = [
+                { "value": "dark", "label": "Dunkel (Standard)" },
+                { "value": "light", "label": "Hell" },
+                { "value": "military", "label": "Militär Grün" }
+            ];
+            
+            console.log('Fallback-Konfiguration geladen');
+        }
+
+        // Apply configuration to UI
+        function applyConfig() {
+            // Update app name and version
+            document.getElementById('app-name').textContent = appConfig.appName;
+            document.getElementById('app-name-footer').textContent = appConfig.appName;
+            document.getElementById('app-version').textContent = 'v' + appConfig.appVersion;
+            document.title = appConfig.appName + ' - Ausbildungspanel';
+            
+            // Update Firebase project info
+            document.getElementById('firebase-project').textContent = firebaseConfig.projectId;
+            
+            // Set default timer
+            currentTimer = appConfig.defaultTimerSeconds;
+            updateTimerDisplay();
+            
+            // Apply themes
+            const themeSelect = document.getElementById('theme-select');
+            themeSelect.innerHTML = '';
+            themes.forEach(theme => {
+                const option = document.createElement('option');
+                option.value = theme.value;
+                option.textContent = theme.label;
+                themeSelect.appendChild(option);
+            });
+            
+            // Update announcement count
+            document.getElementById('announcement-count').textContent = announcements.length;
+            
+            console.log('Konfiguration auf UI angewendet');
+        }
+
+        // Initialize Firebase
+        let app, database;
+        function initializeFirebase() {
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log('Firebase erfolgreich initialisiert');
+                return true;
+            } catch (error) {
+                console.error('Fehler bei Firebase-Initialisierung:', error);
+                return false;
+            }
+        }
+
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load configuration first
+            const configLoaded = await loadConfig();
+            if (!configLoaded) {
+                showNotification('Konfiguration konnte nicht geladen. Verwende Standardwerte.', 'error');
+            }
+            
+            // Apply config to UI
+            applyConfig();
+            
+            // Initialize Firebase
+            const firebaseInitialized = initializeFirebase();
+            if (!firebaseInitialized) {
+                showNotification('Firebase konnte nicht initialisiert werden', 'error');
+                return;
+            }
+            
             // Initialize Firebase database structure
             initializeDatabase();
             
@@ -1106,6 +1168,7 @@
             setupTimer();
             displayRanks();
             populateRankSelects();
+            setupTimerPresets();
             
             // Setup event listeners
             setupEventListeners();
@@ -1159,7 +1222,7 @@
                         loadPromotions();
                         loadUserCount();
                     } else if (tabId === 'announcements') {
-                        // Already loaded
+                        // Already loaded from config
                     }
                 });
             });
@@ -1171,7 +1234,7 @@
             const searchInput = document.getElementById('user-search-input');
             searchInput.addEventListener('input', function() {
                 const query = this.value.trim();
-                if (query.length >= 2) {
+                if (query.length >= appConfig.searchMinChars) {
                     searchUsers(query);
                 } else {
                     showNoUsersMessage();
@@ -1220,7 +1283,7 @@
             const promotionsList = document.getElementById('promotions-list');
             promotionsList.innerHTML = '<div class="text-center">Lade Beförderungen...</div>';
             
-            database.ref('promotions').orderByChild('timestamp').limitToLast(10).once('value').then(snapshot => {
+            database.ref('promotions').orderByChild('timestamp').limitToLast(appConfig.maxPromotionsDisplay).once('value').then(snapshot => {
                 const promotions = [];
                 snapshot.forEach(childSnapshot => {
                     const promo = childSnapshot.val();
@@ -1261,7 +1324,7 @@
             });
         }
 
-        // Setup Announcements
+        // Setup Announcements from Config
         function setupAnnouncements() {
             const announcementsList = document.getElementById('announcements-list');
             announcementsList.innerHTML = '';
@@ -1277,9 +1340,11 @@
                 
                 announcementsList.appendChild(button);
             });
+            
+            console.log(`Ankündigungen geladen: ${announcements.length} Buttons erstellt`);
         }
 
-        // Setup Timer
+        // Setup Timer from Config
         function setupTimer() {
             // Timer controls
             document.getElementById('start-timer-btn').addEventListener('click', startTimer);
@@ -1287,16 +1352,28 @@
             document.getElementById('reset-timer-btn').addEventListener('click', resetTimer);
             document.getElementById('set-timer-btn').addEventListener('click', setTimer);
             
-            // Timer presets
-            document.querySelectorAll('.timer-preset').forEach(preset => {
-                preset.addEventListener('click', function() {
+            // Update timer display
+            updateTimerDisplay();
+        }
+
+        // Setup Timer Presets from Config
+        function setupTimerPresets() {
+            const timerPresetsContainer = document.getElementById('timer-presets');
+            timerPresetsContainer.innerHTML = '';
+            
+            timerPresets.forEach(preset => {
+                const presetButton = document.createElement('button');
+                presetButton.className = 'timer-preset';
+                presetButton.setAttribute('data-seconds', preset.seconds);
+                presetButton.textContent = preset.label;
+                
+                presetButton.addEventListener('click', function() {
                     const seconds = parseInt(this.getAttribute('data-seconds'));
                     setTimerTime(seconds);
                 });
+                
+                timerPresetsContainer.appendChild(presetButton);
             });
-            
-            // Update timer display
-            updateTimerDisplay();
         }
 
         // Timer Functions
@@ -1333,7 +1410,7 @@
 
         function resetTimer() {
             pauseTimer();
-            setTimerTime(30);
+            setTimerTime(appConfig.defaultTimerSeconds);
         }
 
         function setTimer() {
@@ -1606,7 +1683,7 @@
                     
                     // Refresh user list
                     const query = document.getElementById('user-search-input').value;
-                    if (query.length >= 2) {
+                    if (query.length >= appConfig.searchMinChars) {
                         searchUsers(query);
                     }
                 });
@@ -1654,7 +1731,7 @@
                     </div>
                     
                     <div class="id-card-footer">
-                        <p>Bundeswehr Role-Play Ausbildungspanel</p>
+                        <p>${appConfig.appName}</p>
                         <p>Dies ist ein virtueller Ausweis für Ausbildungszwecke</p>
                     </div>
                 </div>
@@ -1701,7 +1778,7 @@
             }, 3000);
         }
 
-        // Display Ranks
+        // Display Ranks from Config
         function displayRanks() {
             const ranksList = document.getElementById('ranks-list');
             ranksList.innerHTML = '';
@@ -1715,7 +1792,7 @@
             });
         }
 
-        // Populate Rank Selects
+        // Populate Rank Selects from Config
         function populateRankSelects() {
             const newUserRankSelect = document.getElementById('new-user-rank');
             newUserRankSelect.innerHTML = '';
@@ -1743,6 +1820,21 @@
 
         // Make functions available globally
         window.markPromotionAsRead = markPromotionAsRead;
+        
+        // Function to reload config (for development)
+        window.reloadConfig = async function() {
+            const loaded = await loadConfig();
+            if (loaded) {
+                applyConfig();
+                setupAnnouncements();
+                setupTimerPresets();
+                displayRanks();
+                populateRankSelects();
+                showNotification('Konfiguration neu geladen');
+            } else {
+                showNotification('Fehler beim Neuladen der Konfiguration', 'error');
+            }
+        };
     </script>
 </body>
 </html>
