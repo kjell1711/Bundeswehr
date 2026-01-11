@@ -1,0 +1,103 @@
+{
+  "firebaseConfig": {
+    "apiKey": "AIzaSyAb_HBnu_4GMAWSOMCQk9Ls80_jlYYDiCk",
+    "authDomain": "bundeswehr-f1c17.firebaseapp.com",
+    "databaseURL": "https://bundeswehr-f1c17-default-rtdb.europe-west1.firebasedatabase.app",
+    "projectId": "bundeswehr-f1c17",
+    "storageBucket": "bundeswehr-f1c17.firebasestorage.app",
+    "messagingSenderId": "255444528262",
+    "appId": "1:255444528262:web:33f97ed63a9b0634b57507",
+    "measurementId": "G-JMCPJ04VCS"
+  },
+  
+  "appConfig": {
+    "appName": "Bundeswehr Role-Play",
+    "appVersion": "2.0",
+    "defaultTimerSeconds": 30,
+    "searchMinChars": 2,
+    "maxPromotionsDisplay": 10
+  },
+  
+  "ranks": [
+    "Schütze",
+    "Gefreiter",
+    "Obergefreiter",
+    "Hauptgefreiter",
+    "Stabsgefreiter",
+    "Oberstabsgefreiter",
+    "Unteroffizier",
+    "Stabsunteroffizier",
+    "Feldwebel",
+    "Oberfeldwebel",
+    "Hauptfeldwebel",
+    "Stabsfeldwebel",
+    "Oberstabsfeldwebel",
+    "Leutnant",
+    "Oberleutnant",
+    "Hauptmann",
+    "Major",
+    "Oberstleutnant",
+    "Oberst",
+    "Brigadegeneral",
+    "Generalmajor",
+    "Generalleutnant",
+    "General"
+  ],
+  
+  "announcements": [
+    {
+      "title": "AGA - Willkommen",
+      "text": "Willkommen zur Allgemeinen Grundausbildung der Bundeswehr! In den nächsten Wochen werden Sie die Grundlagen des militärischen Dienstes erlernen. Erscheinen Sie pünktlich und in korrekter Uniform."
+    },
+    {
+      "title": "Regeln & Disziplin",
+      "text": "Wichtige Regeln: 1. Immer pünktlich sein 2. Befehle sofort befolgen 3. Korrekte Anrede verwenden 4. Uniformordnung einhalten 5. Kameradschaft pflegen"
+    },
+    {
+      "title": "Marschbefehle",
+      "text": "Marschkommandos: 'Achtung!' - Grundstellung einnehmen. 'Rechts um!' - Rechtswendung. 'Links um!' - Linkswendung. 'Im Gleichschritt - Marsch!' - Marschbeginn. 'Halt!' - Marschstopp."
+    },
+    {
+      "title": "Waffenhandhabung",
+      "text": "Sicherheitsregeln: 1. Waffe immer als geladen behandeln 2. Niemals auf Personen richten 3. Finger außerhalb des Abzugs 4. Sicherung erst im Einsatz lösen"
+    },
+    {
+      "title": "Geländeordnung",
+      "text": "Im Gelände: 1. Immer Deckung suchen 2. Funkdisziplin wahren 3. auf Gefechtsfeld achten 4. Verwundete melden 5. Munition kontrollieren"
+    },
+    {
+      "title": "Dienstgradabzeichen",
+      "text": "Erkennen Sie die Dienstgrade: Schütze (kein Abzeichen), Gefreiter (ein Stern), Obergefreiter (zwei Sterne), Hauptgefreiter (drei Sterne). Grüßen Sie Vorgesetzte korrekt."
+    },
+    {
+      "title": "Erste Hilfe",
+      "text": "Im Ernstfall: 1. Deckung sichern 2. Verwundeten bergen 3. Lebenszeichen prüfen 4. Druckverband anlegen 5. Sanitäter rufen"
+    },
+    {
+      "title": "Funkverkehr",
+      "text": "Funksprüche: 'Hier Alpha an Bravo, kommen.' - Anruf. 'Hier Bravo, kommen.' - Antwort. 'Verstanden, Ende.' - Bestätigung. 'Wiederholen, Ende.' - Wiederholung anfordern."
+    },
+    {
+      "title": "Gefechtsdienst",
+      "text": "Gefechtsformationen: 1. Linie - Breitfront 2. Kolonne - Marschformation 3. Keil - Angriffsformation 4. Kreis - Verteidigung"
+    },
+    {
+      "title": "Abschlussprüfung",
+      "text": "Die AGA endet mit einer Prüfung: Theorie (Dienstgrade, Regeln), Praxis (Marschieren, Waffenhandhabung), körperliche Eignung. Bestehen Sie alle Teile für die Beförderung."
+    }
+  ],
+  
+  "timerPresets": [
+    { "seconds": 30, "label": "30s" },
+    { "seconds": 60, "label": "1m" },
+    { "seconds": 120, "label": "2m" },
+    { "seconds": 300, "label": "5m" },
+    { "seconds": 600, "label": "10m" }
+  ],
+  
+  "themes": [
+    { "value": "dark", "label": "Dunkel (Standard)" },
+    { "value": "light", "label": "Hell" },
+    { "value": "military", "label": "Militär Grün" }
+  ]
+}
