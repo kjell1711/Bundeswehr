@@ -3,2238 +3,1224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bundeswehr RP</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ios: {
-                            bg: '#f5f5f7',
-                            card: '#ffffff',
-                            primary: '#007aff',
-                            secondary: '#5856d6',
-                            success: '#34c759',
-                            warning: '#ff9500',
-                            danger: '#ff3b30',
-                            text: '#1d1d1f',
-                            'text-secondary': '#8e8e93',
-                            border: '#d1d1d6'
-                        },
-                        bw: {
-                            green: '#006400',
-                            olive: '#556b2f',
-                            gray: '#4a4a4a',
-                            dark: '#2c2c2e'
-                        }
-                    },
-                    borderRadius: {
-                        'ios': '12px',
-                        'ios-sm': '8px',
-                        'ios-lg': '16px',
-                        'ios-xl': '20px'
-                    },
-                    boxShadow: {
-                        'ios': '0 4px 20px rgba(0, 0, 0, 0.08)',
-                        'ios-lg': '0 10px 40px rgba(0, 0, 0, 0.1)',
-                        'ios-xl': '0 20px 60px rgba(0, 0, 0, 0.12)'
-                    },
-                    backdropBlur: {
-                        'ios': '20px'
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Font Awesome -->
+    <title>Bundeswehr Role-Play - Ausbildungspanel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        /* Modern iOS Design */
+        :root {
+            --primary: #006633; /* Bundeswehrgrün */
+            --secondary: #4B5320; /* Feldgrau */
+            --accent: #FFCC00; /* Bundeswehrgelb */
+            --dark: #1a1f1c;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+
         * {
-            transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
-            background-color: #f5f5f7;
+            background-color: #111;
+            color: var(--light);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        
-        .ios-card {
-            background: white;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(to bottom, var(--dark), var(--secondary));
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            z-index: 100;
         }
-        
-        .bw-card {
-            background: white;
-            border: 1px solid #e5e5e7;
+
+        .logo {
+            text-align: center;
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #006400, #008000);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        .logo h2 {
+            color: var(--accent);
+            font-size: 1.4rem;
+            letter-spacing: 1px;
         }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        .logo p {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 5px;
         }
-        
-        .gradient-primary {
-            background: linear-gradient(135deg, #007aff, #0056cc);
+
+        .nav-menu {
+            list-style: none;
+            flex-grow: 1;
         }
-        
-        .gradient-success {
-            background: linear-gradient(135deg, #34c759, #2d9950);
+
+        .nav-item {
+            margin: 5px 15px;
+            border-radius: 8px;
+            overflow: hidden;
         }
-        
-        .gradient-bw {
-            background: linear-gradient(135deg, #006400, #004d00);
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
         }
-        
-        .soldier-id-badge {
-            background: linear-gradient(135deg, #1d1d1f, #2c2c2e);
-            color: white;
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s;
         }
-        
-        .stamina-badge {
-            background: linear-gradient(135deg, #ff9500, #e68500);
-            color: white;
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.05);
         }
-        
-        .rank-badge {
-            background: linear-gradient(135deg, #5856d6, #4a48b8);
-            color: white;
+
+        .nav-link i {
+            width: 30px;
+            font-size: 1.2rem;
+            margin-right: 10px;
+            color: var(--accent);
         }
-        
-        /* Smooth animations */
-        @keyframes slideIn {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+
+        .nav-item.active .nav-link {
+            color: var(--accent);
+            font-weight: bold;
+            border-left: 4px solid var(--accent);
         }
-        
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: radial-gradient(ellipse at top, #222, #111);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            color: var(--accent);
+            font-size: 1.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .user-info i {
+            color: var(--accent);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
+
+        /* Dashboard Tab */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+
+        .card {
+            background-color: rgba(30, 35, 32, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-left: 4px solid var(--primary);
         }
-        
-        /* Hide scrollbar but keep functionality */
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
-        .hide-scrollbar::-webkit-scrollbar {
+
+        .card-header h3 {
+            color: var(--accent);
+        }
+
+        .promotion-item {
+            background-color: rgba(0,0,0,0.2);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .promotion-item.unread {
+            border-left: 4px solid var(--info);
+        }
+
+        .promotion-info {
+            flex-grow: 1;
+        }
+
+        .promotion-actions button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.3s;
+        }
+
+        .promotion-actions button:hover {
+            background-color: var(--success);
+        }
+
+        /* Ankündigungen Tab */
+        .announcement-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .announcement-btn {
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .announcement-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .announcement-btn i {
+            margin-right: 10px;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
             display: none;
+            animation: slideIn 0.3s;
         }
-        
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
+
+        /* Users Tab */
+        .user-search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
+
+        .user-search input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background-color: rgba(0,0,0,0.3);
+            color: white;
         }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
+
+        .user-search button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
         }
-        
-        /* Loading spinner */
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007aff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+
+        .users-list {
+            background-color: rgba(30, 35, 32, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
-        /* Collapsible sidebar */
-        .sidebar-collapsed {
-            width: 70px;
+
+        .user-item:last-child {
+            border-bottom: none;
         }
-        
-        .sidebar-expanded {
-            width: 250px;
+
+        .user-info-small {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        
-        .main-expanded {
-            margin-left: 250px;
+
+        .user-rank {
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            min-width: 100px;
+            text-align: center;
         }
-        
-        .main-collapsed {
-            margin-left: 70px;
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
         }
-        
+
+        .user-actions button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .promote-btn {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .demote-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Settings Tab */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .setting-item {
+            background-color: rgba(30, 35, 32, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .setting-item h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background-color: rgba(0,0,0,0.3);
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .save-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .save-btn:hover {
+            background-color: var(--success);
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .sidebar-expanded, .sidebar-collapsed {
-                width: 100%;
-                position: fixed;
-                z-index: 1000;
-                height: auto;
-                bottom: 0;
-                top: auto;
-                border-right: none;
-                border-top: 1px solid #e5e5e7;
+            body {
+                flex-direction: column;
             }
             
-            .main-expanded, .main-collapsed {
-                margin-left: 0;
-                margin-bottom: 70px;
+            .sidebar {
+                width: 100%;
+                padding: 10px 0;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .logo {
+                padding: 10px;
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            
+            .logo h2 {
+                font-size: 1.2rem;
+            }
+            
+            .nav-menu {
+                display: flex;
+                flex-grow: 0;
+            }
+            
+            .nav-item {
+                margin: 0 5px;
+            }
+            
+            .nav-link span {
+                display: none;
+            }
+            
+            .nav-link i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                padding: 15px;
             }
         }
-        
-        /* Military ID Card */
-        .military-id {
-            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-            color: white;
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
+
+        /* Helper Classes */
+        .hidden {
+            display: none !important;
         }
-        
-        .military-id::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 100, 0, 0.1) 0%, transparent 70%);
+
+        .text-center {
+            text-align: center;
         }
-        
-        .military-id-header {
-            background: rgba(0, 100, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        .mt-20 {
+            margin-top: 20px;
         }
-        
-        .id-number {
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Mission Card */
-        .mission-card {
-            border-left: 4px solid #007aff;
-        }
-        
-        .mission-active {
-            border-left-color: #34c759;
-        }
-        
-        .mission-completed {
-            border-left-color: #8e8e93;
-        }
-        
-        /* Application Status */
-        .status-pending {
-            background: rgba(255, 149, 0, 0.1);
-            color: #ff9500;
-            border: 1px solid rgba(255, 149, 0, 0.2);
-        }
-        
-        .status-accepted {
-            background: rgba(52, 199, 89, 0.1);
-            color: #34c759;
-            border: 1px solid rgba(52, 199, 89, 0.2);
-        }
-        
-        .status-rejected {
-            background: rgba(255, 59, 48, 0.1);
-            color: #ff3b30;
-            border: 1px solid rgba(255, 59, 48, 0.2);
-        }
-        
-        /* Stamina Indicator */
-        .stamina-low { color: #ff3b30; }
-        .stamina-medium { color: #ff9500; }
-        .stamina-high { color: #34c759; }
-        
-        .stamina-bar-low { background: #ff3b30; }
-        .stamina-bar-medium { background: #ff9500; }
-        .stamina-bar-high { background: #34c759; }
-        
-        /* Visitor ID Card */
-        .visitor-id {
-            background: linear-gradient(135deg, #2c3e50, #4a6491);
-            color: white;
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .visitor-id-header {
-            background: rgba(255, 255, 255, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .visitor-badge {
-            background: linear-gradient(135deg, #ff9500, #ff5e3a);
-            color: white;
+
+        .mb-20 {
+            margin-bottom: 20px;
         }
     </style>
 </head>
-<body class="bg-ios-bg text-ios-text font-sans min-h-screen">
-    <!-- Login Screen -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 gradient-bg">
-        <div class="ios-card rounded-ios-xl shadow-ios-xl p-6 sm:p-8 w-full max-w-md">
-            <!-- Logo -->
-            <div class="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 rounded-2xl gradient-bw flex items-center justify-center shadow-lg">
-                <i class="fas fa-shield-alt text-white text-4xl"></i>
-            </div>
-            
-            <h1 class="text-3xl font-bold text-center mb-2 gradient-text">Bundeswehr RP</h1>
-            <p class="text-ios-text-secondary text-center mb-8">Militärisches Rollenspiel Management</p>
-            
-            <!-- Login Form -->
-            <div class="space-y-4" id="loginForm">
-                <div>
-                    <label class="block text-sm font-medium mb-2 text-bw-gray">Benutzername</label>
-                    <input type="text" id="loginUsername" 
-                           class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                           placeholder="Benutzername">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium mb-2 text-bw-gray">Passwort</label>
-                    <input type="password" id="loginPassword" 
-                           class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                           placeholder="••••••••">
-                </div>
-                
-                <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm text-sm">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    <span id="loginErrorText">Falscher Benutzername oder Passwort</span>
-                </div>
-                
-                <button id="loginButton" class="w-full gradient-bw text-white py-3 rounded-ios-sm font-semibold text-lg hover:shadow-lg transition-shadow">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Einloggen
-                </button>
-            </div>
-            
-            <!-- Application Button -->
-            <div class="mt-6 pt-6 border-t border-ios-border">
-                <button id="applicationButton" class="w-full bg-white border-2 border-bw-green text-bw-green py-3 rounded-ios-sm font-semibold text-lg hover:bg-bw-green hover:text-white transition-colors mb-3">
-                    <i class="fas fa-file-alt mr-2"></i>Bewerben
-                </button>
-                
-                <!-- NEU: Besucherausweis Button -->
-                <button id="visitorButton" class="w-full bg-white border-2 border-blue-600 text-blue-600 py-3 rounded-ios-sm font-semibold text-lg hover:bg-blue-600 hover:text-white transition-colors">
-                    <i class="fas fa-id-card mr-2"></i>Besucherausweis beantragen
-                </button>
-            </div>
-            
-            <div class="mt-8 pt-6 border-t border-ios-border text-center text-ios-text-secondary text-sm">
-                <p><i class="fas fa-shield-alt mr-2"></i>Offizielles Bundeswehr RP System</p>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <h2><i class="fas fa-shield-alt"></i> Bundeswehr RP</h2>
+            <p>Ausbildungspanel v1.0</p>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item active" data-tab="dashboard">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item" data-tab="announcements">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Ankündigungen</span>
+                </a>
+            </li>
+            <li class="nav-item" data-tab="users">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Benutzer</span>
+                </a>
+            </li>
+            <li class="nav-item" data-tab="settings">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Einstellungen</span>
+                </a>
+            </li>
+        </ul>
+        
+        <div class="logo">
+            <p style="font-size: 0.7rem;">Bundeswehr Role-Play</p>
+            <p style="font-size: 0.7rem; color: var(--accent);">Authentisches Ausbildungspanel</p>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1 id="page-title">Dashboard</h1>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Ausbilder</span>
             </div>
         </div>
-    </div>
 
-    <!-- Application Form (Hidden initially) -->
-    <div id="applicationForm" class="hidden min-h-screen flex items-center justify-center p-4 bg-gray-50">
-        <div class="ios-card rounded-ios-xl shadow-ios-xl p-6 w-full max-w-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold gradient-text">Bewerbung</h2>
-                    <p class="text-ios-text-secondary">Bewerben Sie sich für die Bundeswehr</p>
-                </div>
-                <button id="backToLoginButton" class="text-ios-text-secondary hover:text-ios-text">
-                    <i class="fas fa-arrow-left"></i> Zurück
-                </button>
-            </div>
-            
-            <div id="applicationContent">
-                <!-- Content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Visitor Form (Hidden initially) -->
-    <div id="visitorForm" class="hidden min-h-screen flex items-center justify-center p-4 bg-gray-50">
-        <div class="ios-card rounded-ios-xl shadow-ios-xl p-6 w-full max-w-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold gradient-text">Besucherausweis</h2>
-                    <p class="text-ios-text-secondary">Besucherausweis für die Kaserne beantragen</p>
-                </div>
-                <button id="backToLoginButton2" class="text-ios-text-secondary hover:text-ios-text">
-                    <i class="fas fa-arrow-left"></i> Zurück
-                </button>
-            </div>
-            
-            <div id="visitorContent">
-                <!-- Content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Main App -->
-    <div id="mainApp" class="hidden">
-        <!-- Top Navigation -->
-        <nav class="bg-white border-b border-ios-border px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-            <!-- Left: Hamburger menu and ID button -->
-            <div class="flex items-center gap-3">
-                <button id="sidebarToggle" class="text-ios-text-secondary hover:text-ios-text p-2">
-                    <i class="fas fa-bars text-lg"></i>
-                </button>
-                
-                <button id="showIDButton" class="flex items-center gap-2 text-ios-text hover:text-ios-primary">
-                    <i class="fas fa-id-card"></i>
-                    <span class="hidden sm:inline text-sm font-medium">Ausweis</span>
-                </button>
-            </div>
-            
-            <!-- Center: Time -->
-            <div class="flex items-center gap-3">
-                <div id="currentTime" class="font-mono font-bold text-lg">00:00</div>
-                <div class="hidden sm:block text-ios-text-secondary text-sm">
-                    <span id="currentDate">01.01.2024</span>
-                </div>
-            </div>
-            
-            <!-- Right: User info and logout -->
-            <div class="flex items-center gap-3">
-                <div id="userStaminaBadge" class="hidden sm:flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
-                    <i class="fas fa-fire text-orange-500"></i>
-                    <span class="font-semibold text-sm text-orange-700">
-                        Ausdauer: <span id="staminaValue">0</span>
-                    </span>
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Letzte Beförderungen</h3>
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <div id="promotions-list">
+                        <!-- Promotion items will be loaded here -->
+                    </div>
                 </div>
                 
-                <div class="hidden sm:flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-bw-green flex items-center justify-center text-white font-bold text-sm">
-                        <span id="userInitials">BW</span>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Systemstatistik</h3>
+                        <i class="fas fa-chart-line"></i>
                     </div>
                     <div>
-                        <div id="userName" class="font-medium text-sm">Lade...</div>
-                        <div id="userRankSmall" class="text-xs text-ios-text-secondary">Rang: -</div>
-                    </div>
-                </div>
-                
-                <button id="logoutButton" class="text-red-500 hover:text-red-700 p-2" title="Ausloggen">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Sidebar -->
-        <div id="sidebar" class="sidebar-expanded bg-white border-r border-ios-border h-[calc(100vh-64px)] overflow-y-auto hide-scrollbar fixed left-0 top-16 transition-all duration-300">
-            <!-- User Profile -->
-            <div class="p-4 border-b border-ios-border">
-                <div class="flex items-center gap-3 mb-3">
-                    <div id="userAvatar" class="w-12 h-12 rounded-full bg-gradient-to-br from-bw-green to-bw-olive flex items-center justify-center text-white font-bold">
-                        BW
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div id="userDisplayName" class="font-bold truncate">Lade...</div>
-                        <div id="userDivision" class="text-sm text-ios-text-secondary truncate">Division: -</div>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="text-center p-2 bg-gray-50 rounded-ios-sm">
-                        <div class="text-xs text-ios-text-secondary">Rang</div>
-                        <div id="userRank" class="font-semibold">-</div>
-                    </div>
-                    <div class="text-center p-2 bg-gray-50 rounded-ios-sm">
-                        <div class="text-xs text-ios-text-secondary">ID</div>
-                        <div id="userID" class="font-mono text-sm">#0000</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation -->
-            <nav class="p-2">
-                <div class="space-y-1">
-                    <button data-page="dashboard" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                        <i class="fas fa-home w-5 text-center"></i>
-                        <span>Dashboard</span>
-                    </button>
-                    
-                    <button data-page="missions" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                        <i class="fas fa-crosshairs w-5 text-center"></i>
-                        <span>Einsätze</span>
-                    </button>
-                    
-                    <button data-page="personnel" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                        <i class="fas fa-users w-5 text-center"></i>
-                        <span>Personal</span>
-                    </button>
-                    
-                    <!-- NEU: Besucher Seite für alle sichtbar -->
-                    <button data-page="visitors" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                        <i class="fas fa-user-tag w-5 text-center"></i>
-                        <span>Besucher</span>
-                    </button>
-                    
-                    <div id="managementSection" class="hidden">
-                        <div class="text-xs font-semibold text-ios-text-secondary uppercase tracking-wider px-4 py-2">Leitung</div>
-                        
-                        <button data-page="management" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                            <i class="fas fa-tasks w-5 text-center"></i>
-                            <span>Management</span>
-                        </button>
-                        
-                        <button data-page="applications" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                            <i class="fas fa-file-alt w-5 text-center"></i>
-                            <span>Bewerbungen</span>
-                            <span id="pendingAppsBadge" class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
-                        </button>
-                        
-                        <!-- NEU: Besucher Anfragen für Leitung -->
-                        <button data-page="visitorRequests" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                            <i class="fas fa-id-card w-5 text-center"></i>
-                            <span>Besucher-Anfragen</span>
-                            <span id="pendingVisitorBadge" class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
-                        </button>
-                    </div>
-                    
-                    <button data-page="settings" class="nav-item w-full text-left px-4 py-3 rounded-ios-sm flex items-center gap-3 hover:bg-gray-50 text-ios-text">
-                        <i class="fas fa-cog w-5 text-center"></i>
-                        <span>Einstellungen</span>
-                    </button>
-                </div>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div id="mainContent" class="main-expanded p-4 sm:p-6 transition-all duration-300 min-h-[calc(100vh-64px)]">
-            <!-- Dashboard Page -->
-            <div id="dashboardPage" class="page hidden">
-                <div class="mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Dashboard</h1>
-                    <p class="text-ios-text-secondary">Willkommen bei der Bundeswehr</p>
-                </div>
-                
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <!-- Military ID Card -->
-                    <div class="ios-card rounded-ios-lg p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-bold">Truppenausweis</h2>
-                            <button id="showIDButton2" class="text-ios-primary hover:text-ios-primary/80">
-                                <i class="fas fa-expand"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Name:</span>
-                                <span id="idName" class="font-semibold">-</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Dienstgrad:</span>
-                                <span id="idRank" class="font-semibold">-</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Einheit:</span>
-                                <span id="idUnit" class="font-semibold">-</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Personalnummer:</span>
-                                <span id="idNumber" class="font-mono text-sm">#0000</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Dienstbeginn:</span>
-                                <span id="idStartDate" class="font-semibold">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Stamina -->
-                    <div class="ios-card rounded-ios-lg p-5">
-                        <h2 class="text-lg font-bold mb-4">Ausdauer</h2>
-                        <div class="text-center mb-4">
-                            <div class="text-4xl font-bold mb-2">
-                                <span id="dashboardStamina">0</span>
-                                <span class="text-2xl text-ios-text-secondary">/∞</span>
-                            </div>
-                            <div class="text-ios-text-secondary text-sm">
-                                Trainingspunkte
-                            </div>
-                        </div>
-                        <div class="text-sm text-ios-text-secondary">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Erhalten durch Training mit Ausbildern
-                        </div>
-                    </div>
-                    
-                    <!-- Service Info -->
-                    <div class="ios-card rounded-ios-lg p-5">
-                        <h2 class="text-lg font-bold mb-4">Dienstinformationen</h2>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Dienstzeit:</span>
-                                <span id="serviceTime" class="font-semibold">-</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Status:</span>
-                                <span id="serviceStatus" class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Aktiv</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-ios-text-secondary">Letzte Beförderung:</span>
-                                <span id="lastPromotion" class="font-semibold">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Upcoming Missions -->
-                <div class="ios-card rounded-ios-lg p-5 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold">Bevorstehende Einsätze</h2>
-                        <button data-page="missions" class="text-sm text-ios-primary hover:text-ios-primary/80 font-medium">
-                            Alle ansehen →
-                        </button>
-                    </div>
-                    
-                    <div id="upcomingMissions" class="space-y-3">
-                        <div class="text-center py-8 text-ios-text-secondary">
-                            <i class="fas fa-calendar-alt text-3xl mb-3"></i>
-                            <p>Keine bevorstehenden Einsätze</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Missions Page -->
-            <div id="missionsPage" class="page hidden">
-                <!-- Content bleibt gleich -->
-            </div>
-
-            <!-- Personnel Page -->
-            <div id="personnelPage" class="page hidden">
-                <!-- Content bleibt gleich -->
-            </div>
-
-            <!-- NEU: Visitors Page -->
-            <div id="visitorsPage" class="page hidden">
-                <div class="mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Besucher</h1>
-                    <p class="text-ios-text-secondary">Aktive Besucherausweise</p>
-                </div>
-                
-                <div class="ios-card rounded-ios-lg p-5">
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-lg font-bold">Besucherausweise</h2>
-                            <button id="requestVisitorBtn" class="bg-blue-600 text-white px-4 py-2 rounded-ios-sm font-semibold hover:bg-blue-700">
-                                <i class="fas fa-plus mr-2"></i>Ausweis beantragen
-                            </button>
-                        </div>
-                        <p class="text-sm text-ios-text-secondary mt-2">
-                            Hier finden Sie alle aktiven Besucherausweise. Nur gültige Ausweise werden angezeigt.
-                        </p>
-                    </div>
-                    
-                    <!-- Visitor List -->
-                    <div id="visitorsList" class="space-y-4">
-                        <!-- Visitors will be loaded here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Management Page -->
-            <div id="managementPage" class="page hidden">
-                <div class="mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Management</h1>
-                    <p class="text-ios-text-secondary">Leitungsebene - Systemverwaltung</p>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <button id="createMissionBtn2" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
-                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
-                            <i class="fas fa-plus text-blue-600"></i>
-                        </div>
-                        <h3 class="font-bold mb-1">Neuer Einsatz</h3>
-                        <p class="text-sm text-ios-text-secondary">Einsatz erstellen und planen</p>
-                    </button>
-                    
-                    <button data-page="applications" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
-                        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mb-3">
-                            <i class="fas fa-file-alt text-green-600"></i>
-                        </div>
-                        <h3 class="font-bold mb-1">Bewerbungen</h3>
-                        <p class="text-sm text-ios-text-secondary">
-                            <span id="pendingAppsCount2" class="font-semibold">0</span> ausstehend
-                        </p>
-                    </button>
-                    
-                    <button data-page="visitorRequests" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
-                        <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
-                            <i class="fas fa-id-card text-purple-600"></i>
-                        </div>
-                        <h3 class="font-bold mb-1">Besucher-Anfragen</h3>
-                        <p class="text-sm text-ios-text-secondary">
-                            <span id="pendingVisitorCount" class="font-semibold">0</span> ausstehend
-                        </p>
-                    </button>
-                    
-                    <button id="createUserBtn" class="ios-card rounded-ios-lg p-4 text-left hover:shadow-lg transition-shadow">
-                        <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center mb-3">
-                            <i class="fas fa-user-plus text-orange-600"></i>
-                        </div>
-                        <h3 class="font-bold mb-1">Neuer Account</h3>
-                        <p class="text-sm text-ios-text-secondary">Direkt Account erstellen</p>
-                    </button>
-                </div>
-                
-                <!-- Recent Activity -->
-                <div class="ios-card rounded-ios-lg p-5">
-                    <h2 class="text-lg font-bold mb-4">Letzte Aktivitäten</h2>
-                    <div id="managementActivity" class="space-y-3">
-                        <div class="text-center py-8 text-ios-text-secondary">
-                            <i class="fas fa-history text-3xl mb-3"></i>
-                            <p>Keine Aktivitäten vorhanden</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Applications Page -->
-            <div id="applicationsPage" class="page hidden">
-                <!-- Content bleibt gleich -->
-            </div>
-
-            <!-- NEU: Visitor Requests Page -->
-            <div id="visitorRequestsPage" class="page hidden">
-                <div class="mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Besucher-Anfragen</h1>
-                    <p class="text-ios-text-secondary">Neue Besucherausweis-Anfragen bearbeiten</p>
-                </div>
-                
-                <div class="ios-card rounded-ios-lg p-5">
-                    <!-- Visitor Request Tabs -->
-                    <div class="flex border-b border-ios-border mb-6 -mx-5 px-5">
-                        <button data-filter="pending" class="visitor-tab px-4 py-2 font-medium border-b-2 border-blue-600 text-blue-600">
-                            Ausstehend (<span id="pendingVisitorRequests">0</span>)
-                        </button>
-                        <button data-filter="accepted" class="visitor-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
-                            Angenommen
-                        </button>
-                        <button data-filter="rejected" class="visitor-tab px-4 py-2 font-medium border-b-2 border-transparent text-ios-text-secondary hover:text-ios-text">
-                            Abgelehnt
-                        </button>
-                    </div>
-                    
-                    <!-- Visitor Requests List -->
-                    <div id="visitorRequestsList" class="space-y-4">
-                        <!-- Visitor requests will be loaded here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Page -->
-            <div id="settingsPage" class="page hidden">
-                <div class="mb-6">
-                    <h1 class="text-2xl sm:text-3xl font-bold gradient-text">Einstellungen</h1>
-                    <p class="text-ios-text-secondary">Persönliche Einstellungen</p>
-                </div>
-                
-                <div class="ios-card rounded-ios-lg p-5">
-                    <div class="space-y-6">
-                        <!-- Profile Settings -->
-                        <div>
-                            <h2 class="text-lg font-bold mb-4">Profil</h2>
-                            <div class="space-y-4 max-w-md">
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Anzeigename</label>
-                                    <input type="text" id="displayNameInput" 
-                                           class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                           value="Max Mustermann">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Roblox Username</label>
-                                    <input type="text" id="robloxUsername" 
-                                           class="w-full px-4 py-2 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                           placeholder="Dein Roblox Name">
-                                </div>
-                                <button id="updateProfileBtn" class="bg-bw-green text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-green-800 transition-colors">
-                                    Änderungen speichern
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Application Status -->
-                        <div class="pt-6 border-t border-ios-border">
-                            <h2 class="text-lg font-bold mb-4">Besucherausweis-Status</h2>
-                            <div id="visitorStatus" class="max-w-md">
-                                <!-- Visitor status will be shown here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Military ID Modal -->
-    <div id="militaryIDModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <!-- Content bleibt gleich -->
-    </div>
-
-    <!-- NEU: Visitor ID Modal -->
-    <div id="visitorIDModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="visitor-id rounded-ios-xl shadow-2xl w-full max-w-md p-0 overflow-hidden slide-in">
-            <!-- ID Header -->
-            <div class="visitor-id-header px-6 py-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-xl font-bold">BUNDESWEHR RP</h2>
-                        <p class="text-sm opacity-80">Besucherausweis</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xs opacity-80">Besucher Nr.</div>
-                        <div id="modalVisitorID" class="id-number font-mono text-sm">#VIS-0000</div>
+                        <p><i class="fas fa-users"></i> Benutzer in Datenbank: <span id="user-count">0</span></p>
+                        <p><i class="fas fa-bullhorn"></i> Ankündigungen: <span id="announcement-count">12</span></p>
+                        <p><i class="fas fa-clock"></i> Letzte Aktualisierung: <span id="last-update">Heute</span></p>
                     </div>
                 </div>
             </div>
             
-            <!-- ID Content -->
-            <div class="p-6">
-                <div class="space-y-4">
-                    <div>
-                        <div class="text-xs opacity-80 mb-1">Name</div>
-                        <div id="modalVisitorName" class="text-xl font-bold">-</div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-xs opacity-80 mb-1">Roblox Name</div>
-                            <div id="modalVisitorRoblox" class="font-semibold">-</div>
-                        </div>
-                        <div>
-                            <div class="text-xs opacity-80 mb-1">Status</div>
-                            <div id="modalVisitorStatus" class="px-2 py-1 rounded-full text-xs font-semibold bg-green-500">Aktiv</div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="text-xs opacity-80 mb-1">Besucher-ID</div>
-                        <div id="modalVisitorFullID" class="font-mono">VIS-<span id="modalVisitorNumber">0000</span></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-xs opacity-80 mb-1">Ausgestellt am</div>
-                            <div id="modalVisitorIssued" class="font-semibold">-</div>
-                        </div>
-                        <div>
-                            <div class="text-xs opacity-80 mb-1">Gültig bis</div>
-                            <div id="modalVisitorValidUntil" class="font-semibold">-</div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="text-xs opacity-80 mb-1">Berechtigungen</div>
-                        <div class="text-sm">Zugang zu öffentlichen Bereichen der Kaserne</div>
-                    </div>
-                    
-                    <div class="mt-6 pt-4 border-t border-white/10">
-                        <div class="text-xs opacity-80 mb-2">Unterschrift des Kommandanten</div>
-                        <div class="h-8 border-b border-white/30"></div>
-                    </div>
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3>Schnellzugriff</h3>
+                    <i class="fas fa-bolt"></i>
                 </div>
-            </div>
-            
-            <!-- ID Footer -->
-            <div class="px-6 py-3 bg-black/20 text-center text-xs opacity-80">
-                Dieser Ausweis ist Eigentum der Bundeswehr RP und berechtigt nur zu den angegebenen Bereichen.
-            </div>
-            
-            <!-- Close Button -->
-            <button id="closeVisitorModal" class="absolute top-4 right-4 text-white/70 hover:text-white">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Accept Visitor Modal -->
-    <div id="acceptVisitorModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="ios-card rounded-ios-xl shadow-ios-xl w-full max-w-md slide-in">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold gradient-text">Besucherausweis genehmigen</h2>
-                    <button id="closeAcceptVisitorModal" class="text-ios-text-secondary hover:text-ios-text">
-                        <i class="fas fa-times text-xl"></i>
+                <div class="announcement-buttons">
+                    <button class="announcement-btn" data-text="AGA Ankündigung">
+                        <i class="fas fa-copy"></i> AGA Ankündigung kopieren
+                    </button>
+                    <button class="announcement-btn" data-text="Dienstantritt">
+                        <i class="fas fa-copy"></i> Dienstantritt kopieren
+                    </button>
+                    <button class="announcement-btn" data-text="Beförderungsansprache">
+                        <i class="fas fa-copy"></i> Beförderungsansprache kopieren
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Announcements Tab -->
+        <div id="announcements" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Ankündigungen & Skripte</h3>
+                    <i class="fas fa-scroll"></i>
+                </div>
+                <p class="mb-20">Klicken Sie auf eine Ankündigung, um den Text in die Zwischenablage zu kopieren.</p>
                 
-                <div class="space-y-4">
-                    <div id="acceptVisitorInfo">
-                        <!-- Visitor info will be loaded here -->
-                    </div>
+                <div class="announcement-buttons">
+                    <!-- Announcement buttons will be generated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Benutzerverwaltung</h3>
+                    <i class="fas fa-user-edit"></i>
+                </div>
+                
+                <div class="user-search">
+                    <input type="text" id="user-search-input" placeholder="Benutzername suchen (z.B. kl1777)">
+                    <button id="search-user-btn">Suchen</button>
+                </div>
+                
+                <div id="user-result" class="hidden">
+                    <!-- User search result will appear here -->
+                </div>
+                
+                <div id="users-list" class="users-list">
+                    <!-- Users will be loaded here -->
+                </div>
+                
+                <div id="user-edit-form" class="hidden mt-20">
+                    <!-- User edit form will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <h3>Panel-Einstellungen</h3>
+                    <label for="theme-select">Theme:</label>
+                    <select id="theme-select">
+                        <option value="dark">Dunkel (Standard)</option>
+                        <option value="light">Hell</option>
+                        <option value="military">Militär Grün</option>
+                    </select>
                     
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Gültig bis (Datum) *</label>
-                        <input type="date" id="visitorValidUntil" 
-                               class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20">
-                    </div>
+                    <label for="items-per-page">Einträge pro Seite:</label>
+                    <input type="number" id="items-per-page" value="10" min="5" max="50">
                     
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Bemerkungen</label>
-                        <textarea id="visitorNotes" rows="3" 
-                                  class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                  placeholder="Zusätzliche Informationen..."></textarea>
-                    </div>
+                    <button class="save-btn">Einstellungen speichern</button>
+                </div>
+                
+                <div class="setting-item">
+                    <h3>Datenbank-Verbindung</h3>
+                    <p>Status: <span id="db-status" style="color: var(--accent);">Verbunden</span></p>
+                    <p>URL: bxgkgqnoebjoshkuaidq.supabase.co</p>
+                    <p>API-Schlüssel: *******_mVlYGYRn</p>
                     
-                    <div id="visitorAcceptError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm">
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        <span>Bitte gib ein Gültigkeitsdatum an</span>
-                    </div>
-                    
-                    <div class="flex gap-4 pt-4">
-                        <button id="acceptVisitorConfirmBtn" class="flex-1 bg-green-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-green-700">
-                            <i class="fas fa-check mr-2"></i>Genehmigen
-                        </button>
-                        <button id="cancelVisitorBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
-                            Abbrechen
-                        </button>
+                    <button id="refresh-db-btn" class="save-btn">Datenbank aktualisieren</button>
+                </div>
+                
+                <div class="setting-item">
+                    <h3>Bundeswehr Ränge</h3>
+                    <div id="ranks-list">
+                        <!-- Ranks will be listed here -->
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Reject Visitor Modal -->
-    <div id="rejectVisitorModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="ios-card rounded-ios-xl shadow-ios-xl w-full max-w-md slide-in">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold gradient-text">Besucherausweis ablehnen</h2>
-                    <button id="closeRejectVisitorModal" class="text-ios-text-secondary hover:text-ios-text">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <div class="space-y-4">
-                    <div id="rejectVisitorInfo">
-                        <!-- Visitor info will be loaded here -->
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Ablehnungsgrund *</label>
-                        <textarea id="rejectVisitorReason" rows="3" 
-                                  class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                  placeholder="Bitte gib einen Grund für die Ablehnung an..."></textarea>
-                    </div>
-                    
-                    <div id="visitorRejectError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm">
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        <span>Bitte gib einen Ablehnungsgrund an</span>
-                    </div>
-                    
-                    <div class="flex gap-4 pt-4">
-                        <button id="rejectVisitorConfirmBtn" class="flex-1 bg-red-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-red-700">
-                            <i class="fas fa-times mr-2"></i>Ablehnen
-                        </button>
-                        <button id="cancelVisitorRejectBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
-                            Abbrechen
-                        </button>
-                    </div>
-                </div>
-            </div>
+        
+        <!-- Copy Notification -->
+        <div id="copy-notification" class="copy-notification">
+            <i class="fas fa-check-circle"></i> Text wurde in die Zwischenablage kopiert!
         </div>
-    </div>
+    </main>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center">
-        <div class="ios-card rounded-ios-xl p-8 flex flex-col items-center">
-            <div class="spinner mb-4"></div>
-            <p class="font-semibold">Lade...</p>
-        </div>
-    </div>
-
-    <!-- Notifications Container -->
-    <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-3 w-80 sm:w-96"></div>
-
-    <!-- Main JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-    // ======================
-    // SUPABASE INITIALISIERUNG
-    // ======================
-    const supabaseUrl = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
-    const supabaseAnonKey = 'sb_publishable_Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
-
-    // Supabase Client erstellen
-    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-
-    
-    // ======================
-    // APP STATE & CONFIGURATION
-    // ======================
-    const APP_CONFIG = {
-        appName: 'Bundeswehr RP',
-        version: '1.0.0',
-        localStoragePrefix: 'bw_rp_',
-        defaultStamina: 0,
-        applicationCooldown: 7 * 24 * 60 * 60 * 1000, // 7 Tage
-        ranks: [
-            'Schütze', 'Gefreiter', 'Obergefreiter', 'Hauptgefreiter',
-            'Stabsgefreiter', 'Oberstabsgefreiter', 'Unteroffizier',
-            'Stabsunteroffizier', 'Feldwebel', 'Hauptfeldwebel',
-            'Stabsfeldwebel', 'Oberstabsfeldwebel', 'Leutnant',
-            'Oberleutnant', 'Hauptmann', 'Stabshauptmann', 'Major',
-            'Oberstleutnant', 'Oberst', 'Brigadegeneral',
-            'Generalmajor', 'Generalleutnant', 'General'
-        ],
-        divisions: ['Heer', 'Marine', 'Luftwaffe', 'Sanitätsdienst']
-    };
-
-    // App State
-    let currentUser = null;
-    let currentPage = 'dashboard';
-    let missions = [];
-    let personnel = [];
-    let applications = [];
-    let visitors = [];
-    let visitorRequests = [];
-    let isSidebarCollapsed = false;
-    let currentAcceptVisitorId = null;
-    let currentRejectVisitorId = null;
-    let currentSoldierId = null;
-
-    // ======================
-    // INITIALIZATION
-    // ======================
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing app...');
-        initializeApp();
-    });
-
-    async function initializeApp() {
-        // Check for saved session
-        await checkSavedSession();
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://bxgkgqnoebjoshkuaidq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z2tncW5vZWJqb3Noa3VhaWRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU5NjQxNDUsImV4cCI6MjA0MTU0MDE0NX0.Qd2vCzcC7XJZaND_GmD8rA_mVlYGYRn';
         
-        // Initialize clock
-        updateClock();
-        setInterval(updateClock, 60000);
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // Setup event listeners
-        setupEventListeners();
+        // Bundeswehr Ränge in aufsteigender Reihenfolge
+        const ranks = [
+            "Schütze",
+            "Gefreiter",
+            "Obergefreiter",
+            "Hauptgefreiter",
+            "Stabsgefreiter",
+            "Oberstabsgefreiter",
+            "Unteroffizier",
+            "Stabsunteroffizier",
+            "Feldwebel",
+            "Oberfeldwebel",
+            "Hauptfeldwebel",
+            "Stabsfeldwebel",
+            "Oberstabsfeldwebel",
+            "Leutnant",
+            "Oberleutnant",
+            "Hauptmann",
+            "Major",
+            "Oberstleutnant",
+            "Oberst",
+            "Brigadegeneral",
+            "Generalmajor",
+            "Generalleutnant",
+            "General"
+        ];
         
-        // Show welcome message
-        setTimeout(() => {
-            if (!currentUser) {
-                showNotification('Willkommen beim Bundeswehr RP System', 'info');
-            }
-        }, 1000);
-    }
+        // Announcement texts
+        const announcements = {
+            "AGA Ankündigung": `Willkommen bei der AGA (Allgemeine Grundausbildung) der Bundeswehr!
 
-    async function checkSavedSession() {
-        const savedUser = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'user');
-        const savedToken = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token');
+Dies ist die Grundausbildung der Bundeswehr. Hier lernen Sie die Grundlagen des militärischen Dienstes.
+
+Ablauf der AGA:
+1. Begrüßung und Einweisung
+2. Grundlagen der militärischen Ordnung
+3. Ausbildung an der Waffe
+4. Körperliche Ertüchtigung
+5. Theoretische Ausbildung
+
+Wichtige Kommandos:
+- "Achtung!" - Grundstellung
+- "Rechts um!" - Rechtswendung
+- "Links um!" - Linkswendung
+- "Kehrt!" - Kehrtwendung
+- "Im Gleichschritt... Marsch!" - Marschbeginn
+- "Halt!" - Marschstopp
+
+Ab sofort antworten Sie mit "Jawohl, Herr Ausbilder!" oder "Jawohl, Frau Ausbilder!"
+
+Die AGA dauert 4 Wochen. Bei erfolgreichem Abschluss werden Sie zum Gefreiten befördert.
+
+Viel Erfolg!`,
+            
+            "Dienstantritt": `Dienstantritt Bundeswehr Role-Play
+
+Sehr geehrte Rekrutin, sehr geehrter Rekrut,
+
+herzlich willkommen zum Dienstantritt bei der Bundeswehr im Role-Play.
+
+Ihre erste Aufgabe ist die Meldung bei Ihrer Einheit. Bitte begeben Sie sich unverzüglich zum Kompaniegefechtsstand und melden Sie sich beim diensthabenden Unteroffizier.
+
+Mit dem heutigen Tag beginnen Sie Ihre militärische Laufbahn. Erwartet werden:
+- Pünktlichkeit
+- Disziplin
+- Kameradschaft
+- Einsatzbereitschaft
+
+Die Dienstuniform ist korrekt zu tragen. Vergessen Sie nicht Ihre Erkennungsmarke.
+
+Bei Fragen wenden Sie sich an Ihren Gruppenführer.
+
+Mit kameradschaftlichen Grüßen
+Ihr Ausbildungspersonal`,
+            
+            "Beförderungsansprache": `Beförderungsansprache
+
+Kameradinnen und Kameraden,
+
+im Namen der Bundeswehr darf ich Ihnen zur Beförderung gratulieren.
+
+Sie haben in der vergangenen Zeit bewiesen, dass Sie den Anforderungen des Dienstes gewachsen sind. Ihr Einsatz, Ihre Disziplin und Ihre Kameradschaft wurden von Ihren Vorgesetzten anerkannt.
+
+Mit Ihrer neuen Dienstgradstellung übernehmen Sie mehr Verantwortung. Sie sind nun Vorbild für die Rekruten und unterstellten Soldaten.
+
+Die Beförderung ist nicht nur ein Privileg, sondern vor allem eine Verpflichtung. Verpflichtung gegenüber der Truppe, gegenüber Ihren Kameraden und gegenüber unserem Staat.
+
+Tragen Sie Ihren neuen Dienstgrad mit Stolz, aber auch mit der Demut, die einem Soldaten der Bundeswehr gebührt.
+
+Ich wünsche Ihnen weiterhin viel Erfolg und alles Gute für Ihren weiteren Dienst.
+
+Glück ab!`,
+            
+            "Marschbefehl": `Marschbefehl
+
+An alle Soldaten der Einheit!
+
+Es folgt der Marschbefehl für die Übung "Eichenlaub".
+
+Aufstellung: 08:30 Uhr am Sammelplatz Alpha
+Ausrückung: 09:00 Uhr
+Marschroute: Sammelplatz Alpha -> Wegpunkt Bravo -> Wegpunkt Charlie -> Zielpunkt Delta
+Marschgeschwindigkeit: 5 km/h
+Pausen: 10 Minuten nach jeder Stunde
+Ausrüstung: Vollausrüstung, Feldflasche gefüllt, Verpflegung für 6 Stunden
+
+Besondere Anweisungen:
+- Funkstille bis Wegpunkt Bravo
+- Tarnung ab Wegpunkt Charlie
+- Gefechtsberührung möglich ab Wegpunkt Charlie
+
+Der Marschführer ist Hauptfeldwebel Mustermann.
+
+Bei Verwundung: Sofort Meldung an den Sanitäter.
+
+Für die Bundeswehr!
+Der Einheitsführer`,
+            
+            "Gefechtsübung": `Ankündigung Gefechtsübung
+
+ACHTUNG! GEFECHTSÜBUNG "STURMWIND"
+
+Zeit: Heute, 15:00 Uhr
+Ort: Übungsgelände Nord
+Teilnehmer: 1. - 3. Zug
+Ziel: Übung der defensiven Gefechtsführung
+
+Ablauf:
+1. Einweisen in die Lage (15:00-15:15)
+2. Beziehen der Stellungen (15:15-15:45)
+3. Abwehr des gegnerischen Angriffs (16:00-17:00)
+4. Gegenstoß (17:15-17:45)
+5. Übungsnachbesprechung (18:00)
+
+Ausrüstung:
+- Übungswaffen (gekennzeichnet)
+- Schutzausrüstung (Helm, Weste)
+- Tarnkleidung
+- Übungsmunition (Simunitions)
+
+Sicherheitsbestimmungen:
+- Waffen niemals auf Personen richten
+- Sicherheitsabstand von 10 Metern
+- Bei "Übungsabbruch" sofort alle Aktivitäten einstellen
+
+Die Übung wird bewertet. Besonderes Augenmerk auf:
+- Kommunikation innerhalb der Gruppe
+- Deckungswechsel
+- Feuer und Bewegung
+
+Führen Sie sich und Ihre Kameraden verantwortungsvoll!
+
+Der Übungsleiter
+Major Schneider`
+        };
         
-        if (savedUser && savedToken) {
-            try {
-                const user = JSON.parse(savedUser);
+        // DOM Elements
+        let currentUser = null;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab navigation
+            setupTabNavigation();
+            
+            // Load initial data
+            loadDashboardData();
+            loadUsers();
+            setupAnnouncementButtons();
+            displayRanks();
+            
+            // Setup event listeners
+            document.getElementById('search-user-btn').addEventListener('click', searchUser);
+            document.getElementById('user-search-input').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') searchUser();
+            });
+            
+            document.getElementById('refresh-db-btn').addEventListener('click', function() {
+                loadUsers();
+                loadDashboardData();
+                showNotification('Datenbank aktualisiert!');
+            });
+            
+            // Theme selector
+            document.getElementById('theme-select').addEventListener('change', function() {
+                const theme = this.value;
+                document.body.className = theme;
+                showNotification('Theme geändert zu: ' + theme);
+            });
+        });
+        
+        // Tab Navigation Setup
+        function setupTabNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const pageTitle = document.getElementById('page-title');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    tabContents.forEach(tab => tab.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Update page title
+                    const tabName = this.querySelector('span').textContent;
+                    pageTitle.textContent = tabName;
+                    
+                    // Load data for the tab if needed
+                    if (tabId === 'users') {
+                        loadUsers();
+                    } else if (tabId === 'dashboard') {
+                        loadDashboardData();
+                    }
+                });
+            });
+        }
+        
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            // In a real app, you would fetch this from Supabase
+            // For now, we'll use mock data
+            
+            const promotions = [
+                { id: 1, username: 'kl1777', oldRank: 'Gefreiter', newRank: 'Obergefreiter', timestamp: '2023-10-15 14:30', read: false },
+                { id: 2, username: 'Soldat123', oldRank: 'Schütze', newRank: 'Gefreiter', timestamp: '2023-10-14 11:20', read: false },
+                { id: 3, username: 'Panzerfahrer', oldRank: 'Hauptgefreiter', newRank: 'Stabsgefreiter', timestamp: '2023-10-13 16:45', read: true },
+                { id: 4, username: 'FallschirmJA', oldRank: 'Obergefreiter', newRank: 'Hauptgefreiter', timestamp: '2023-10-12 09:15', read: false }
+            ];
+            
+            const promotionsList = document.getElementById('promotions-list');
+            promotionsList.innerHTML = '';
+            
+            promotions.forEach(promo => {
+                const promoItem = document.createElement('div');
+                promoItem.className = `promotion-item ${promo.read ? '' : 'unread'}`;
+                promoItem.innerHTML = `
+                    <div class="promotion-info">
+                        <strong>${promo.username}</strong><br>
+                        <small>${promo.oldRank} → ${promo.newRank}</small><br>
+                        <small>${promo.timestamp}</small>
+                    </div>
+                    <div class="promotion-actions">
+                        ${!promo.read ? `<button onclick="markPromotionAsRead(${promo.id})">Als gelesen markieren</button>` : '<span style="color: var(--success);"><i class="fas fa-check"></i> Gelesen</span>'}
+                    </div>
+                `;
+                promotionsList.appendChild(promoItem);
+            });
+            
+            // Update user count (mock)
+            document.getElementById('user-count').textContent = '24';
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('de-DE');
+        }
+        
+        // Load Users
+        async function loadUsers() {
+            // In a real app, you would fetch from Supabase
+            // For now, we'll use mock data
+            
+            const mockUsers = [
+                { id: 1, username: 'kl1777', rank: 'Obergefreiter' },
+                { id: 2, username: 'Soldat123', rank: 'Gefreiter' },
+                { id: 3, username: 'Panzerfahrer', rank: 'Stabsgefreiter' },
+                { id: 4, username: 'FallschirmJA', rank: 'Hauptgefreiter' },
+                { id: 5, username: 'BW_Fan22', rank: 'Schütze' },
+                { id: 6, username: 'General_H', rank: 'Hauptmann' },
+                { id: 7, username: 'Leopard2A7', rank: 'Oberfeldwebel' },
+                { id: 8, username: 'GefechtsSim', rank: 'Unteroffizier' },
+                { id: 9, username: 'Sanitäter77', rank: 'Stabsunteroffizier' },
+                { id: 10, username: 'Fernmelder', rank: 'Feldwebel' }
+            ];
+            
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = '';
+            
+            mockUsers.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.innerHTML = `
+                    <div class="user-info-small">
+                        <i class="fas fa-user"></i>
+                        <span><strong>${user.username}</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="user-rank">${user.rank}</span>
+                        <div class="user-actions">
+                            <button class="promote-btn" onclick="promoteUser('${user.username}', '${user.rank}')">Befördern</button>
+                            <button class="demote-btn" onclick="demoteUser('${user.username}', '${user.rank}')">Degradieren</button>
+                        </div>
+                    </div>
+                `;
+                usersList.appendChild(userItem);
+            });
+        }
+        
+        // Setup Announcement Buttons
+        function setupAnnouncementButtons() {
+            const announcementsContainer = document.querySelector('#announcements .announcement-buttons');
+            announcementsContainer.innerHTML = '';
+            
+            for (const [title, text] of Object.entries(announcements)) {
+                const button = document.createElement('button');
+                button.className = 'announcement-btn';
+                button.innerHTML = `<i class="fas fa-copy"></i> ${title} kopieren`;
+                button.setAttribute('data-text', title);
                 
-                // Check if token is still valid (simplified)
-                const tokenExpiry = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-                if (tokenExpiry && Date.now() < parseInt(tokenExpiry)) {
-                    // Auto-login
-                    await handleLoginSuccess(user);
-                    showNotification('Willkommen zurück, ' + user.display_name, 'success');
-                    return true;
-                } else {
-                    // Token expired
-                    localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
-                    localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
+                button.addEventListener('click', function() {
+                    copyToClipboard(announcements[title]);
+                });
+                
+                announcementsContainer.appendChild(button);
+            }
+            
+            // Also update the dashboard quick access buttons
+            const dashboardButtons = document.querySelectorAll('#dashboard .announcement-btn');
+            dashboardButtons.forEach(button => {
+                const textKey = button.getAttribute('data-text');
+                if (announcements[textKey]) {
+                    button.addEventListener('click', function() {
+                        copyToClipboard(announcements[textKey]);
+                    });
                 }
-            } catch (e) {
-                console.error('Error parsing saved user:', e);
-            }
-        }
-        
-        return false;
-    }
-
-    function setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
-        // Login button
-        document.getElementById('loginButton').addEventListener('click', login);
-        
-        // Application button
-        document.getElementById('applicationButton').addEventListener('click', showApplicationForm);
-        
-        // NEU: Visitor button
-        document.getElementById('visitorButton').addEventListener('click', showVisitorForm);
-        
-        // Back to login buttons
-        document.getElementById('backToLoginButton').addEventListener('click', showLoginForm);
-        document.getElementById('backToLoginButton2')?.addEventListener('click', showLoginForm);
-        
-        // Sidebar toggle
-        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-        
-        // Logout button
-        document.getElementById('logoutButton').addEventListener('click', logout);
-        
-        // Show ID buttons
-        document.getElementById('showIDButton').addEventListener('click', showMilitaryID);
-        document.getElementById('showIDButton2').addEventListener('click', showMilitaryID);
-        document.getElementById('closeIDModal').addEventListener('click', hideMilitaryID);
-        
-        // NEU: Visitor ID modal
-        document.getElementById('closeVisitorModal').addEventListener('click', hideVisitorIDModal);
-        
-        // NEU: Request visitor button
-        document.getElementById('requestVisitorBtn')?.addEventListener('click', showVisitorFormFromApp);
-        
-        // Navigation buttons
-        document.querySelectorAll('.nav-item[data-page]').forEach(button => {
-            button.addEventListener('click', function() {
-                showPage(this.getAttribute('data-page'));
-            });
-        });
-        
-        // NEU: Visitor request tabs
-        document.querySelectorAll('.visitor-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                setVisitorRequestFilter(this.getAttribute('data-filter'));
-            });
-        });
-        
-        // Login form enter key
-        document.getElementById('loginUsername')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-        
-        document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-        
-        console.log('Event listeners set up successfully');
-    }
-
-    // ======================
-    // AUTHENTICATION - KORRIGIERT
-    // ======================
-    async function login() {
-        console.log('Login function called');
-        
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        console.log('Username:', username);
-        console.log('Password:', password ? '***' : 'empty');
-        
-        if (!username || !password) {
-            showError('loginError', 'Bitte Benutzername und Passwort eingeben');
-            return;
-        }
-        
-        showLoading();
-        
-        try {
-            console.log('Querying SupabaseClient for user:', username);
-            
-            // User aus SupabaseClient holen - PASSEND ZU UNSERER TABELLENSTRUKTUR
-            const { data: users, error } = await supabaseClient
-                .from('users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .limit(1);
-            
-            console.log('SupabaseClient response:', { data: users, error });
-            
-            if (error) {
-                console.error('SupabaseClient error:', error);
-                throw new Error('Datenbankfehler: ' + error.message);
-            }
-            
-            if (users && users.length > 0) {
-                const user = users[0];
-                console.log('User found:', user);
-                
-                // Create session
-                const token = 'supabaseClient_token_' + Date.now();
-                const tokenExpiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
-                
-                // Store session
-                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'user', JSON.stringify(user));
-                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token', token);
-                localStorage.setItem(APP_CONFIG.localStoragePrefix + 'token_expiry', tokenExpiry.toString());
-                
-                // Handle login success
-                await handleLoginSuccess(user);
-                hideError('loginError');
-                
-                showNotification('Erfolgreich eingeloggt', 'success');
-            } else {
-                console.log('No user found or password incorrect');
-                throw new Error('Falscher Benutzername oder Passwort');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            showError('loginError', error.message);
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async function handleLoginSuccess(user) {
-        console.log('Login success for user:', user);
-        currentUser = user;
-        
-        // Update UI
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        
-        // Update user display
-        updateUserDisplay(user);
-        
-        // Check permissions
-        checkPermissions(user.role);
-        
-        // Load initial data from SupabaseClient
-        await Promise.all([
-            loadDashboard(),
-            loadVisitors(),
-            loadVisitorRequests()
-        ]);
-        
-        // Show dashboard
-        showPage('dashboard');
-    }
-
-    function logout() {
-        if (confirm('Möchtest du dich wirklich ausloggen?')) {
-            // Clear session
-            localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token');
-            localStorage.removeItem(APP_CONFIG.localStoragePrefix + 'token_expiry');
-            
-            // Reset UI
-            currentUser = null;
-            document.getElementById('mainApp').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            
-            // Clear forms
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-            hideError('loginError');
-            
-            showNotification('Erfolgreich ausgeloggt', 'info');
-        }
-    }
-
-    // ======================
-    // FORM FUNCTIONS
-    // ======================
-    function showApplicationForm() {
-        console.log('showApplicationForm called');
-        // Einfache Implementierung um den Fehler zu beheben
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('applicationForm').classList.remove('hidden');
-        
-        const content = `
-            <div class="text-center py-12">
-                <i class="fas fa-file-alt text-4xl text-ios-text-secondary mb-4"></i>
-                <h3 class="text-xl font-bold mb-2">Bewerbungsformular</h3>
-                <p class="text-ios-text-secondary mb-6">Die Bewerbungsfunktion ist noch in Entwicklung.</p>
-                <button id="backFromAppButton" class="bg-ios-primary text-white px-6 py-2 rounded-ios-sm font-semibold hover:bg-blue-700">
-                    <i class="fas fa-arrow-left mr-2"></i>Zurück
-                </button>
-            </div>
-        `;
-        
-        document.getElementById('applicationContent').innerHTML = content;
-        
-        document.getElementById('backFromAppButton').addEventListener('click', showLoginForm);
-    }
-
-    function showLoginForm() {
-        document.getElementById('applicationForm').classList.add('hidden');
-        document.getElementById('visitorForm').classList.add('hidden');
-        document.getElementById('loginScreen').classList.remove('hidden');
-    }
-
-    // ======================
-    // DEBUG HELPER
-    // ======================
-    console.log('Script loaded! Testing buttons...');
-
-    // Test ob Event Listener gesetzt werden
-    setTimeout(() => {
-        const loginBtn = document.getElementById('loginButton');
-        const appBtn = document.getElementById('applicationButton');
-        const visitorBtn = document.getElementById('visitorButton');
-
-        console.log('Buttons found:', {
-            loginButton: loginBtn ? 'YES' : 'NO',
-            applicationButton: appBtn ? 'YES' : 'NO',
-            visitorButton: visitorBtn ? 'YES' : 'NO'
-        });
-
-        // Manuelle Event Listener für Test
-        if (loginBtn) {
-            loginBtn.addEventListener('click', function(e) {
-                console.log('LOGIN BUTTON CLICKED!', e);
-                alert('Login Button funktioniert! Jetzt wird eingeloggt...');
-                login(); // Die eigentliche Funktion
             });
         }
-
-        if (appBtn) {
-            appBtn.addEventListener('click', function(e) {
-                console.log('APPLICATION BUTTON CLICKED!', e);
-                alert('Bewerbung Button funktioniert!');
-                showApplicationForm();
+        
+        // Copy to Clipboard Function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Text wurde in die Zwischenablage kopiert!');
+            }).catch(err => {
+                console.error('Fehler beim Kopieren: ', err);
+                showNotification('Fehler beim Kopieren!', 'error');
             });
         }
-
-        if (visitorBtn) {
-            visitorBtn.addEventListener('click', function(e) {
-                console.log('VISITOR BUTTON CLICKED!', e);
-                alert('Besucher Button funktioniert!');
-                showVisitorForm();
-            });
-        }
-    }, 1000);
-    
-    // ======================
-    // VISITOR SYSTEM - NEUE FUNKTIONEN
-    // ======================
-    function showVisitorForm() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('visitorForm').classList.remove('hidden');
         
-        const content = `
-            <form id="visitorFormElement">
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Roblox Display Name *</label>
-                        <input type="text" id="visitorDisplayName" required
-                               class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                               placeholder="Dein Roblox Display Name">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Roblox Username *</label>
-                        <input type="text" id="visitorRobloxUsername" required
-                               class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                               placeholder="@username">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Grund des Besuchs *</label>
-                        <textarea id="visitorReason" rows="4" required
-                                  class="w-full px-4 py-3 rounded-ios-sm border border-ios-border focus:outline-none focus:border-ios-primary focus:ring-2 focus:ring-ios-primary/20"
-                                  placeholder="Warum benötigst du einen Besucherausweis?"></textarea>
-                    </div>
-                    
-                    <div id="visitorFormError" class="hidden bg-red-50 border border-red-200 text-red-600 p-3 rounded-ios-sm"></div>
-                    
-                    <div class="flex gap-4 pt-4">
-                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-ios-sm font-semibold hover:bg-blue-700">
-                            <i class="fas fa-paper-plane mr-2"></i>Antrag absenden
-                        </button>
-                        <button type="button" id="cancelVisitorFormBtn" class="flex-1 bg-white border border-ios-primary text-ios-primary py-3 rounded-ios-sm font-semibold hover:bg-ios-primary/10">
-                            Abbrechen
-                        </button>
-                    </div>
-                    
-                    <p class="text-sm text-ios-text-secondary text-center">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Dein Antrag wird von der Leitung geprüft. Du wirst per Roblox benachrichtigt.
-                    </p>
-                </div>
-            </form>
-        `;
-        
-        document.getElementById('visitorContent').innerHTML = content;
-        
-        // Add event listeners
-        document.getElementById('visitorFormElement').addEventListener('submit', function(event) {
-            event.preventDefault();
-            submitVisitorRequest();
-        });
-        
-        document.getElementById('cancelVisitorFormBtn').addEventListener('click', showLoginForm);
-    }
-
-    function showVisitorFormFromApp() {
-        showNotification('Bitte logge dich aus, um einen Besucherausweis zu beantragen', 'info');
-        setTimeout(() => {
-            logout();
+        // Show Notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('copy-notification');
+            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            notification.style.display = 'block';
+            
             setTimeout(() => {
-                document.getElementById('visitorButton').click();
-            }, 500);
-        }, 1000);
-    }
-
-    async function submitVisitorRequest() {
-        const displayName = document.getElementById('visitorDisplayName').value;
-        const robloxUsername = document.getElementById('visitorRobloxUsername').value;
-        const reason = document.getElementById('visitorReason').value;
-        
-        if (!displayName || !robloxUsername || !reason) {
-            document.getElementById('visitorFormError').textContent = 'Bitte fülle alle Felder aus';
-            document.getElementById('visitorFormError').classList.remove('hidden');
-            return;
+                notification.style.display = 'none';
+            }, 3000);
         }
         
-        try {
-            // Generate visitor ID
-            const { data: lastVisitor } = await supabaseClient
-                .from('visitor_requests')
-                .select('visitor_id')
-                .order('created_at', { ascending: false })
-                .limit(1);
+        // Search User Function
+        async function searchUser() {
+            const username = document.getElementById('user-search-input').value.trim();
+            if (!username) return;
             
-            let nextId = 1000;
-            if (lastVisitor && lastVisitor[0] && lastVisitor[0].visitor_id) {
-                const lastId = parseInt(lastVisitor[0].visitor_id.split('-')[1]);
-                nextId = lastId + 1;
-            }
+            const userResult = document.getElementById('user-result');
+            const editForm = document.getElementById('user-edit-form');
             
-            const visitorId = 'VIS-' + nextId.toString().padStart(4, '0');
+            // In a real app, you would search in Supabase
+            // For now, we'll simulate a search
             
-            const visitorRequest = {
-                visitor_id: visitorId,
-                display_name: displayName,
-                roblox_username: robloxUsername,
-                reason: reason,
-                status: 'pending',
-                created_at: new Date().toISOString(),
-                request_date: new Date().toLocaleDateString('de-DE')
+            // Mock user data
+            const mockUser = { 
+                id: 25, 
+                username: username, 
+                rank: 'Schütze',
+                exists: Math.random() > 0.5 // Simulate 50/50 chance user exists
             };
             
-            const { data, error } = await supabaseClient
-                .from('visitor_requests')
-                .insert([visitorRequest]);
-            
-            if (error) throw error;
-            
-            // Store locally for status checking
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request', JSON.stringify(visitorRequest));
-            localStorage.setItem(APP_CONFIG.localStoragePrefix + 'visitor_status', 'pending');
-            
-            showNotification('Besucherausweis-Anfrage erfolgreich eingereicht!', 'success');
-            
-            setTimeout(() => {
-                showLoginForm();
-                showNotification('Die Leitung wird deinen Antrag prüfen.', 'info');
-            }, 1500);
-            
-        } catch (error) {
-            console.error('Error submitting visitor request:', error);
-            showNotification('Fehler beim Einreichen der Anfrage', 'error');
-        }
-    }
-
-    async function loadVisitors() {
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            
-            const { data: visitorsData, error } = await supabaseClient
-                .from('visitor_requests')
-                .select('*')
-                .eq('status', 'accepted')
-                .gte('valid_until', today) // Nur gültige Ausweise
-                .order('valid_until', { ascending: true });
-            
-            if (error) throw error;
-            
-            visitors = visitorsData || [];
-            
-            // Update UI
-            const container = document.getElementById('visitorsList');
-            if (container) {
-                renderVisitors(visitors, container);
-            }
-            
-            return visitors;
-        } catch (error) {
-            console.error('Error loading visitors:', error);
-            showNotification('Fehler beim Laden der Besucher', 'error');
-            return [];
-        }
-    }
-
-    async function loadVisitorRequests(filter = 'pending') {
-        try {
-            let query = supabaseClient
-                .from('visitor_requests')
-                .select('*');
-            
-            if (filter !== 'all') {
-                query = query.eq('status', filter);
-            }
-            
-            const { data: requests, error } = await query;
-            
-            if (error) throw error;
-            
-            visitorRequests = requests || [];
-            
-            // Update counts
-            const pendingCount = visitorRequests.filter(req => req.status === 'pending').length;
-            document.getElementById('pendingVisitorRequests').textContent = pendingCount;
-            document.getElementById('pendingVisitorCount').textContent = pendingCount;
-            
-            const pendingVisitorBadge = document.getElementById('pendingVisitorBadge');
-            if (pendingVisitorBadge) {
-                pendingVisitorBadge.textContent = pendingCount;
-                pendingVisitorBadge.classList.toggle('hidden', pendingCount === 0);
-            }
-            
-            // Update UI
-            const container = document.getElementById('visitorRequestsList');
-            if (container) {
-                renderVisitorRequests(visitorRequests, container);
-            }
-            
-            return visitorRequests;
-        } catch (error) {
-            console.error('Error loading visitor requests:', error);
-            showNotification('Fehler beim Laden der Besucher-Anfragen', 'error');
-            return [];
-        }
-    }
-
-    function renderVisitors(visitors, container) {
-        if (visitors.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12 text-ios-text-secondary">
-                    <i class="fas fa-user-tag text-4xl mb-4"></i>
-                    <p class="text-lg mb-2">Keine aktiven Besucherausweise</p>
-                    <p class="text-sm">Es sind keine gültigen Besucherausweise vorhanden.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        let html = '';
-        visitors.forEach(visitor => {
-            const validUntil = new Date(visitor.valid_until);
-            const today = new Date();
-            const daysLeft = Math.ceil((validUntil - today) / (1000 * 60 * 60 * 24));
-            
-            html += `
-                <div class="border border-ios-border rounded-ios-sm p-5 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
+            if (mockUser.exists) {
+                // User exists - show current rank
+                userResult.innerHTML = `
+                    <div class="user-item">
+                        <div class="user-info-small">
+                            <i class="fas fa-user-check"></i>
+                            <span><strong>${mockUser.username}</strong> gefunden</span>
+                        </div>
                         <div>
-                            <h3 class="font-bold text-lg">${visitor.display_name}</h3>
-                            <p class="text-ios-text-secondary">
-                                <i class="fab fa-roblox mr-1"></i>${visitor.roblox_username}
-                                <span class="mx-2">•</span>
-                                <i class="fas fa-id-card mr-1"></i>${visitor.visitor_id}
-                            </p>
+                            <span class="user-rank">${mockUser.rank}</span>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                            daysLeft < 3 ? 'bg-red-100 text-red-800' :
-                            daysLeft < 7 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            Gültig: ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}
-                        </span>
                     </div>
-                    
-                    <div class="mb-4">
-                        <p class="text-sm font-medium mb-2">Grund:</p>
-                        <div class="bg-gray-50 p-3 rounded-ios-sm">${visitor.reason}</div>
-                    </div>
-                    
-                    <div class="flex justify-between items-center pt-4 border-t border-ios-border">
-                        <div class="text-ios-text-secondary text-sm">
-                            <i class="fas fa-calendar-alt mr-1"></i>
-                            Gültig bis: ${validUntil.toLocaleDateString('de-DE')}
-                        </div>
-                        <button data-visitor-id="${visitor.id}" class="view-visitor-btn text-blue-600 hover:text-blue-800 font-medium">
-                            <i class="fas fa-eye mr-1"></i>Ausweis ansehen
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-        
-        // Add event listeners
-        container.querySelectorAll('.view-visitor-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const visitorId = this.getAttribute('data-visitor-id');
-                showVisitorID(visitorId);
-            });
-        });
-    }
-
-    function renderVisitorRequests(requests, container) {
-        if (requests.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12 text-ios-text-secondary">
-                    <i class="fas fa-id-card text-4xl mb-4"></i>
-                    <p class="text-lg mb-2">Keine ${filter === 'pending' ? 'ausstehenden' : filter === 'accepted' ? 'angenommenen' : 'abgelehnten'} Anfragen</p>
-                </div>
-            `;
-            return;
-        }
-        
-        let html = '';
-        requests.forEach(request => {
-            html += `
-                <div class="border border-ios-border rounded-ios-sm p-5">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-bold text-lg">${request.display_name}</h3>
-                            <p class="text-ios-text-secondary">
-                                <i class="fab fa-roblox mr-1"></i>${request.roblox_username}
-                                <span class="mx-2">•</span>
-                                <i class="fas fa-calendar-alt mr-1"></i>${request.request_date}
-                                <span class="mx-2">•</span>
-                                <i class="fas fa-id-card mr-1"></i>${request.visitor_id}
-                            </p>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${
-                            request.status === 'pending' ? 'status-pending' :
-                            request.status === 'accepted' ? 'status-accepted' :
-                            'status-rejected'
-                        }">
-                            ${request.status === 'pending' ? 'Ausstehend' :
-                              request.status === 'accepted' ? 'Angenommen' : 'Abgelehnt'}
-                        </span>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <p class="text-sm font-medium mb-2">Grund des Besuchs:</p>
-                        <div class="bg-gray-50 p-3 rounded-ios-sm">${request.reason}</div>
-                    </div>
-                    
-                    ${request.status === 'pending' && (currentUser?.role === 'admin' || currentUser?.role === 'leader') ? `
-                        <div class="flex gap-3 pt-4 border-t border-ios-border">
-                            <button data-request-id="${request.id}" class="accept-visitor-btn flex-1 bg-green-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-green-700">
-                                <i class="fas fa-check mr-2"></i>Genehmigen
-                            </button>
-                            <button data-request-id="${request.id}" class="reject-visitor-btn flex-1 bg-red-600 text-white py-2 rounded-ios-sm font-semibold hover:bg-red-700">
-                                <i class="fas fa-times mr-2"></i>Ablehnen
-                            </button>
-                        </div>
-                    ` : ''}
-                    
-                    ${request.status === 'accepted' ? `
-                        <div class="bg-green-50 border border-green-200 rounded-ios-sm p-3 mt-3">
-                            <p class="font-medium text-green-800 mb-1">Besucherausweis genehmigt</p>
-                            <p class="text-sm text-green-600">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
-                            ${request.notes ? `<p class="text-sm text-green-600 mt-1">Bemerkungen: ${request.notes}</p>` : ''}
-                        </div>
-                    ` : ''}
-                    
-                    ${request.status === 'rejected' && request.rejection_reason ? `
-                        <div class="bg-red-50 border border-red-200 rounded-ios-sm p-3 mt-3">
-                            <p class="font-medium text-red-800 mb-1">Abgelehnt</p>
-                            <p class="text-sm text-red-600">Grund: ${request.rejection_reason}</p>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-        
-        // Add event listeners
-        container.querySelectorAll('.accept-visitor-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const requestId = this.getAttribute('data-request-id');
-                showAcceptVisitorModal(requestId);
-            });
-        });
-        
-        container.querySelectorAll('.reject-visitor-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const requestId = this.getAttribute('data-request-id');
-                showRejectVisitorModal(requestId);
-            });
-        });
-    }
-
-    function showAcceptVisitorModal(requestId) {
-        const request = visitorRequests.find(r => r.id === requestId);
-        if (!request) return;
-        
-        // Set minimum date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const minDate = tomorrow.toISOString().split('T')[0];
-        
-        document.getElementById('visitorValidUntil').min = minDate;
-        document.getElementById('visitorValidUntil').value = minDate;
-        
-        document.getElementById('acceptVisitorInfo').innerHTML = `
-            <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                <p class="font-medium">${request.display_name}</p>
-                <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
-                <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
-                <p class="text-sm text-ios-text-secondary mt-2">Grund: ${request.reason}</p>
-            </div>
-        `;
-        
-        document.getElementById('acceptVisitorModal').classList.remove('hidden');
-        currentAcceptVisitorId = requestId;
-        
-        // Add event listeners for modal buttons
-        document.getElementById('acceptVisitorConfirmBtn').onclick = acceptVisitorConfirm;
-        document.getElementById('cancelVisitorBtn').onclick = hideAcceptVisitorModal;
-        document.getElementById('closeAcceptVisitorModal').onclick = hideAcceptVisitorModal;
-    }
-
-    function hideAcceptVisitorModal() {
-        document.getElementById('acceptVisitorModal').classList.add('hidden');
-        document.getElementById('visitorAcceptError').classList.add('hidden');
-        currentAcceptVisitorId = null;
-    }
-
-    async function acceptVisitorConfirm() {
-        const validUntil = document.getElementById('visitorValidUntil').value;
-        const notes = document.getElementById('visitorNotes').value;
-        
-        if (!validUntil) {
-            document.getElementById('visitorAcceptError').classList.remove('hidden');
-            return;
-        }
-        
-        try {
-            const request = visitorRequests.find(r => r.id === currentAcceptVisitorId);
-            if (!request) return;
-            
-            const { error } = await supabaseClient
-                .from('visitor_requests')
-                .update({ 
-                    status: 'accepted',
-                    valid_until: validUntil,
-                    notes: notes,
-                    reviewed_by: currentUser.id,
-                    reviewed_at: new Date().toISOString()
-                })
-                .eq('id', currentAcceptVisitorId);
-            
-            if (error) throw error;
-            
-            hideAcceptVisitorModal();
-            showNotification('Besucherausweis genehmigt', 'success');
-            
-            await Promise.all([
-                loadVisitorRequests(),
-                loadVisitors()
-            ]);
-            
-        } catch (error) {
-            console.error('Error accepting visitor request:', error);
-            showNotification('Fehler beim Genehmigen des Ausweises', 'error');
-        }
-    }
-
-    function showRejectVisitorModal(requestId) {
-        const request = visitorRequests.find(r => r.id === requestId);
-        if (!request) return;
-        
-        document.getElementById('rejectVisitorInfo').innerHTML = `
-            <div class="bg-gray-50 p-3 rounded-ios-sm mb-4">
-                <p class="font-medium">${request.display_name}</p>
-                <p class="text-sm text-ios-text-secondary">Roblox: ${request.roblox_username}</p>
-                <p class="text-sm text-ios-text-secondary">ID: ${request.visitor_id}</p>
-            </div>
-        `;
-        
-        document.getElementById('rejectVisitorModal').classList.remove('hidden');
-        currentRejectVisitorId = requestId;
-        
-        // Add event listeners
-        document.getElementById('rejectVisitorConfirmBtn').onclick = rejectVisitorConfirm;
-        document.getElementById('cancelVisitorRejectBtn').onclick = hideRejectVisitorModal;
-        document.getElementById('closeRejectVisitorModal').onclick = hideRejectVisitorModal;
-    }
-
-    function hideRejectVisitorModal() {
-        document.getElementById('rejectVisitorModal').classList.add('hidden');
-        document.getElementById('visitorRejectError').classList.add('hidden');
-        currentRejectVisitorId = null;
-    }
-
-    async function rejectVisitorConfirm() {
-        const reason = document.getElementById('rejectVisitorReason').value;
-        
-        if (!reason) {
-            document.getElementById('visitorRejectError').classList.remove('hidden');
-            return;
-        }
-        
-        try {
-            const { error } = await supabaseClient
-                .from('visitor_requests')
-                .update({ 
-                    status: 'rejected',
-                    rejection_reason: reason,
-                    reviewed_by: currentUser.id,
-                    reviewed_at: new Date().toISOString()
-                })
-                .eq('id', currentRejectVisitorId);
-            
-            if (error) throw error;
-            
-            hideRejectVisitorModal();
-            showNotification('Besucherausweis abgelehnt', 'info');
-            
-            await loadVisitorRequests();
-            
-        } catch (error) {
-            console.error('Error rejecting visitor request:', error);
-            showNotification('Fehler beim Ablehnen des Ausweises', 'error');
-        }
-    }
-
-    function showVisitorID(visitorId) {
-        const visitor = visitors.find(v => v.id === visitorId);
-        if (!visitor) return;
-        
-        document.getElementById('modalVisitorName').textContent = visitor.display_name;
-        document.getElementById('modalVisitorRoblox').textContent = visitor.roblox_username;
-        document.getElementById('modalVisitorFullID').textContent = visitor.visitor_id;
-        document.getElementById('modalVisitorID').textContent = visitor.visitor_id;
-        
-        const visitorIdParts = visitor.visitor_id.split('-');
-        document.getElementById('modalVisitorNumber').textContent = visitorIdParts.length > 1 ? visitorIdParts[1] : '0000';
-        
-        if (visitor.created_at) {
-            const issuedDate = new Date(visitor.created_at);
-            document.getElementById('modalVisitorIssued').textContent = issuedDate.toLocaleDateString('de-DE');
-        }
-        
-        if (visitor.valid_until) {
-            const validUntil = new Date(visitor.valid_until);
-            document.getElementById('modalVisitorValidUntil').textContent = validUntil.toLocaleDateString('de-DE');
-            
-            const today = new Date();
-            const isExpired = validUntil < today;
-            const statusEl = document.getElementById('modalVisitorStatus');
-            statusEl.textContent = isExpired ? 'Abgelaufen' : 'Aktiv';
-            statusEl.className = isExpired ? 
-                'px-2 py-1 rounded-full text-xs font-semibold bg-red-500' : 
-                'px-2 py-1 rounded-full text-xs font-semibold bg-green-500';
-        }
-        
-        document.getElementById('visitorIDModal').classList.remove('hidden');
-    }
-
-    function hideVisitorIDModal() {
-        document.getElementById('visitorIDModal').classList.add('hidden');
-    }
-
-    // ======================
-    // HELPER FUNCTIONS
-    // ======================
-    function updateClock() {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('de-DE', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        const dateStr = now.toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        
-        const timeEl = document.getElementById('currentTime');
-        const dateEl = document.getElementById('currentDate');
-        
-        if (timeEl) timeEl.textContent = timeStr;
-        if (dateEl) dateEl.textContent = dateStr;
-    }
-
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        
-        isSidebarCollapsed = !isSidebarCollapsed;
-        
-        if (isSidebarCollapsed) {
-            sidebar.classList.remove('sidebar-expanded');
-            sidebar.classList.add('sidebar-collapsed');
-            mainContent.classList.remove('main-expanded');
-            mainContent.classList.add('main-collapsed');
-            
-            sidebar.querySelectorAll('span:not(.absolute)').forEach(span => {
-                if (!span.closest('#userID')) {
-                    span.classList.add('hidden');
-                }
-            });
-        } else {
-            sidebar.classList.remove('sidebar-collapsed');
-            sidebar.classList.add('sidebar-expanded');
-            mainContent.classList.remove('main-collapsed');
-            mainContent.classList.add('main-expanded');
-            
-            sidebar.querySelectorAll('span').forEach(span => {
-                span.classList.remove('hidden');
-            });
-        }
-    }
-
-    function showPage(page) {
-        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-        const pageElement = document.getElementById(page + 'Page');
-        if (pageElement) {
-            pageElement.classList.remove('hidden');
-        }
-        
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('bg-gray-50', 'text-ios-primary');
-        });
-        
-        // Load page data if needed
-        if (page === 'dashboard') loadDashboard();
-        if (page === 'visitors') loadVisitors();
-        if (page === 'visitorRequests') loadVisitorRequests();
-        
-        currentPage = page;
-    }
-
-    function setVisitorRequestFilter(filter) {
-        document.querySelectorAll('.visitor-tab').forEach(tab => {
-            tab.classList.remove('border-b-2', 'border-blue-600', 'text-blue-600');
-            tab.classList.add('border-transparent', 'text-ios-text-secondary');
-        });
-        
-        const activeTab = document.querySelector(`.visitor-tab[data-filter="${filter}"]`);
-        if (activeTab) {
-            activeTab.classList.add('border-b-2', 'border-blue-600', 'text-blue-600');
-            activeTab.classList.remove('border-transparent', 'text-ios-text-secondary');
-        }
-        
-        loadVisitorRequests(filter);
-    }
-
-    function updateUserDisplay(user) {
-        const initials = user.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
-        document.getElementById('userAvatar').textContent = initials.substring(0, 2);
-        document.getElementById('userInitials').textContent = initials.substring(0, 2);
-        
-        document.getElementById('userDisplayName').textContent = user.display_name;
-        document.getElementById('userName').textContent = user.display_name;
-        document.getElementById('userRank').textContent = user.rank;
-        document.getElementById('userRankSmall').textContent = `Rang: ${user.rank}`;
-        document.getElementById('userDivision').textContent = `Division: ${user.division}`;
-        document.getElementById('userID').textContent = user.soldier_id;
-        
-        document.getElementById('staminaValue').textContent = user.stamina;
-        document.getElementById('dashboardStamina').textContent = user.stamina;
-        
-        document.getElementById('idName').textContent = user.display_name;
-        document.getElementById('idRank').textContent = user.rank;
-        document.getElementById('idUnit').textContent = user.division;
-        document.getElementById('idNumber').textContent = user.soldier_id;
-        
-        if (user.service_start) {
-            const startDate = new Date(user.service_start);
-            const now = new Date();
-            const months = (now.getFullYear() - startDate.getFullYear()) * 12 + 
-                          (now.getMonth() - startDate.getMonth());
-            document.getElementById('serviceTime').textContent = `${months} Monat${months !== 1 ? 'e' : ''}`;
-            document.getElementById('idStartDate').textContent = new Date(user.service_start).toLocaleDateString('de-DE');
-        }
-    }
-
-    function checkPermissions(role) {
-        const managementSection = document.getElementById('managementSection');
-        
-        if (role === 'admin' || role === 'leader') {
-            if (managementSection) managementSection.classList.remove('hidden');
-        } else {
-            if (managementSection) managementSection.classList.add('hidden');
-        }
-    }
-
-    async function loadDashboard() {
-        if (!currentUser) return;
-        
-        // Update user display
-        updateUserDisplay(currentUser);
-        
-        // Load visitor status in settings
-        await loadVisitorStatus();
-    }
-
-    async function loadVisitorStatus() {
-        const statusContainer = document.getElementById('visitorStatus');
-        if (!statusContainer) return;
-        
-        const lastVisitorRequest = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'last_visitor_request');
-        const visitorStatus = localStorage.getItem(APP_CONFIG.localStoragePrefix + 'visitor_status');
-        
-        if (lastVisitorRequest && visitorStatus) {
-            try {
-                const request = JSON.parse(lastVisitorRequest);
+                `;
+                userResult.classList.remove('hidden');
                 
-                let statusText = '';
-                let statusClass = '';
-                let statusIcon = '';
-                
-                switch(visitorStatus) {
-                    case 'pending':
-                        statusText = 'In Bearbeitung';
-                        statusClass = 'status-pending';
-                        statusIcon = 'fa-clock';
-                        break;
-                    case 'accepted':
-                        statusText = 'Genehmigt';
-                        statusClass = 'status-accepted';
-                        statusIcon = 'fa-check-circle';
-                        break;
-                    case 'rejected':
-                        statusText = 'Abgelehnt';
-                        statusClass = 'status-rejected';
-                        statusIcon = 'fa-times-circle';
-                        break;
-                }
-                
-                statusContainer.innerHTML = `
-                    <div class="p-4 rounded-ios-sm ${statusClass}">
-                        <div class="flex items-center gap-3">
-                            <i class="fas ${statusIcon} text-xl"></i>
-                            <div>
-                                <p class="font-medium">Besucherausweis-Status: ${statusText}</p>
-                                <p class="text-sm mt-1">ID: ${request.visitor_id}</p>
-                                <p class="text-sm mt-1">Eingereicht am: ${request.request_date}</p>
-                                ${visitorStatus === 'accepted' && request.valid_until ? `
-                                    <p class="text-sm mt-1">Gültig bis: ${new Date(request.valid_until).toLocaleDateString('de-DE')}</p>
-                                ` : ''}
-                                ${visitorStatus === 'rejected' && request.rejection_reason ? `
-                                    <p class="text-sm mt-1">Grund: ${request.rejection_reason}</p>
-                                ` : ''}
+                // Show edit form
+                editForm.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Benutzer bearbeiten: ${mockUser.username}</h3>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p>Aktueller Rang: <strong>${mockUser.rank}</strong></p>
+                            <div class="user-actions" style="margin-top: 15px;">
+                                <button class="promote-btn" onclick="promoteUser('${mockUser.username}', '${mockUser.rank}')">Befördern</button>
+                                <button class="demote-btn" onclick="demoteUser('${mockUser.username}', '${mockUser.rank}')">Degradieren</button>
                             </div>
                         </div>
                     </div>
                 `;
-            } catch (e) {
-                console.error('Error loading visitor status:', e);
+                editForm.classList.remove('hidden');
+                
+            } else {
+                // User doesn't exist - show creation form
+                userResult.innerHTML = `
+                    <div class="user-item">
+                        <div class="user-info-small">
+                            <i class="fas fa-user-plus"></i>
+                            <span><strong>${mockUser.username}</strong> nicht gefunden - Neuer Benutzer</span>
+                        </div>
+                    </div>
+                `;
+                userResult.classList.remove('hidden');
+                
+                // Show creation form
+                editForm.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Neuen Benutzer erstellen</h3>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p>Benutzername: <strong>${mockUser.username}</strong></p>
+                            <label for="new-user-rank">Startrang wählen:</label>
+                            <select id="new-user-rank" style="width: 100%; margin: 10px 0;">
+                                ${ranks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}
+                            </select>
+                            <button class="save-btn" onclick="createUser('${mockUser.username}')">Benutzer erstellen</button>
+                        </div>
+                    </div>
+                `;
+                editForm.classList.remove('hidden');
             }
-        } else {
-            statusContainer.innerHTML = `
-                <div class="text-center py-8 text-ios-text-secondary">
-                    <i class="fas fa-id-card text-3xl mb-3"></i>
-                    <p>Keine aktive Besucherausweis-Anfrage</p>
-                    <button id="newVisitorRequestBtn" class="mt-4 text-blue-600 hover:text-blue-800 font-medium">
-                        Besucherausweis beantragen →
-                    </button>
+        }
+        
+        // Promote User Function
+        function promoteUser(username, currentRank) {
+            const currentIndex = ranks.indexOf(currentRank);
+            if (currentIndex < ranks.length - 1) {
+                const newRank = ranks[currentIndex + 1];
+                
+                // In a real app, you would update in Supabase
+                // and add a promotion record
+                
+                // Show success message
+                showNotification(`${username} wurde von ${currentRank} zu ${newRank} befördert!`);
+                
+                // Add to promotion list (simulated)
+                addPromotionToDashboard(username, currentRank, newRank);
+                
+                // Reload users
+                setTimeout(() => {
+                    loadUsers();
+                    const userResult = document.getElementById('user-result');
+                    const editForm = document.getElementById('user-edit-form');
+                    userResult.classList.add('hidden');
+                    editForm.classList.add('hidden');
+                }, 1000);
+            } else {
+                showNotification(`${username} hat bereits den höchsten Rang!`, 'error');
+            }
+        }
+        
+        // Demote User Function
+        function demoteUser(username, currentRank) {
+            const currentIndex = ranks.indexOf(currentRank);
+            if (currentIndex > 0) {
+                const newRank = ranks[currentIndex - 1];
+                
+                // In a real app, you would update in Supabase
+                
+                // Show success message
+                showNotification(`${username} wurde von ${currentRank} zu ${newRank} degradiert!`);
+                
+                // Reload users
+                setTimeout(() => {
+                    loadUsers();
+                    const userResult = document.getElementById('user-result');
+                    const editForm = document.getElementById('user-edit-form');
+                    userResult.classList.add('hidden');
+                    editForm.classList.add('hidden');
+                }, 1000);
+            } else {
+                showNotification(`${username} hat bereits den niedrigsten Rang!`, 'error');
+            }
+        }
+        
+        // Create User Function
+        function createUser(username) {
+            const rankSelect = document.getElementById('new-user-rank');
+            const selectedRank = rankSelect.value;
+            
+            // In a real app, you would insert into Supabase
+            
+            // Show success message
+            showNotification(`Benutzer ${username} wurde mit Rang ${selectedRank} erstellt!`);
+            
+            // Clear forms
+            setTimeout(() => {
+                document.getElementById('user-search-input').value = '';
+                const userResult = document.getElementById('user-result');
+                const editForm = document.getElementById('user-edit-form');
+                userResult.classList.add('hidden');
+                editForm.classList.add('hidden');
+                
+                // Reload users to show the new one
+                loadUsers();
+            }, 1000);
+        }
+        
+        // Add Promotion to Dashboard
+        function addPromotionToDashboard(username, oldRank, newRank) {
+            const promotionsList = document.getElementById('promotions-list');
+            const promoItem = document.createElement('div');
+            promoItem.className = 'promotion-item unread';
+            promoItem.innerHTML = `
+                <div class="promotion-info">
+                    <strong>${username}</strong><br>
+                    <small>${oldRank} → ${newRank}</small><br>
+                    <small>${new Date().toLocaleString('de-DE')}</small>
+                </div>
+                <div class="promotion-actions">
+                    <button onclick="markPromotionAsRead(${Date.now()})">Als gelesen markieren</button>
                 </div>
             `;
             
-            document.getElementById('newVisitorRequestBtn')?.addEventListener('click', function() {
-                document.getElementById('mainApp').classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('visitorButton').click();
-                }, 500);
+            // Add to the top of the list
+            if (promotionsList.firstChild) {
+                promotionsList.insertBefore(promoItem, promotionsList.firstChild);
+            } else {
+                promotionsList.appendChild(promoItem);
+            }
+        }
+        
+        // Mark Promotion as Read
+        function markPromotionAsRead(promoId) {
+            // In a real app, you would update the promotion record in Supabase
+            
+            // Find and update the promotion item
+            const promotions = document.querySelectorAll('.promotion-item');
+            promotions.forEach(promo => {
+                if (promo.querySelector('button') && promo.querySelector('button').textContent.includes('markieren')) {
+                    promo.classList.remove('unread');
+                    promo.querySelector('.promotion-actions').innerHTML = '<span style="color: var(--success);"><i class="fas fa-check"></i> Gelesen</span>';
+                }
+            });
+            
+            showNotification('Beförderung als gelesen markiert!');
+        }
+        
+        // Display Ranks
+        function displayRanks() {
+            const ranksList = document.getElementById('ranks-list');
+            ranksList.innerHTML = '';
+            
+            ranks.forEach((rank, index) => {
+                const rankItem = document.createElement('div');
+                rankItem.style.padding = '5px 0';
+                rankItem.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                rankItem.textContent = `${index + 1}. ${rank}`;
+                ranksList.appendChild(rankItem);
             });
         }
-    }
-
-    function showMilitaryID() {
-        if (!currentUser) return;
         
-        // ... existing military ID code ...
-    }
-
-    function hideMilitaryID() {
-        document.getElementById('militaryIDModal').classList.add('hidden');
-    }
-
-    function showError(elementId, message) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            const span = element.querySelector('span');
-            if (span) {
-                span.textContent = message;
+        // Function to simulate Supabase connection
+        async function testSupabaseConnection() {
+            try {
+                // This would be your actual Supabase query
+                // const { data, error } = await supabase.from('users').select('*').limit(1);
+                
+                // For now, simulate a successful connection
+                return true;
+            } catch (error) {
+                console.error('Supabase connection error:', error);
+                return false;
             }
-            element.classList.remove('hidden');
         }
-    }
-
-    function hideError(elementId) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.classList.add('hidden');
-        }
-    }
-
-    function showNotification(message, type = 'info') {
-        const container = document.getElementById('notificationContainer');
-        const id = 'notif_' + Date.now();
-        
-        const icons = {
-            success: 'check-circle',
-            error: 'exclamation-circle',
-            warning: 'exclamation-triangle',
-            info: 'info-circle'
-        };
-        
-        const colors = {
-            success: 'green',
-            error: 'red',
-            warning: 'yellow',
-            info: 'blue'
-        };
-        
-        const notification = document.createElement('div');
-        notification.id = id;
-        notification.className = `ios-card rounded-ios-sm p-4 slide-in border-l-4 border-${colors[type]}-500`;
-        
-        notification.innerHTML = `
-            <div class="flex items-start gap-3">
-                <i class="fas fa-${icons[type]} text-${colors[type]}-500 mt-0.5"></i>
-                <div class="flex-1">
-                    <p class="font-medium">${message}</p>
-                </div>
-                <button class="close-notification-btn text-ios-text-secondary hover:text-ios-text">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        container.appendChild(notification);
-        
-        notification.querySelector('.close-notification-btn').addEventListener('click', function() {
-            notification.remove();
-        });
-        
-        setTimeout(() => {
-            const notif = document.getElementById(id);
-            if (notif) {
-                notif.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                setTimeout(() => notif.remove(), 300);
-            }
-        }, 5000);
-    }
-
-    function showLoading() {
-        document.getElementById('loadingOverlay').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    }
-
-    // ======================
-    // DATABASE SETUP SQL
-    // ======================
-    const databaseSetupSQL = `
-    -- Create tables for Bundeswehr RP System
-    
-    -- Users table (für Login)
-    CREATE TABLE IF NOT EXISTS users (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        display_name VARCHAR(100) NOT NULL,
-        rank VARCHAR(50) DEFAULT 'Schütze',
-        division VARCHAR(50) DEFAULT 'Heer',
-        stamina INTEGER DEFAULT 0,
-        role VARCHAR(20) DEFAULT 'soldier' CHECK (role IN ('soldier', 'leader', 'admin')),
-        soldier_id VARCHAR(20) UNIQUE NOT NULL,
-        roblox_username VARCHAR(100),
-        service_start DATE DEFAULT CURRENT_DATE,
-        created_at TIMESTAMP DEFAULT NOW()
-    );
-    
-    -- Visitor requests table (NEU für Besucherausweise)
-    CREATE TABLE IF NOT EXISTS visitor_requests (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        visitor_id VARCHAR(20) UNIQUE NOT NULL,
-        display_name VARCHAR(100) NOT NULL,
-        roblox_username VARCHAR(100) NOT NULL,
-        reason TEXT NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
-        valid_until DATE,
-        notes TEXT,
-        rejection_reason TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        request_date VARCHAR(50),
-        reviewed_by UUID REFERENCES users(id),
-        reviewed_at TIMESTAMP
-    );
-    
-    -- Create test admin account (password: admin123)
-    INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
-    VALUES (
-        'admin',
-        'admin123',
-        'Oberst Markus Schmidt',
-        'Oberst',
-        'Heer',
-        'admin',
-        'BW-0001'
-    ) ON CONFLICT (username) DO NOTHING;
-    
-    -- Create test soldier account (password: soldat123)
-    INSERT INTO users (username, password, display_name, rank, division, role, soldier_id) 
-    VALUES (
-        'soldat',
-        'soldat123',
-        'Gefreiter Thomas Weber',
-        'Gefreiter',
-        'Marine',
-        'soldier',
-        'BW-0002'
-    ) ON CONFLICT (username) DO NOTHING;
-    
-    -- Test visitor request
-    INSERT INTO visitor_requests (visitor_id, display_name, roblox_username, reason, status, request_date)
-    VALUES (
-        'VIS-1000',
-        'Max Mustermann',
-        'MaxMuster123',
-        'Besuch der Kaserne für Information über die Bundeswehr',
-        'pending',
-        '${new Date().toLocaleDateString('de-DE')}'
-    ) ON CONFLICT (visitor_id) DO NOTHING;
-    `;
-
-    // Make SQL available globally
-    window.databaseSetupSQL = databaseSetupSQL;
-    console.log('Database setup SQL available at window.databaseSetupSQL');
-    
-    // Debug: Check if SupabaseClient is working
-    console.log('Script fully loaded. SupabaseClient:', supabaseClient);
-    console.log('Test credentials:');
-    console.log('Admin: username=admin, password=admin123');
-    console.log('Soldier: username=soldat, password=soldat123');
-</script>
-
+    </script>
 </body>
 </html>
